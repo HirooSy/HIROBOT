@@ -262,6 +262,6 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname, args, isPrems, isOwne
 handler.help    = handler.dym = ['menu', 'help']
 handler.tags    = ['main']
 handler.command = /^(menu|help|\?)$/i
-handler.ai = { risk: 'low', isTool: true, description: "Show menu list / command list" }
+handler.ai = { risk: 'low', isTool: false, summarize: false, description: "Show menu list / command list" }
 
 export default handler
