@@ -35,19 +35,6 @@ Hiro Bot is a WhatsApp automation framework built on Baileys and powered by Goog
   </sub>
 </div>
 
-<sub align=left>
-  
-```bash
-'Total commands: 110'
-Downloader     > Instagram, TikTok, Youtube, Twitter, Reddit, GDrive, Pinterest, Spotify, Animein
-Sticker        > Sticker, Sticker Meta, Brat, TeleSticker
-Tools          > HD, OCR, Resize, Upload, SSWeb, SetProfile
-System         > Auto-heal, Backup, Ping
-Multi Session  > Connect, disconnect, reconnect, listsession
-Group          > Member Management, Group management
-Owner          > Plugin Management, Eval, Exec
-```
-</sub>
 <br>
 
 <details>
@@ -63,16 +50,16 @@ Gemma-4-26b-a4b-it    > For system Auto-repair / coding
   ```
 
 ```python
-✦ Total tools: 40
-- Reminder     : create, list, cancel
-- Memory       : remember, recall, list, forget, log_failure
-- File Ops     : read, write, list, delete, move, search
-- System       : system_time, system_info, restart_bot, install_package
-- Web & Links  : view_website, fetch_html_raw, view_link_post, search_web
-- Media & AI   : generate_image, ai_edit_image, downloader
-- Plugins      : list_plugins, run_plugin, read_plugin_guide
-- Messaging    : send_message, reply_now, send_as_file, send_codeblock, get_group_info
-- Dev          : shell_exec, run_python
+✦ Total tools: 49
+- Database     : read_database, write_database
+- File Ops     : read_file, write_file, list_files, delete_file, move_file, search_files
+- Messaging    : send_as_file, send_codeblock, get_group_info, send_message, list_owners, forward_media, reply_now, send_rich_reply
+- Group Mgmt   : group_member_action, group_settings, group_link, group_leave, group_join_requests
+- Media & AI   : download_media, generate_image, ai_edit_image, view_website, fetch_html_raw, view_link_post
+- Memory       : remember, recall, list_learned, forget, pin_note, unpin_note, list_pinned_notes, log_failure
+- Reminders    : create_reminder, list_reminders, cancel_reminder
+- Plugins      : list_plugins, run_plugin, check_plugin_risk, read_plugin_guide
+- System       : system_time, shell_exec, run_python, system_info, restart_bot, install_package, search_web
 ```
 
 </sub>
