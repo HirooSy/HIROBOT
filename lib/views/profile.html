@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/x-icon" href="/src/icon.png">
+  <title>Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    button {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      box-shadow: none;
+      font: inherit;
+      background-image: none;
+    }
+
+    img {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    :root {
+      --bg:        #080808;
+      --surface:   #111111;
+      --surface2:  #181818;
+      --border:    #242424;
+      --border2:   #303030;
+      --accent:    #ffffff;
+      --text:      #e8e8e8;
+      --muted:     #555555;
+      --muted2:    #888888;
+      --error:     #ff5555;
+      --success:   #55cc77;
+      --warn:      #ccaa44;
+      --font:      'IBM Plex Mono', monospace;
+      --health:    #ff4444;
+      --gem:       #ffd700;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      padding: 20px 16px 56px;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 20px;
+      letter-spacing: 10px;
+    }
+
+    .dot-anim { animation: loadingPulse 1.2s ease-in-out infinite; }
+
+    @keyframes loadingPulse {
+      0%, 100% { opacity: 0.25; }
+      50% { opacity: 1; }
+    }
+
+    #content { display: none; animation: fadeUp 0.35s ease; }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 9px; }
+    .logo { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+    .logo-text { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text); }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 5px;
+      color: var(--muted2);
+      padding: 6px 12px;
+      font-size: 10px;
+      font-family: var(--font);
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .logout-btn:hover { border-color: var(--error); color: var(--error); }
+
+    /* Navigation */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 4px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+
+    .nav-btn {
+      flex: 1;
+      min-width: 50px;
+      background: transparent;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 6px;
+      font-size: 8px;
+      font-weight: 700;
+      font-family: var(--font);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .nav-btn.active { background: var(--accent); color: #080808; }
+    .nav-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
+
+    .tab-panel { display: none; animation: fadeUp 0.25s ease; }
+    .tab-panel.active-panel { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title::before {
+      content: '';
+      width: 2px; height: 10px;
+      background: var(--text);
+      border-radius: 1px;
+      opacity: 0.4;
+    }
+
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+    /* Profile */
+    .profile-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .avatar-wrap {
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .avatar {
+      width: 56px; height: 56px;
+      background: var(--surface2);
+      border: 2px solid var(--border2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      position: absolute;
+      inset: 0;
+    }
+
+    #profile-pic {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border2);
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: none;
+    }
+
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name { font-size: 16px; font-weight: 700; color: var(--text); }
+    .profile-sub { font-size: 10px; color: var(--muted2); margin-top: 2px; letter-spacing: 0.5px; }
+
+    .premium-wrap { position: relative; flex-shrink: 0; }
+    .premium-badge {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: rgba(249,168,37,0.12);
+      border: 1px solid rgba(249,168,37,0.4);
+      color: #f9a825;
+      font-size: 9px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .premium-tooltip {
+      position: absolute;
+      top: -8px;
+      right: 0;
+      transform: translateY(-100%);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 7px 12px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease;
+      z-index: 20;
+    }
+    .premium-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      right: 12px;
+      border: 5px solid transparent;
+      border-top-color: var(--surface2);
+    }
+    .premium-tooltip.open { opacity: 1; visibility: visible; }
+
+    .shimmer-premium {
+      background: linear-gradient(90deg, #f9a825 0%, #ffe082 40%, #fff9c4 47%, #ffffff 50%, #fff9c4 53%, #ffe082 60%, #f9a825 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmerMove 3.2s linear infinite;
+      font-weight: 700;
+    }
+
+    .shimmer-diamond {
+      background: linear-gradient(90deg, #4fc3f7 0%, #81d4fa 40%, #b3e5fc 47%, #ffffff 50%, #b3e5fc 53%, #81d4fa 60%, #4fc3f7 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmerMove 3.4s linear infinite;
+      font-weight: 700;
+    }
+
+    /* Stats Grid - All white */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .stat-item {
+      background: var(--surface2);
+      padding: 12px 6px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 7px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 3px;
+    }
+
+    /* EXP Bar */
+    .exp-bar-wrap { margin-top: 8px; }
+    .exp-bar-header { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted2); margin-bottom: 5px; letter-spacing: 0.5px; }
+    .exp-bar-track { height: 3px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+    .exp-bar-fill { height: 100%; background: var(--text); border-radius: 99px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); }
+    .exp-bar-sub { text-align: right; font-size: 9px; color: var(--muted); letter-spacing: 0.5px; margin-top: 4px; }
+
+    .tierup-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      background: var(--accent);
+      color: #080808;
+      border: none;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      display: none;
+    }
+    .tierup-btn:hover:not(:disabled) { background: #cccccc; }
+    .tierup-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ============ FAB ============ */
+    .fab-container {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 150;
+    }
+    .fab-container.visible { display: flex; }
+    .fab-container.tab-hidden { display: none; }
+    .fab-main {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #080808;
+      border: none;
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    .fab-main.open { transform: rotate(135deg); }
+    .fab-menu {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(8px);
+      transition: all 0.2s ease;
+    }
+    .fab-menu.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .fab-sub-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.15s ease;
+    }
+    .fab-sub-btn:hover { background: var(--surface); border-color: var(--border2); }
+
+    .qty-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .qty-btn:hover { background: var(--surface); border-color: var(--border2); }
+    .qty-btn:active { transform: scale(0.92); }
+    .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+    .qty-display {
+      min-width: 22px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--accent);
+      color: #080808;
+      border: none;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn:hover:not(:disabled) { background: #cccccc; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn .spinner { display: none; width: 12px; height: 12px; border: 2px solid rgba(0,0,0,0.15); border-top-color: #080808; border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto; }
+    .btn.loading .btn-text { display: none; }
+    .btn.loading .spinner { display: block; }
+
+    .btn-secondary { background: transparent; border: 1px solid var(--border2); color: var(--text); }
+    .btn-secondary:hover:not(:disabled) { background: var(--surface2); border-color: var(--border); }
+    .btn-success { background: var(--success); color: #080808; }
+    .btn-success:hover:not(:disabled) { background: #44bb66; }
+    .btn-danger { background: var(--error); color: #080808; }
+    .btn-danger:hover:not(:disabled) { background: #dd4444; }
+    .btn-flat { background: #ffffff; color: #080808; }
+    .btn-flat:hover:not(:disabled) { background: #e6e6e6; }
+    .btn-small { padding: 6px 12px; font-size: 8px; width: auto; display: inline-block; }
+
+    .btn-success.ready { background: var(--success); color: #080808; }
+    .btn-success.claimed { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); cursor: not-allowed; }
+
+    .input-field {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input-field:focus { border-color: var(--border2); }
+    .input-field::placeholder { color: var(--muted); }
+
+    .flex-row { display: flex; align-items: center; gap: 8px; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-wrap { flex-wrap: wrap; }
+    .gap-4 { gap: 4px; }
+    .gap-8 { gap: 8px; }
+    .mt-8 { margin-top: 8px; }
+    .mb-8 { margin-bottom: 8px; }
+    .text-center { text-align: center; }
+    .text-muted { color: var(--muted); font-size: 9px; }
+    .text-muted2 { color: var(--muted2); font-size: 9px; }
+    .text-gem { color: var(--gem); }
+    .text-success { color: var(--success); }
+    .text-error { color: var(--error); }
+    .text-warn { color: var(--warn); }
+    .text-xs { font-size: 8px; }
+    .text-sm { font-size: 10px; }
+    .text-md { font-size: 12px; }
+    .text-lg { font-size: 16px; }
+    .font-bold { font-weight: 700; }
+
+    .shimmer-gold {
+      background: linear-gradient(90deg, #f9a825 0%, #ffe082 40%, #fff9c4 47%, #ffffff 50%, #fff9c4 53%, #ffe082 60%, #f9a825 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmerMove 3s linear infinite;
+      font-weight: 700;
+    }
+
+    @keyframes shimmerMove {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============ SLOT ============ */
+    .slot-machine { text-align: center; }
+    .slot-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .slot-spin-btn { flex: 0 0 70px; }
+    .spin-button {
+      width: 100%;
+      background: var(--accent);
+      color: #080808;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 0;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font);
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .spin-button:active { opacity: 0.8; }
+    .spin-button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .slot-display {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    .slot-box {
+      width: 55px;
+      height: 55px;
+      background: var(--surface2);
+      border: 2px solid var(--border2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      transition: all 0.08s ease;
+    }
+    .slot-box.spinning { animation: slotSpin 0.08s linear infinite; }
+    @keyframes slotSpin {
+      0%   { transform: translateY(0); opacity: 1; }
+      25%  { transform: translateY(-6px); opacity: 0.7; }
+      50%  { transform: translateY(0); opacity: 1; }
+      75%  { transform: translateY(6px); opacity: 0.7; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    .slot-prize-btn { flex: 0 0 40px; }
+    .prize-button {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 10px 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--muted2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .prize-button:active { background: var(--surface2); color: var(--text); }
+    .slot-cost-info { font-size: 9px; color: var(--warn); text-align: center; margin-bottom: 8px; }
+    .slot-result {
+      font-size: 11px;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      animation: fadeUp 0.3s ease;
+      margin-top: 8px;
+    }
+    .slot-result.win { background: rgba(68,255,102,0.1); border: 1px solid rgba(68,255,102,0.2); color: var(--success); }
+    .slot-result.lose { background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.2); color: var(--error); }
+
+    /* Prize Modal */
+    .prize-modal {
+      position: fixed;
+      top: 50%;
+      right: 16px;
+      transform: translateY(-50%) translateX(120%);
+      width: 260px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      z-index: 300;
+      transition: transform 0.3s ease;
+      padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .prize-modal.open { transform: translateY(-50%) translateX(0); }
+    .prize-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .prize-modal-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); }
+    .prize-modal-close { background: transparent; border: none; color: var(--muted2); font-size: 18px; cursor: pointer; padding: 0 6px; line-height: 1; }
+    .prize-list { display: flex; flex-direction: column; gap: 8px; }
+    .prize-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 10px; }
+    .prize-item:last-child { border-bottom: none; }
+    .prize-icons { display: flex; gap: 4px; font-size: 14px; font-weight: 600; }
+    .prize-value.positive { color: var(--success); }
+    .prize-value.negative { color: var(--error); }
+    .prize-value.jackpot { color: #ffaa44; }
+
+    .modal-overlay-prize {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 299;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .modal-overlay-prize.open { opacity: 1; visibility: visible; }
+
+    /* ============ ACCOUNT ============ */
+    .db-user-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .db-user-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .db-user-header:hover { background: rgba(255,255,255,0.03); }
+    .db-user-name { font-size: 11px; font-weight: 600; color: var(--text); word-break: break-all; flex: 1; }
+    .db-user-expand { font-size: 14px; color: var(--muted2); transition: transform 0.2s; flex-shrink: 0; margin-left: 8px; }
+
+    .db-user-fields {
+      display: none;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+    .db-user-fields.open { display: block; }
+
+    .db-field-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      gap: 8px;
+    }
+    .db-field-label {
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      flex: 0 0 50px;
+    }
+    .db-field-input {
+      height: 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 10px;
+      text-align: center;
+      outline: none;
+    }
+    .db-field-input:focus { border-color: var(--border2); }
+    .db-field-input.number { width: 70px; }
+    .db-field-input.string { width: 120px; }
+
+    .db-save-btn {
+      background: var(--success);
+      color: #080808;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 7px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .db-save-btn:active { opacity: 0.8; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 22px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 5px;
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 1000;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(85,204,119,0.3); color: var(--success); }
+    .toast.error { border-color: rgba(255,85,85,0.3); color: var(--error); }
+    .toast.warn { border-color: rgba(204,170,68,0.3); color: var(--warn); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(8,8,8,0.88);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+      padding: 16px;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 28px 22px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0.88); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-icon { font-size: 30px; margin-bottom: 12px; }
+    .modal-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: 1px; margin-bottom: 8px; }
+    .modal-body { font-size: 11px; color: var(--muted2); line-height: 1.9; margin-bottom: 20px; }
+    .modal-body strong { color: var(--text); }
+
+    .modal-close {
+      background: var(--accent);
+      color: #080808;
+      border: none;
+      border-radius: 5px;
+      padding: 9px 22px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: #cccccc; }
+
+    .modal-buy {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      column-gap: 18px;
+      row-gap: 12px;
+      text-align: left;
+    }
+    .modal-buy-title { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: var(--text); }
+    .modal-buy-sub { font-size: 11px; font-weight: 600; color: var(--gem); }
+    .modal-buy-qty { display: flex; align-items: center; gap: 10px; justify-self: end; }
+    .modal-buy-actions { display: flex; gap: 8px; justify-self: end; }
+
+    .gc-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+    .gc-item-code { font-size: 11px; font-weight: 700; color: var(--text); letter-spacing: 1px; }
+    .gc-item-reward { font-size: 9px; color: var(--muted2); }
+
+    .gc-del-btn {
+      background: transparent;
+      border: 1px solid rgba(255,85,85,0.3);
+      border-radius: 4px;
+      color: var(--error);
+      font-size: 12px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .gc-del-btn:hover { background: rgba(255,85,85,0.1); }
+
+    @media (max-width: 420px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .nav-btn { font-size: 7px; padding: 6px 4px; letter-spacing: 0.5px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div id="loading">
+    <span class="dot-anim">✦&nbsp;&nbsp;&nbsp;✦&nbsp;&nbsp;&nbsp;✦</span>
+  </div>
+
+  <div id="content">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <div class="logo">
+          <img src="/src/icon.png" alt="Bot" id="header-logo-img" draggable="false" oncontextmenu="return false">
+        </div>
+        <span class="logo-text" id="header-logo-text">HIRO BOT</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="nav-btn active" data-tab="home">Home</button>
+      <button class="nav-btn" data-tab="account">Account</button>
+      <button class="nav-btn" data-tab="database" id="db-tab" style="display:none">DB</button>
+    </div>
+
+    <!-- ==================== TAB: HOME ==================== -->
+    <div id="tab-home" class="tab-panel active-panel">
+      <!-- Profile Card -->
+      <div class="card">
+        <div class="profile-top">
+          <div class="avatar-wrap">
+            <div class="avatar" id="avatar-letter">?</div>
+            <img id="profile-pic" src="" alt="">
+          </div>
+          <div class="profile-info">
+            <div class="profile-name" id="profile-name">-</div>
+            <div class="profile-sub" id="profile-sub">USER</div>
+          </div>
+          <div class="premium-wrap" id="premium-wrap" style="display:none">
+            <button class="premium-badge" id="premium-badge" onclick="togglePremiumTooltip()">⭐</button>
+            <div class="premium-tooltip" id="premium-tooltip"></div>
+          </div>
+        </div>
+
+        <!-- Stats - All White -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="stat-tier">✧</div>
+            <div class="stat-label">Tier</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-exp">0</div>
+            <div class="stat-label">EXP</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-gems">0</div>
+            <div class="stat-label" style="color:var(--gem)">♦ Gems</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-limit">0</div>
+            <div class="stat-label">Limit</div>
+          </div>
+        </div>
+
+        <!-- EXP Bar -->
+        <div class="exp-bar-wrap" id="exp-bar-wrap">
+          <div class="exp-bar-header">
+            <span id="exp-bar-label">Progress to next tier</span>
+            <span id="exp-bar-pct">0%</span>
+          </div>
+          <div class="exp-bar-track">
+            <div class="exp-bar-fill" id="exp-bar-fill" style="width:0%"></div>
+          </div>
+          <div id="exp-bar-sub" class="exp-bar-sub"></div>
+        </div>
+        <button class="tierup-btn" id="tierup-btn" onclick="doTierUp()">
+          <span class="btn-text">Tier Up</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+
+      <!-- Daily Reward -->
+      <div class="card">
+        <div class="flex-between">
+          <div>
+            <div class="text-md font-bold">Daily Bonus</div>
+            <div class="text-sm text-muted2">+500 EXP · +5 Gems</div>
+            <div class="text-xs text-warn" id="reward-timer">Ready to claim!</div>
+          </div>
+          <button class="btn btn-small btn-success ready" id="reward-btn" onclick="claimReward()">Claim</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB: ACCOUNT ==================== -->
+    <div id="tab-account" class="tab-panel">
+      <div class="card">
+        <div class="card-title">Change Name</div>
+        <input type="text" id="rename-input" class="input-field" placeholder="New display name" maxlength="32">
+        <button class="btn mt-8" id="rename-btn" onclick="doRename()">
+          <span class="btn-text">Save Name</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Change Password</div>
+        <input type="password" id="pw-old" class="input-field" placeholder="Current password">
+        <input type="password" id="pw-new" class="input-field mt-8" placeholder="New password">
+        <input type="password" id="pw-new2" class="input-field mt-8" placeholder="Confirm new password">
+        <button class="btn mt-8" id="pw-btn" onclick="changePassword()">
+          <span class="btn-text">Save Password</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Gift Code</div>
+        <input type="text" id="gc-input" class="input-field" placeholder="Enter gift code" maxlength="32" style="text-transform:uppercase">
+        <button class="btn mt-8" id="gc-btn" onclick="redeemCode()">
+          <span class="btn-text">Redeem</span>
+          <div class="spinner"></div>
+        </button>
+        <div id="gc-result" style="display:none;margin-top:10px;padding:10px;border-radius:5px;text-align:center;font-size:11px;font-weight:600;"></div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB: DATABASE ==================== -->
+    <div id="tab-database" class="tab-panel">
+      <div class="card">
+        <div class="card-title">🎁 Gift Code Manager</div>
+        <div class="text-xs text-muted2 mb-8">
+          Format: <strong>CODE</strong> → <strong>type:value</strong><br>
+          Types: exp:2000 · limit:5 · premium:2 · level:1 · gems:50
+        </div>
+        <div class="flex-row gap-4 flex-wrap">
+          <input type="text" id="gc-new-code" class="input-field" style="flex:1;min-width:80px;" placeholder="CODE" maxlength="32">
+          <input type="text" id="gc-new-reward" class="input-field" style="flex:1;min-width:100px;" placeholder="exp:2000">
+          <button class="btn btn-small btn-success" onclick="addGiftCode()">+ Add</button>
+        </div>
+        <div id="gc-list" class="mt-8">
+          <div class="text-center text-muted2 text-sm">Loading codes...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📁 Database Editor</div>
+        <button class="btn btn-small btn-secondary" onclick="loadDatabaseData()">⟳ Refresh</button>
+        <div id="db-users-list" class="mt-8">
+          <div class="text-center text-muted2 text-sm">Loading users...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prize Modal -->
+  <div class="modal-overlay-prize" id="prize-overlay" onclick="closePrizeModal()"></div>
+  <div class="prize-modal" id="prize-modal">
+    <div class="prize-modal-header">
+      <span class="prize-modal-title">♦ PRIZE LIST</span>
+      <button class="prize-modal-close" onclick="closePrizeModal()">×</button>
+    </div>
+    <div class="prize-list">
+      <div class="prize-item"><div class="prize-icons">✦ ✦ ✦</div><div class="prize-value jackpot"><span class="shimmer-diamond">+200k EXP</span> <span style="font-size:8px;color:var(--muted2)">0.001%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">7 7 7</div><div class="prize-value jackpot"><span class="shimmer-gold">+77.7k EXP</span> <span style="font-size:8px;color:var(--muted2)">0.1%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">♦ ♦ ♦</div><div class="prize-value positive">+10k EXP <span style="font-size:8px;color:var(--muted2)">0.5%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">♣ ♣ ♣</div><div class="prize-value positive">+5k EXP <span style="font-size:8px;color:var(--muted2)">1%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">♥ ♥ ♥</div><div class="prize-value positive">+3k EXP <span style="font-size:8px;color:var(--muted2)">1.5%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">♠ ♠ ♠</div><div class="prize-value positive">+2k EXP <span style="font-size:8px;color:var(--muted2)">2%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">♪ ♪ ♪</div><div class="prize-value positive">+1k EXP <span style="font-size:8px;color:var(--muted2)">3%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">✿ ✿ ✿</div><div class="prize-value positive">+500 EXP <span style="font-size:8px;color:var(--muted2)">4%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">× × ×</div><div class="prize-value negative">−300 EXP <span style="font-size:8px;color:var(--muted2)">~30%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">−200 EXP <span style="font-size:8px;color:var(--muted2)">~57.9%</span></div></div>
+      <div class="prize-item" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="prize-icons" style="font-size:10px;color:var(--warn)">⭐ PITY</div><div class="prize-value" style="font-size:9px;color:var(--warn)">Guaranteed ✦/7/♦ every 100 losses</div></div>
+    </div>
+  </div>
+
+  <!-- Tier Up Modal -->
+  <div class="modal-overlay" id="tierup-modal">
+    <div class="modal">
+      <div class="modal-icon">★</div>
+      <div class="modal-title" id="modal-title">Tier Up!</div>
+      <div class="modal-body" id="modal-body"></div>
+      <button class="modal-close" onclick="closeModal()">OK</button>
+    </div>
+  </div>
+
+  <!-- Gacha (Slot) Modal -->
+  <div class="modal-overlay" id="gacha-modal">
+    <div class="modal">
+      <div class="modal-title">♣ SLOT</div>
+      <div class="modal-body">
+        <div class="slot-machine">
+          <div class="slot-row">
+            <div class="slot-spin-btn">
+              <button class="spin-button" id="slot-btn" onclick="spinSlot()">SPIN</button>
+            </div>
+            <div class="slot-display">
+              <div class="slot-box" id="slot1">✿</div>
+              <div class="slot-box" id="slot2">♦</div>
+              <div class="slot-box" id="slot3">7</div>
+            </div>
+            <div class="slot-prize-btn">
+              <button class="prize-button" onclick="openPrizeModal()">&lt;</button>
+            </div>
+          </div>
+          <div class="slot-cost-info">⚡ 200 EXP per spin</div>
+          <div class="slot-cost-info" style="color:var(--muted2);margin-top:-8px">🛡 Pity: <span id="pity-count">0</span>/100 losses</div>
+          <div id="slot-result" class="slot-result"></div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeGachaModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- Buy Limit Modal -->
+  <div class="modal-overlay" id="limit-modal">
+    <div class="modal modal-buy">
+      <div class="modal-buy-title">BUY LIMIT</div>
+      <div class="modal-buy-qty">
+        <span class="qty-display" id="limit-qty-display">0</span>
+        <button class="qty-btn" id="limit-qty-minus" onclick="changeLimitQty(-1)">−</button>
+        <button class="qty-btn" id="limit-qty-plus" onclick="changeLimitQty(1)">+</button>
+      </div>
+      <div class="modal-buy-sub">1 ♦ / limit</div>
+      <div class="modal-buy-actions">
+        <button class="btn btn-small btn-secondary" onclick="closeLimitModal()">Cancel</button>
+        <button class="btn btn-small btn-flat" onclick="buyLimit()">Buy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buy Premium Modal -->
+  <div class="modal-overlay" id="premium-modal">
+    <div class="modal modal-buy">
+      <div class="modal-buy-title">BUY PREMIUM</div>
+      <div class="modal-buy-qty">
+        <span class="qty-display" id="premium-qty-display">0</span>
+        <button class="qty-btn" id="premium-qty-minus" onclick="changePremiumQty(-1)">−</button>
+        <button class="qty-btn" id="premium-qty-plus" onclick="changePremiumQty(1)">+</button>
+      </div>
+      <div class="modal-buy-sub">100 ♦ / week</div>
+      <div class="modal-buy-actions">
+        <button class="btn btn-small btn-secondary" onclick="closePremiumModal()">Cancel</button>
+        <button class="btn btn-small btn-flat" onclick="buyPremium()">Buy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <div class="fab-container">
+    <div class="fab-menu" id="fab-menu">
+      <button class="fab-sub-btn" onclick="openGachaModal()">Gacha</button>
+      <button class="fab-sub-btn" onclick="openLimitModal()">Limit</button>
+      <button class="fab-sub-btn" onclick="openPremiumModal()">Premium</button>
+    </div>
+    <button class="fab-main" id="fab-main" onclick="toggleFab()">✦</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+// ============ HELPERS ============
+function safeRedirect(url) { window.location.href = url }
+
+async function safeFetch(url, opts = {}, timeoutMs = 15000) {
+  opts.headers = { ...(opts.headers || {}), 'bypass-tunnel-reminder': '1' }
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+let token = localStorage.getItem('token')
+let phone = localStorage.getItem('phone')
+// Don't bounce to login just because localStorage is empty — that happens
+// on every cloudflared tunnel URL change too, even for an already-logged-in
+// user. Let loadProfile() ask the server first: it can still recognize this
+// browser via the IP fallback even without a saved token. Only redirect if
+// the server itself responds Unauthorized.
+
+// ============ STATE ============
+let cachedTierAsset = null
+let currentExp = 0
+let currentLevel = 0
+let currentLimit = 0
+let currentGems = 0
+let currentPremiumTime = 0
+let limitBuyQty = 0
+let premiumBuyQty = 0
+let isOwner = false
+let timerInterval = null
+let shopResetAt = null
+let shopTimerInterval = null
+
+// ============ TIER ASSET ============
+async function loadBotName() {
+  try {
+    const res = await safeFetch('/api/botInfo', { headers: { 'Authorization': 'Bearer ' + token } })
+    const data = await res.json()
+    if (data && data.name) {
+      document.title = `Profile — ${data.name}`
+      document.getElementById('header-logo-text').textContent = data.name
+      document.getElementById('header-logo-img').alt = data.name
+    }
+  } catch {}
+}
+
+async function fetchTierAsset() {
+  try {
+    const res = await safeFetch('/api/tierAsset', { headers: { 'Authorization': 'Bearer ' + token } })
+    const data = await res.json()
+    if (data && data.name) { cachedTierAsset = data; return cachedTierAsset }
+    return null
+  } catch { return null }
+}
+
+function getTierAsset() {
+  return cachedTierAsset
+}
+
+function getTierName(level) { return getTierAsset().name[level] }
+function getTierExp(level) { return getTierAsset().exp[level] }
+function getTierLimit(level) { return getTierAsset().limit[level] }
+
+function fmtExp(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+  return n.toString()
+}
+
+function fmtCooldown(totalSeconds) {
+  totalSeconds = Math.max(0, Math.floor(totalSeconds))
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+}
+
+function escapeHtml(str) {
+  if (str == null) return ''
+  return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))
+}
+
+function makeSafeId(key) { return key.replace(/[^a-zA-Z0-9]/g, '_') }
+
+// ============ TOAST ============
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = 'toast ' + type + ' show'
+  setTimeout(() => t.classList.remove('show'), 3000)
+}
+
+function setLoading(el, loading) {
+  if (typeof el === 'string') el = document.getElementById(el)
+  if (!el) return
+  el.classList.toggle('loading', loading)
+  el.disabled = loading
+}
+
+// ============ NAVIGATION ============
+function switchTab(tabId) {
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'))
+  document.querySelector(`.nav-btn[data-tab="${tabId}"]`).classList.add('active')
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active-panel'))
+  document.getElementById(`tab-${tabId}`).classList.add('active-panel')
+
+  document.querySelector('.fab-container').classList.toggle('tab-hidden', tabId !== 'home')
+
+  if (tabId === 'database' && isOwner) { loadDatabaseData(); loadGiftCodes() }
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')))
+})
+
+// ============ MODALS ============
+function closeModal() { document.getElementById('tierup-modal').classList.remove('show') }
+function openPrizeModal() {
+  document.getElementById('prize-overlay').classList.add('open')
+  document.getElementById('prize-modal').classList.add('open')
+}
+function closePrizeModal() {
+  document.getElementById('prize-overlay').classList.remove('open')
+  document.getElementById('prize-modal').classList.remove('open')
+}
+
+// ============ FAB ============
+// ============ PREMIUM TOOLTIP ============
+function formatPremiumRemaining(ms) {
+  if (ms <= 0) return '0m'
+  const totalMinutes = Math.floor(ms / 60000)
+  const totalDays = Math.floor(totalMinutes / 1440)
+  const minutesOfDay = totalMinutes % 1440
+
+  const months = Math.floor(totalDays / 30)
+  const days = totalDays % 30
+
+  const parts = []
+  if (months > 0) parts.push(`${months}mo`)
+  if (days > 0) parts.push(`${days}d`)
+  if (parts.length === 0) parts.push(`${minutesOfDay}m`)
+  return parts.join(' ')
+}
+
+function togglePremiumTooltip() {
+  const tooltip = document.getElementById('premium-tooltip')
+  const isOpen = tooltip.classList.contains('open')
+  if (isOpen) {
+    tooltip.classList.remove('open')
+    return
+  }
+  const remaining = currentPremiumTime - Date.now()
+  tooltip.textContent = `Premium: ${formatPremiumRemaining(remaining)} left`
+  tooltip.classList.add('open')
+}
+
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('premium-wrap')
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('premium-tooltip').classList.remove('open')
+  }
+})
+
+function toggleFab() {
+  document.getElementById('fab-menu').classList.toggle('open')
+  document.getElementById('fab-main').classList.toggle('open')
+}
+function closeFab() {
+  document.getElementById('fab-menu').classList.remove('open')
+  document.getElementById('fab-main').classList.remove('open')
+}
+
+function openGachaModal() {
+  closeFab()
+  document.getElementById('gacha-modal').classList.add('show')
+}
+function closeGachaModal() {
+  document.getElementById('gacha-modal').classList.remove('show')
+}
+
+const LIMIT_PRICE = 1
+const PREMIUM_PRICE = 100
+
+function openLimitModal() {
+  closeFab()
+  limitBuyQty = 0
+  renderLimitQty()
+  document.getElementById('limit-modal').classList.add('show')
+}
+function closeLimitModal() {
+  document.getElementById('limit-modal').classList.remove('show')
+}
+function renderLimitQty() {
+  document.getElementById('limit-qty-display').textContent = limitBuyQty
+  const maxQty = Math.floor((currentGems || 0) / LIMIT_PRICE)
+  document.getElementById('limit-qty-plus').disabled = limitBuyQty >= maxQty
+  document.getElementById('limit-qty-minus').disabled = limitBuyQty <= 0
+}
+function changeLimitQty(delta) {
+  const maxQty = Math.floor((currentGems || 0) / LIMIT_PRICE)
+  limitBuyQty = Math.min(maxQty, Math.max(0, limitBuyQty + delta))
+  renderLimitQty()
+}
+async function buyLimit() {
+  const amount = limitBuyQty
+  if (amount <= 0) { showToast('Enter an amount first.', 'warn'); return }
+  try {
+    const res = await safeFetch('/api/buy-limit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ amount })
+    })
+    const data = await res.json()
+    if (data.success) {
+      showToast(data.message || 'Limit purchased!', 'success')
+      closeLimitModal()
+      loadProfile(true)
+    } else {
+      showToast(data.message || 'Purchase failed.', 'error')
+    }
+  } catch { showToast('Connection error.', 'error') }
+}
+
+function openPremiumModal() {
+  closeFab()
+  premiumBuyQty = 0
+  renderPremiumQty()
+  document.getElementById('premium-modal').classList.add('show')
+}
+function closePremiumModal() {
+  document.getElementById('premium-modal').classList.remove('show')
+}
+function renderPremiumQty() {
+  document.getElementById('premium-qty-display').textContent = premiumBuyQty
+  const maxQty = Math.floor((currentGems || 0) / PREMIUM_PRICE)
+  document.getElementById('premium-qty-plus').disabled = premiumBuyQty >= maxQty
+  document.getElementById('premium-qty-minus').disabled = premiumBuyQty <= 0
+}
+function changePremiumQty(delta) {
+  const maxQty = Math.floor((currentGems || 0) / PREMIUM_PRICE)
+  premiumBuyQty = Math.min(maxQty, Math.max(0, premiumBuyQty + delta))
+  renderPremiumQty()
+}
+async function buyPremium() {
+  const weeks = premiumBuyQty
+  if (weeks <= 0) { showToast('Enter an amount first.', 'warn'); return }
+  try {
+    const res = await safeFetch('/api/buy-premium', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ weeks })
+    })
+    const data = await res.json()
+    if (data.success) {
+      showToast(data.message || 'Premium purchased!', 'success')
+      closePremiumModal()
+      loadProfile(true)
+    } else {
+      showToast(data.message || 'Purchase failed.', 'error')
+    }
+  } catch { showToast('Connection error.', 'error') }
+}
+
+// ============ UPDATE UI ============
+function updateTierDisplay() {
+  const tierName = getTierName(currentLevel)
+  document.getElementById('stat-tier').textContent = tierName
+
+  const asset = getTierAsset()
+  const maxLevel = Object.keys(asset.exp).length
+
+  if (currentLevel >= maxLevel) {
+    document.getElementById('exp-bar-wrap').style.display = 'none'
+    document.getElementById('tierup-btn').style.display = 'none'
+    return
+  }
+
+  const nextLevel = currentLevel + 1
+  const needed = getTierExp(nextLevel)
+  const nextTierName = getTierName(nextLevel)
+  const pct = Math.min(100, (currentExp / needed) * 100)
+
+  document.getElementById('exp-bar-fill').style.width = pct + '%'
+  document.getElementById('exp-bar-pct').textContent = Math.floor(pct) + '%'
+  document.getElementById('exp-bar-sub').textContent =
+    `${fmtExp(currentExp)} / ${fmtExp(needed)} EXP → ${nextTierName}`
+
+  const btn = document.getElementById('tierup-btn')
+  btn.style.display = 'block'
+  if (currentExp >= needed) {
+    btn.disabled = false
+    btn.querySelector('.btn-text').textContent = `↑ Tier Up to ${nextTierName}`
+  } else {
+    btn.disabled = true
+    btn.querySelector('.btn-text').textContent = `↑ Need ${fmtExp(needed - currentExp)} more EXP`
+  }
+}
+
+// ============ LOAD PROFILE ============
+async function loadProfile(silent = false) {
+  try {
+    const res = await safeFetch('/api/profile', { headers: token ? { 'Authorization': 'Bearer ' + token } : {} })
+    const data = await res.json()
+    if (!data.success) { localStorage.clear(); return safeRedirect('/') }
+
+    const u = data.user
+    if (!phone) phone = u.phone || u.number || ''
+    currentExp = u.exp ?? 0
+    currentLevel = u.level ?? 0
+    currentLimit = u.limit ?? 0
+    currentGems = u.gems ?? 0
+
+    try {
+      const ownerRes = await safeFetch('/api/check-owner', { headers: { 'Authorization': 'Bearer ' + token } })
+      const ownerData = await ownerRes.json()
+      isOwner = ownerData.isOwner === true
+      document.getElementById('db-tab').style.display = isOwner ? 'block' : 'none'
+    } catch {}
+
+    if (!silent) {
+      const displayName = (u.name && u.name !== phone) ? u.name : phone
+      document.getElementById('avatar-letter').textContent = displayName.slice(0, 2).toUpperCase()
+
+      const nameEl = document.getElementById('profile-name')
+      if (u.premium && u.premiumTime > Date.now()) {
+        nameEl.className = 'shimmer-premium'
+        currentPremiumTime = u.premiumTime
+        document.getElementById('premium-wrap').style.display = 'block'
+      } else {
+        nameEl.className = ''
+        currentPremiumTime = 0
+        document.getElementById('premium-wrap').style.display = 'none'
+        document.getElementById('premium-tooltip').classList.remove('open')
+      }
+      nameEl.textContent = displayName
+
+      const picEl = document.getElementById('profile-pic')
+      const avatarEl = document.getElementById('avatar-letter')
+      if (u.profilePic) {
+        picEl.src = u.profilePic
+        picEl.style.display = 'block'
+        avatarEl.style.display = 'none'
+      } else {
+        picEl.style.display = 'none'
+        avatarEl.style.display = 'flex'
+      }
+
+      document.getElementById('profile-sub').textContent = isOwner ? 'OWNER' : 'USER'
+      document.getElementById('stat-exp').textContent = fmtExp(currentExp)
+      document.getElementById('stat-gems').textContent = fmtExp(currentGems)
+      document.getElementById('stat-limit').textContent = currentLimit
+
+      updateTierDisplay()
+
+      if (u.daily && (Date.now() - u.daily) < 86400000) {
+        startRewardTimer(u.daily + 86400000)
+      } else {
+        document.getElementById('reward-timer').textContent = 'Ready to claim!'
+        const btn = document.getElementById('reward-btn')
+        btn.disabled = false
+        btn.textContent = 'Claim'
+        btn.className = 'btn btn-small btn-success ready'
+      }
+
+      document.getElementById('loading').style.display = 'none'
+      document.getElementById('content').style.display = 'block'
+      document.querySelector('.fab-container').classList.add('visible')
+    } else {
+      document.getElementById('stat-exp').textContent = fmtExp(currentExp)
+      document.getElementById('stat-gems').textContent = fmtExp(currentGems)
+      document.getElementById('stat-limit').textContent = currentLimit
+      updateTierDisplay()
+    }
+  } catch (err) {
+    console.error('[loadProfile]', err)
+    if (!silent) {
+      const isTimeout = err?.name === 'AbortError'
+      document.getElementById('loading').innerHTML = isTimeout
+        ? '// ✕ Request timed out. <a href="#" onclick="location.reload();return false;" style="color:inherit;text-decoration:underline;">Retry</a>'
+        : '// ✕ failed to load data. <a href="#" onclick="location.reload();return false;" style="color:inherit;text-decoration:underline;">Retry</a>'
+    }
+  }
+}
+
+// ============ DAILY REWARD ============
+function startRewardTimer(nextTime) {
+  if (timerInterval) clearInterval(timerInterval)
+  const timerEl = document.getElementById('reward-timer')
+  const btn = document.getElementById('reward-btn')
+
+  const update = () => {
+    const diff = nextTime - Date.now()
+    if (diff <= 0) {
+      clearInterval(timerInterval)
+      timerEl.textContent = 'Ready to claim!'
+      btn.disabled = false
+      btn.textContent = 'Claim'
+      btn.className = 'btn btn-small btn-success ready'
+      return
+    }
+    const h = Math.floor(diff / 3600000)
+    const m = Math.floor((diff % 3600000) / 60000)
+    const s = Math.floor((diff % 60000) / 1000)
+    timerEl.textContent = `Available in ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
+
+  btn.disabled = true
+  btn.textContent = 'Waiting'
+  btn.className = 'btn btn-small btn-success claimed'
+  update()
+  timerInterval = setInterval(update, 1000)
+}
+
+async function claimReward() {
+  const btn = document.getElementById('reward-btn')
+  btn.disabled = true
+  btn.textContent = '...'
+  btn.className = 'btn btn-small btn-success claimed'
+
+  try {
+    const res = await safeFetch('/api/daily', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } })
+    const data = await res.json()
+    if (data.success) {
+      currentExp = data.exp
+      currentGems = data.gems || 0
+      document.getElementById('stat-exp').textContent = fmtExp(currentExp)
+      document.getElementById('stat-gems').textContent = fmtExp(currentGems)
+      updateTierDisplay()
+      startRewardTimer(data.daily + 86400000)
+      showToast(`🎉 +${data.expReward} EXP, +${data.gemReward} Gems claimed!`, 'success')
+    } else {
+      showToast(data.message || 'Failed to claim.', 'error')
+      btn.disabled = false
+      btn.textContent = 'Claim'
+      btn.className = 'btn btn-small btn-success ready'
+    }
+  } catch {
+    showToast('Connection error.', 'error')
+    btn.disabled = false
+    btn.textContent = 'Claim'
+    btn.className = 'btn btn-small btn-success ready'
+  }
+}
+
+// ============ TIER UP ============
+async function doTierUp() {
+  setLoading('tierup-btn', true)
+  try {
+    const res = await safeFetch('/api/tierup', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } })
+    const data = await res.json()
+    if (data.success) {
+      currentExp = data.exp
+      currentLevel = data.level
+      currentLimit = data.limit
+      document.getElementById('stat-exp').textContent = fmtExp(currentExp)
+      document.getElementById('stat-limit').textContent = currentLimit
+      document.getElementById('stat-tier').textContent = getTierName(currentLevel)
+      updateTierDisplay()
+      document.getElementById('modal-title').textContent = `${data.oldTier} → ${data.newTier}`
+      document.getElementById('modal-body').innerHTML =
+        `Congratulations! You've reached <strong>${data.newTier}</strong>.<br><br>New limit: <strong>${data.limit}</strong><br>Remaining EXP: <strong>${fmtExp(data.exp)}</strong>`
+      document.getElementById('tierup-modal').classList.add('show')
+      showToast(`🎉 Tier Up! ${data.oldTier} → ${data.newTier}`, 'success')
+    } else {
+      showToast(data.message || 'Tier up failed.', 'error')
+    }
+  } catch {
+    showToast('Connection error.', 'error')
+  }
+  setLoading('tierup-btn', false)
+}
+
+// ============ SLOT ============
+const SPIN_COOLDOWN_MS = 500
+let spinCooldownEnd = 0
+let cooldownTimer = null
+let isSpinning = false
+
+function startSpinCooldown() {
+  spinCooldownEnd = Date.now() + SPIN_COOLDOWN_MS
+  const btn = document.getElementById('slot-btn')
+  if (cooldownTimer) clearInterval(cooldownTimer)
+  cooldownTimer = setInterval(() => {
+    const remaining = Math.ceil((spinCooldownEnd - Date.now()) / 1000)
+    if (remaining <= 0) {
+      clearInterval(cooldownTimer)
+      cooldownTimer = null
+      if (!isSpinning) { btn.disabled = false; btn.textContent = 'SPIN' }
+    } else {
+      btn.disabled = true
+      btn.textContent = remaining + 's'
+    }
+  }, 100)
+}
+
+async function spinSlot() {
+  if (isSpinning) { showToast('Please wait, still spinning...', 'warn'); return }
+  if (Date.now() < spinCooldownEnd) {
+    const remaining = Math.ceil((spinCooldownEnd - Date.now()) / 1000)
+    showToast(`Cooldown! Wait ${remaining}s`, 'warn'); return
+  }
+
+  const btn = document.getElementById('slot-btn')
+  const s1 = document.getElementById('slot1')
+  const s2 = document.getElementById('slot2')
+  const s3 = document.getElementById('slot3')
+  const resultEl = document.getElementById('slot-result')
+
+  resultEl.innerHTML = ''
+  resultEl.className = 'slot-result'
+  isSpinning = true
+  btn.disabled = true
+  btn.textContent = '...'
+
+  const icons = ['♣', '♦', '♠', '♥', '♪', '7', '×', '✦', '✿']
+  const spinInterval = setInterval(() => {
+    s1.textContent = icons[Math.floor(Math.random() * icons.length)]
+    s2.textContent = icons[Math.floor(Math.random() * icons.length)]
+    s3.textContent = icons[Math.floor(Math.random() * icons.length)]
+  }, 40)
+  const maxSpinVisual = setTimeout(() => clearInterval(spinInterval), 600)
+
+  try {
+    const res = await safeFetch('/api/slot', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }, 12000)
+    const data = await res.json()
+    clearTimeout(maxSpinVisual)
+    clearInterval(spinInterval)
+
+    if (data.success) {
+      s1.textContent = data.slots[0]
+      s2.textContent = data.slots[1]
+      s3.textContent = data.slots[2]
+      currentExp = data.newExp
+      document.getElementById('stat-exp').textContent = fmtExp(currentExp)
+      updateTierDisplay()
+      const pityMsg = data.isPity ? ' ⭐ PITY!' : ''
+      resultEl.innerHTML = data.winMessage + pityMsg
+      resultEl.classList.add(data.isWin ? 'win' : 'lose')
+      showToast(data.isWin ? `🎉 ${data.winMessage}${pityMsg}` : `😢 ${data.winMessage}`, data.isWin ? 'success' : 'error')
+      document.getElementById('pity-count').textContent = data.spinCount ?? 0
+    } else {
+      s1.textContent = '♣'; s2.textContent = '♦'; s3.textContent = '7'
+      showToast(data.message || 'Spin failed!', 'error')
+    }
+  } catch {
+    clearTimeout(maxSpinVisual)
+    clearInterval(spinInterval)
+    s1.textContent = '♣'; s2.textContent = '♦'; s3.textContent = '7'
+    showToast('Connection error!', 'error')
+  } finally {
+    isSpinning = false
+    startSpinCooldown()
+  }
+}
+
+// ============ ACCOUNT ============
+async function doRename() {
+  const newName = document.getElementById('rename-input').value.trim()
+  if (!newName) return showToast('Name cannot be empty.', 'error')
+  if (newName.length > 32) return showToast('Max 32 characters.', 'error')
+  setLoading('rename-btn', true)
+
+  try {
+    const res = await safeFetch('/api/rename', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ newName })
+    })
+    const data = await res.json()
+    if (data.success) {
+      showToast('Name updated!', 'success')
+      document.getElementById('rename-input').value = ''
+      await loadProfile(false)
+    } else {
+      showToast(data.message || 'Failed.', 'error')
+    }
+  } catch { showToast('Connection error.', 'error') }
+  setLoading('rename-btn', false)
+}
+
+async function changePassword() {
+  const oldPw = document.getElementById('pw-old').value
+  const newPw = document.getElementById('pw-new').value
+  const newPw2 = document.getElementById('pw-new2').value
+  if (!oldPw || !newPw || !newPw2) return showToast('Fill in all fields.', 'error')
+  if (newPw !== newPw2) return showToast('Passwords do not match.', 'error')
+  if (newPw.length < 6) return showToast('Min 6 characters.', 'error')
+  if (oldPw === newPw) return showToast('New password must be different.', 'error')
+
+  setLoading('pw-btn', true)
+  try {
+    const res = await safeFetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
+    })
+    const data = await res.json()
+    if (data.success) {
+      showToast('Password updated.', 'success')
+      document.getElementById('pw-old').value = ''
+      document.getElementById('pw-new').value = ''
+      document.getElementById('pw-new2').value = ''
+    } else {
+      showToast(data.message || 'Failed.', 'error')
+    }
+  } catch { showToast('Connection error.', 'error') }
+  setLoading('pw-btn', false)
+}
+
+async function redeemCode() {
+  const code = document.getElementById('gc-input').value.trim().toUpperCase()
+  if (!code) return showToast('Enter a gift code.', 'error')
+
+  const resultEl = document.getElementById('gc-result')
+  resultEl.style.display = 'none'
+
+  setLoading('gc-btn', true)
+  try {
+    const res = await safeFetch('/api/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ code })
+    })
+    const data = await res.json()
+    if (data.success) {
+      document.getElementById('gc-input').value = ''
+      resultEl.style.display = 'block'
+      resultEl.style.background = 'rgba(85,204,119,0.08)'
+      resultEl.style.border = '1px solid rgba(85,204,119,0.25)'
+      resultEl.style.color = 'var(--success)'
+      resultEl.textContent = '🎁 ' + data.message
+      showToast(data.message, 'success')
+      await loadProfile(true)
+    } else {
+      resultEl.style.display = 'block'
+      resultEl.style.background = 'rgba(255,85,85,0.07)'
+      resultEl.style.border = '1px solid rgba(255,85,85,0.2)'
+      resultEl.style.color = 'var(--error)'
+      resultEl.textContent = '✕ ' + (data.message || 'Invalid code.')
+      showToast(data.message || 'Invalid code.', 'error')
+    }
+  } catch { showToast('Connection error.', 'error') }
+  setLoading('gc-btn', false)
+}
+
+// ============ LOGOUT ============
+async function logout() {
+  try { await safeFetch('/api/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }) } catch {}
+  localStorage.clear()
+  safeRedirect('/')
+}
+
+// ============ ADMIN: DATABASE ============
+async function loadDatabaseData() {
+  const container = document.getElementById('db-users-list')
+  container.innerHTML = '<div class="text-center text-muted2 text-sm">Loading users...</div>'
+
+  try {
+    const res = await safeFetch('/api/admin/users', { headers: { 'Authorization': 'Bearer ' + token } })
+    if (!res.ok) { container.innerHTML = `<div class="text-center text-error text-sm">Server error: ${res.status}</div>`; return }
+    const data = await res.json()
+    if (!data.success) { container.innerHTML = `<div class="text-center text-error text-sm">${escapeHtml(data.message)}</div>`; return }
+
+    const users = data.users || []
+    if (users.length === 0) { container.innerHTML = '<div class="text-center text-muted2 text-sm">No users found.</div>'; return }
+
+    container.innerHTML = ''
+    for (const userData of users) {
+      const userKey = userData.userKey || userData.number || ''
+      if (userKey.endsWith('@g.us')) continue
+      const safeKey = makeSafeId(userKey)
+      const displayName = userData.name || userKey.split('@')[0] || userKey.slice(0, 15)
+
+      const userDiv = document.createElement('div')
+      userDiv.className = 'db-user-item'
+      userDiv.innerHTML = `
+        <div class="db-user-header" onclick="toggleUserFields('${escapeHtml(userKey)}')">
+          <span class="db-user-name">📁 ${escapeHtml(displayName)}</span>
+          <span class="db-user-expand" id="expand-${safeKey}">▶</span>
+        </div>
+        <div class="db-user-fields" id="fields-${safeKey}">
+          ${['exp', 'limit', 'level', 'gems'].map(f => `
+            <div class="db-field-row">
+              <span class="db-field-label">${f}</span>
+              <input type="number" id="${f}-${safeKey}" class="db-field-input number" value="${Number(userData[f]) || 0}">
+              <button class="db-save-btn" onclick="saveUserField('${escapeHtml(userKey)}', '${f}')">Save</button>
+            </div>
+          `).join('')}
+          <div class="db-field-row">
+            <span class="db-field-label">name</span>
+            <input type="text" id="name-${safeKey}" class="db-field-input string" value="${escapeHtml(userData.name || '')}">
+            <button class="db-save-btn" onclick="saveUserField('${escapeHtml(userKey)}', 'name')">Save</button>
+          </div>
+          <div class="db-field-row">
+            <span class="db-field-label">premium</span>
+            <input type="checkbox" id="premium-${safeKey}" ${userData.premium ? 'checked' : ''}>
+            <button class="db-save-btn" onclick="saveUserField('${escapeHtml(userKey)}', 'premium')">Save</button>
+          </div>
+          <div class="db-field-row">
+            <span class="db-field-label">premium time</span>
+            <input type="datetime-local" id="premiumTime-${safeKey}" class="db-field-input" value="${userData.premiumTime ? toLocalDatetimeValue(userData.premiumTime) : ''}">
+            <button class="db-save-btn" onclick="saveUserField('${escapeHtml(userKey)}', 'premiumTime')">Save</button>
+          </div>
+        </div>
+      `
+      container.appendChild(userDiv)
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="text-center text-error text-sm">Error: ${escapeHtml(err.message)}</div>`
+  }
+}
+
+function toLocalDatetimeValue(ts) {
+  const d = new Date(ts)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+window.toggleUserFields = function(userKey) {
+  const safeKey = makeSafeId(userKey)
+  const fields = document.getElementById(`fields-${safeKey}`)
+  const icon = document.getElementById(`expand-${safeKey}`)
+  if (!fields || !icon) return
+  const isOpen = fields.classList.contains('open')
+  fields.classList.toggle('open', !isOpen)
+  icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)'
+}
+
+window.saveUserField = async function(userKey, field) {
+  const safeKey = makeSafeId(userKey)
+  let value
+
+  if (['premium', 'banned', 'registered'].includes(field)) {
+    const cb = document.getElementById(`${field}-${safeKey}`)
+    if (!cb) return
+    value = cb.checked
+  } else {
+    const input = document.getElementById(`${field}-${safeKey}`)
+    if (!input) return
+    if (field === 'premiumTime') {
+      value = input.value ? new Date(input.value).getTime() : 0
+    } else {
+      value = ['exp', 'limit', 'level', 'gems'].includes(field) ? (parseInt(input.value) || 0) : input.value
+    }
+  }
+
+  try {
+    const res = await safeFetch('/api/admin/update-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ userKey, field, value })
+    })
+    const data = await res.json()
+    if (data.success) {
+      showToast(`${field} updated!`, 'success')
+      if (['exp', 'limit', 'level', 'gems'].includes(field)) await loadProfile(true)
+    } else {
+      showToast(data.message || 'Update failed', 'error')
+    }
+  } catch { showToast('Connection error.', 'error') }
+}
+
+// ============ ADMIN: GIFT CODES ============
+async function loadGiftCodes() {
+  const list = document.getElementById('gc-list')
+  list.innerHTML = '<div class="text-center text-muted2 text-sm">Loading codes...</div>'
+
+  try {
+    const res = await safeFetch('/api/admin/giftcodes', { headers: { 'Authorization': 'Bearer ' + token } })
+    const data = await res.json()
+    if (!data.success) { list.innerHTML = `<div class="text-center text-error text-sm">${escapeHtml(data.message)}</div>`; return }
+    const codes = data.codes || []
+    if (codes.length === 0) { list.innerHTML = '<div class="text-center text-muted2 text-sm">No gift codes yet.</div>'; return }
+    list.innerHTML = codes.map(([code, reward]) => `
+      <div class="gc-item">
+        <div><span class="gc-item-code">${escapeHtml(code)}</span><br><span class="gc-item-reward">${escapeHtml(reward)}</span></div>
+        <button class="gc-del-btn" onclick="deleteGiftCode('${escapeHtml(code)}')">×</button>
+      </div>
+    `).join('')
+  } catch {
+    list.innerHTML = '<div class="text-center text-error text-sm">Error loading codes</div>'
+  }
+}
+
+async function addGiftCode() {
+  const codeEl = document.getElementById('gc-new-code')
+  const rewardEl = document.getElementById('gc-new-reward')
+  const code = codeEl.value.trim().toUpperCase()
+  const reward = rewardEl.value.trim()
+  if (!code) return showToast('Enter a code name.', 'error')
+  if (!reward || !reward.includes(':')) return showToast('Reward format: type:value', 'error')
+
+  try {
+    const res = await safeFetch('/api/admin/giftcodes/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ code, reward })
+    })
+    const data = await res.json()
+    if (data.success) {
+      codeEl.value = ''; rewardEl.value = ''
+      showToast(`Code "${code}" added!`, 'success')
+      loadGiftCodes()
+    } else {
+      showToast(data.message || 'Failed.', 'error')
+    }
+  } catch { showToast('Connection error.', 'error') }
+}
+
+async function deleteGiftCode(code) {
+  try {
+    const res = await safeFetch('/api/admin/giftcodes/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ code })
+    })
+    const data = await res.json()
+    if (data.success) {
+      showToast(`Code "${code}" deleted.`, 'success')
+      loadGiftCodes()
+    } else {
+      showToast(data.message || 'Failed.', 'error')
+    }
+  } catch { showToast('Connection error.', 'error') }
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', async () => {
+  await fetchTierAsset()
+  loadBotName()
+  await loadProfile()
+  setInterval(() => { loadProfile(true) }, 30000)
+})
+</script>
+</body>
+</html>

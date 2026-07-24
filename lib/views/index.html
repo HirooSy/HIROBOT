@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Login</title>
+  <link rel="icon" type="image/x-icon" href="/src/icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    img {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: #222222;
+      --border2: #2a2a2a;
+      --accent: #ffffff;
+      --text: #e0e0e0;
+      --muted: #666666;
+      --error: #ff4444;
+      --success: #44ff66;
+      --warning: #ffaa44;
+      --doc-pink: #e79ce0;
+      --doc-green: #7fe0c2;
+      --font: 'IBM Plex Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: var(--font);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    /* ============ TOP NAV ============ */
+    .topnav {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: flex-end;
+      padding: 16px 18px;
+    }
+
+    .log-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 50%;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .log-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============ HERO / DOC HEADER ============ */
+    .doc-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 18px;
+    }
+
+    .doc-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .hero {
+      position: relative;
+      padding: 36px 24px 28px;
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-logo {
+      flex: none;
+      width: 90px;
+      height: 90px;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .hero-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-text {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .hero-title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .hero-sub {
+      font-size: 10px;
+      letter-spacing: 6px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .hero-desc {
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text);
+      opacity: 0.85;
+      margin-bottom: 14px;
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .hero-badges img {
+      height: 15px;
+      border-radius: 3px;
+      pointer-events: auto;
+    }
+
+    /* < > section nav — white, sits below the description, right-aligned */
+    .hero-nav {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .hero-nav button {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: none;
+      color: #0a0a0a;
+      font-family: var(--font);
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .hero-rule {
+      height: 1px;
+      background: var(--border2);
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    /* ============ SECTION SLIDES (1 section per "page") ============ */
+    .section-slide {
+      display: none;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-slide.active {
+      display: block;
+      animation: fadeUp 0.25s ease;
+    }
+
+    /* ============ CONTENT BLOCKS ============ */
+    .doc-block {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .doc-block + .doc-block {
+      border-top: 1px solid var(--border);
+    }
+
+    .doc-block-label {
+      flex: none;
+      width: 130px;
+      padding: 20px 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      border-right: 1px solid var(--border);
+    }
+
+    .doc-block-body {
+      flex: 1;
+      min-width: 220px;
+      padding: 20px 18px;
+      font-size: 12px;
+      line-height: 1.9;
+      color: var(--text);
+    }
+
+    .doc-block-body strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    /* ============ DYNAMIC COMMAND LIST ============ */
+    .cmd-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--doc-green);
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .cmd-divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 14px;
+    }
+
+    .cmd-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      font-size: 11px;
+    }
+
+    .cmd-list span {
+      color: var(--text);
+      opacity: 0.85;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cmd-list span:nth-child(odd) {
+      border-right: 1px solid var(--border);
+    }
+
+    .cmd-list span::before {
+      content: "/";
+      color: var(--muted);
+    }
+
+    @media (min-width: 480px) {
+      .cmd-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .cmd-list span:nth-child(odd) {
+        border-right: none;
+      }
+      .cmd-list span:not(:nth-child(3n)) {
+        border-right: 1px solid var(--border);
+      }
+    }
+
+    /* code-style body uses monospace-tight line height */
+    .code-body {
+      line-height: 1.85;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    /* ============ COPYABLE CODE BLOCK (GitHub style) ============ */
+    .code-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .code-wrap .code-body {
+      padding: 20px 44px 20px 18px;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 1;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .copy-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: var(--muted);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .copy-btn:active {
+      background: var(--border2);
+    }
+
+    .copy-btn.copied svg {
+      stroke: var(--doc-green);
+    }
+
+    /* ============ SYNTAX HIGHLIGHT TOKENS ============ */
+    .tok-section {
+      color: var(--doc-green);
+      display: block;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    .tok-comment {
+      color: #6a737d;
+      display: block;
+      font-style: italic;
+    }
+
+    .tok-prompt {
+      color: #6a737d;
+    }
+
+    .tok-cmd {
+      color: #82aaff;
+      font-weight: 600;
+    }
+
+    .tok-arg {
+      color: #c3e88d;
+    }
+
+    .tok-string {
+      color: #c3e88d;
+    }
+
+    .tok-key {
+      color: #ff8ad8;
+      font-weight: 600;
+    }
+
+    .tok-prop {
+      color: #7fe0c2;
+    }
+
+    .tok-number {
+      color: #f78c6c;
+    }
+
+    .tok-punct {
+      color: #8b95a5;
+    }
+
+    /* ============ FOOTER ============ */
+    .doc-footer {
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .doc-footer a {
+      display: inline-flex;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .doc-footer svg {
+      width: 22px;
+      height: 22px;
+      fill: var(--muted);
+      transition: fill 0.15s;
+    }
+
+    .doc-footer a:active svg {
+      fill: var(--text);
+    }
+
+    /* ============ AUTH MODAL (login/register) ============ */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      padding: 16px;
+    }
+
+    .auth-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .container {
+      max-width: 480px;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+    }
+
+    .auth-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      z-index: 2;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Branding inside modal */
+    .brand-side {
+      padding: 32px 28px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .brand-icon {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .brand-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    /* Form side inside modal */
+    .form-side {
+      padding: 12px 28px 32px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 8px 16px;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #080808;
+    }
+
+    .form-panel {
+      display: none;
+    }
+
+    .form-panel.active-panel {
+      display: block;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 36px 12px 38px;
+      font-family: var(--font);
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .input-wrapper input:focus {
+      border-color: var(--border2);
+    }
+
+    .input-wrapper svg.icon-left {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      stroke: var(--muted);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .input-wrapper .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      stroke: var(--muted);
+      fill: none;
+      stroke-width: 1.5;
+      transition: stroke 0.2s;
+      z-index: 2;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .input-wrapper .toggle-password:active {
+      stroke: var(--text);
+    }
+
+    .btn {
+      width: 100%;
+      background: var(--accent);
+      color: #080808;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 10px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active {
+      opacity: 0.85;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      background: rgba(255,68,68,0.1);
+      border: 1px solid rgba(255,68,68,0.2);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 10px;
+      color: var(--error);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .alert.show {
+      display: block;
+    }
+
+    .success-alert {
+      background: rgba(68,255,102,0.1);
+      border-color: rgba(68,255,102,0.2);
+      color: var(--success);
+    }
+
+    /* Modal Popup */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 28px 24px;
+      max-width: 300px;
+      width: 90%;
+      text-align: center;
+      animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(0.88);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .modal-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .modal-body {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      background: var(--accent);
+      color: #080808;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .modal-close:active {
+      opacity: 0.8;
+    }
+
+    .otp-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: var(--font);
+      font-size: 22px;
+      letter-spacing: 10px;
+      text-align: center;
+      color: var(--text);
+      outline: none;
+      margin-bottom: 14px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .otp-input:focus {
+      border-color: var(--border2);
+    }
+
+    .otp-resend {
+      font-size: 10px;
+      color: var(--muted);
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: var(--font);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .otp-resend:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 640px) {
+      .hero {
+        padding: 28px 18px 22px;
+      }
+      .hero-title {
+        font-size: 20px;
+      }
+      .doc-block-label {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 14px 16px 8px;
+      }
+      .doc-block-body {
+        padding: 14px 16px 18px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .hero {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+      }
+      .hero-badges, .hero-nav {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top nav -->
+<div class="topnav">
+  <button class="log-btn" onclick="handleAccountClick()" aria-label="Login or Register">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  </button>
+</div>
+
+<div class="doc-wrap">
+<div class="doc-container">
+
+  <!-- Hero / header -->
+  <div class="hero">
+    <div class="hero-logo">
+      <img src="/src/icon.png" alt="" draggable="false" oncontextmenu="return false">
+    </div>
+    <div class="hero-text">
+      <div class="hero-title" id="brand-title">&nbsp;</div>
+      <div class="hero-sub">Documentary</div>
+      <div class="hero-desc" id="brand-desc">
+        This bot is a high-performance WhatsApp automation framework powered by Google Gemini AI.
+        Engineered for stability, efficiency, and intelligence, it features a self-healing
+        architecture designed to ensure seamless operation and minimal downtime.
+      </div>
+      <div class="hero-badges">
+        <img src="https://img.shields.io/badge/Baileys-000000?style=flat&logo=whatsapp&logoColor=white" alt="Baileys">
+        <img src="https://img.shields.io/badge/node.js%20-%2343853D.svg?&style=for-the-badge&logo=node.js&logoColor=white" alt="node.js">
+        <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black" alt="JavaScript">
+        <img src="https://img.shields.io/badge/Gemini-4285F4?style=flat&logo=googlegemini&logoColor=white" alt="Gemini">
+        <img src="https://img.shields.io/badge/express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="express.js">
+      </div>
+      <div class="hero-rule"></div>
+      <div class="hero-nav">
+        <button aria-label="previous section" onclick="prevSection()">&lt;</button>
+        <button aria-label="next section" onclick="nextSection()">&gt;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- #blank -->
+  <div class="section-slide" data-section="blank"></div>
+
+  <!-- #command -->
+  <div class="section-slide" data-section="command">
+    <div class="doc-block">
+      <div class="doc-block-label"># COMMAND</div>
+      <div class="doc-block-body">
+        <div id="cmd-count" class="cmd-count">Loading commands…</div>
+        <div class="cmd-divider"></div>
+        <div id="cmd-list" class="cmd-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- #install & setup -->
+  <div class="section-slide" data-section="install">
+    <div class="doc-block">
+      <div class="doc-block-label"># INSTALL</div>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+          <svg class="icon-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <svg class="icon-check" viewBox="0 0 24 24" style="display:none"><path d="M20 6L9 17l-5-5"/></svg>
+        </button>
+        <div class="doc-block-body code-body" data-raw="git clone https://github.com/HirooSy/HIROBOT.git
+npm install
+cp .env.example .env
+nano .env
+npm start">
+          <span class="tok-prompt">$</span> <span class="tok-cmd">git</span> <span class="tok-arg">clone</span> <span class="tok-string">https://github.com/HirooSy/HIROBOT.git</span><br>
+          <span class="tok-prompt">$</span> <span class="tok-cmd">npm</span> <span class="tok-arg">install</span><br>
+          <span class="tok-prompt">$</span> <span class="tok-cmd">cp</span> <span class="tok-arg">.env.example .env</span><br>
+          <span class="tok-prompt">$</span> <span class="tok-cmd">nano</span> <span class="tok-arg">.env</span><br>
+          <span class="tok-prompt">$</span> <span class="tok-cmd">npm</span> <span class="tok-arg">start</span>
+        </div>
+      </div>
+    </div>
+    <div class="doc-block">
+      <div class="doc-block-label"># SET UP</div>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+          <svg class="icon-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <svg class="icon-check" viewBox="0 0 24 24" style="display:none"><path d="M20 6L9 17l-5-5"/></svg>
+        </button>
+        <div id="setup-body" class="doc-block-body code-body" data-raw="">Loading .env.example…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div class="doc-footer">
+    <a href="https://github.com/hiroosy" target="_blank" rel="noopener" aria-label="GitHub">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+
+</div>
+</div>
+
+<!-- ============ AUTH MODAL (Login / Register) ============ -->
+<div id="auth-overlay" class="auth-overlay" onclick="closeAuth(event)">
+  <div class="container" onclick="event.stopPropagation()">
+    <div class="auth-close" onclick="closeAuth()">&times;</div>
+
+    <!-- Branding -->
+    <div class="brand-side">
+      <div class="brand-icon">
+        <img src="/src/icon.png" alt="" draggable="false" oncontextmenu="return false">
+      </div>
+      <div class="brand-text">
+        <div class="brand-title" id="brand-title-modal">&nbsp;</div>
+      </div>
+    </div>
+
+    <!-- Forms -->
+    <div class="form-side">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="login">Login</button>
+        <button class="tab-btn" data-tab="register">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="login-panel" class="form-panel active-panel">
+        <div id="login-alert" class="alert"></div>
+        <div class="input-group">
+          <label>WhatsApp Number</label>
+          <div class="input-wrapper">
+            <input type="tel" id="login-phone" placeholder="628123456789" inputmode="numeric">
+            <svg class="icon-left" viewBox="0 0 24 24">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="login-password" placeholder="••••••••">
+            <svg class="icon-left" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <svg class="toggle-password" viewBox="0 0 24 24" onclick="togglePassword('login-password', this)">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+        </div>
+        <button class="btn" id="login-btn" onclick="doLogin()">Login</button>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-panel" class="form-panel">
+        <div id="register-alert" class="alert"></div>
+        <div class="input-group">
+          <label>WhatsApp Number</label>
+          <div class="input-wrapper">
+            <input type="tel" id="register-phone" placeholder="628123456789" inputmode="numeric">
+            <svg class="icon-left" viewBox="0 0 24 24">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="register-password" placeholder="min. 6 characters">
+            <svg class="icon-left" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <svg class="toggle-password" viewBox="0 0 24 24" onclick="togglePassword('register-password', this)">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Confirm Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="register-password2" placeholder="••••••••">
+            <svg class="icon-left" viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <svg class="toggle-password" viewBox="0 0 24 24" onclick="togglePassword('register-password2', this)">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+        </div>
+        <button class="btn" id="register-btn" onclick="doRegister()">Register</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Popup -->
+<div id="modal" class="modal-overlay" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">Number Not Found</div>
+    <div class="modal-body" id="modal-body">This number is not listed in the database</div>
+    <button class="modal-close" onclick="closeModal()">OK</button>
+  </div>
+</div>
+
+<!-- OTP Verification Modal -->
+<div id="otp-modal" class="modal-overlay">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-title">Enter Code</div>
+    <div class="modal-body" id="otp-modal-body">We sent a 6-digit code to your WhatsApp. Enter it below.</div>
+    <input type="text" id="otp-code" class="otp-input" placeholder="------" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+    <div class="alert" id="otp-alert"></div>
+    <button class="modal-close" id="otp-submit-btn" onclick="submitOtp()" style="width:100%;margin-bottom:10px;">Verify</button>
+    <button class="otp-resend" id="otp-resend-btn" onclick="resendOtp()">Resend code</button>
+  </div>
+</div>
+
+<script>
+  // Auth overlay open/close
+  function openAuth() {
+    document.getElementById('auth-overlay').classList.add('show')
+  }
+  function closeAuth(e) {
+    if (e && e.target !== e.currentTarget) return
+    document.getElementById('auth-overlay').classList.remove('show')
+  }
+
+  // Account icon: try to recognize this browser first (saved token, or the
+  // server's IP fallback if the tunnel URL changed since last login) before
+  // bothering the user with the login form. Any failure — no session, no
+  // network, tunnel interstitial page, etc. — just falls back to the normal
+  // manual login/register modal.
+  async function handleAccountClick() {
+    const token = localStorage.getItem('token')
+    try {
+      const res = await safeFetch('/api/profile', {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      })
+      const data = await res.json()
+      if (data.success) {
+        window.location.href = '/profile'
+        return
+      }
+    } catch (_) { /* fall through to manual login below */ }
+    openAuth()
+  }
+
+  // Section navigation (1 section per "page", like Carrd section breaks)
+  const sectionOrder = ['blank', 'command', 'install']
+  let currentSectionIndex = 0
+
+  function showSection(index) {
+    currentSectionIndex = (index + sectionOrder.length) % sectionOrder.length
+    const name = sectionOrder[currentSectionIndex]
+    document.querySelectorAll('.section-slide').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-section') === name)
+    })
+  }
+
+  function prevSection() { showSection(currentSectionIndex - 1) }
+  function nextSection() { showSection(currentSectionIndex + 1) }
+
+  document.addEventListener('DOMContentLoaded', () => showSection(0))
+
+  // Copy code block to clipboard (GitHub-style copy button)
+  async function copyCode(btn) {
+    const wrap = btn.closest('.code-wrap')
+    const codeEl = wrap.querySelector('.code-body')
+    const raw = codeEl.getAttribute('data-raw') || codeEl.innerText
+    try {
+      await navigator.clipboard.writeText(raw)
+    } catch {
+      // fallback for older browsers / no clipboard permission
+      const ta = document.createElement('textarea')
+      ta.value = raw
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy') } catch {}
+      document.body.removeChild(ta)
+    }
+    const iconCopy = btn.querySelector('.icon-copy')
+    const iconCheck = btn.querySelector('.icon-check')
+    btn.classList.add('copied')
+    iconCopy.style.display = 'none'
+    iconCheck.style.display = ''
+    setTimeout(() => {
+      btn.classList.remove('copied')
+      iconCopy.style.display = ''
+      iconCheck.style.display = 'none'
+    }, 1500)
+  }
+</script>
+
+<script>
+  // Modal functions
+  function showModal(message) {
+    const modal = document.getElementById('modal');
+    const modalBody = document.getElementById('modal-body');
+    modalBody.textContent = message || 'This number is not listed in the database';
+    modal.classList.add('show');
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('modal');
+    modal.classList.remove('show');
+  }
+
+  // Format Phone Number - Hanya angka
+  function formatPhoneNumber(input) {
+    let cleaned = input.value.replace(/\D/g, '');
+    input.value = cleaned;
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const phoneInputs = ['login-phone', 'register-phone'];
+    phoneInputs.forEach(id => {
+      const input = document.getElementById(id);
+      if (input) {
+        input.addEventListener('input', function() { formatPhoneNumber(this); });
+        input.addEventListener('blur', function() { formatPhoneNumber(this); });
+      }
+    });
+    loadBotName();
+    loadCommandList();
+    loadEnvExample();
+  });
+
+  async function loadBotName() {
+    try {
+      const res = await safeFetch('/api/botInfo')
+      const data = await res.json()
+      if (data && data.name) {
+        document.title = data.name
+        document.getElementById('brand-title').textContent = data.name
+        document.getElementById('brand-title-modal').textContent = data.name
+        document.querySelectorAll('.brand-icon img').forEach(img => img.alt = data.name)
+        return
+      }
+    } catch {}
+    // Kalau /api/botInfo gagal atau BOT_NAME kosong, biarkan judul/brand kosong
+    // (tidak ada nama hardcoded sebagai fallback)
+  }
+
+  async function loadCommandList() {
+    const countEl = document.getElementById('cmd-count')
+    const listEl = document.getElementById('cmd-list')
+    try {
+      const res = await safeFetch('/api/commandList')
+      const data = await res.json()
+      const total = data?.total ?? 0
+      const commands = Array.isArray(data?.commands) ? data.commands : []
+      countEl.textContent = `${total} Commands available`
+      listEl.innerHTML = commands.map(c => `<span>${c}</span>`).join('')
+    } catch {
+      countEl.textContent = '0 Commands available'
+      listEl.innerHTML = ''
+    }
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+  }
+
+  // Turn a raw .env file into syntax-highlighted HTML, line by line
+  function highlightEnvLine(line) {
+    const trimmed = line.trim()
+    if (trimmed === '') return '<br>'
+
+    // Section separator comment, e.g. "# ── Main ──────"
+    if (/^#\s*[─—-]{2,}/.test(trimmed) || /[─—-]{2,}\s*$/.test(trimmed) && trimmed.startsWith('#')) {
+      return `<span class="tok-section">${escapeHtml(line)}</span>`
+    }
+    // Plain comment line
+    if (trimmed.startsWith('#')) {
+      return `<span class="tok-comment">${escapeHtml(line)}</span>`
+    }
+    // KEY=VALUE line
+    const eq = line.indexOf('=')
+    if (eq !== -1) {
+      const key = line.slice(0, eq)
+      let value = line.slice(eq + 1)
+      // Highlight JSON-ish punctuation/strings/numbers inside the value
+      let highlightedValue = escapeHtml(value)
+        .replace(/"([^"]*)"/g, '<span class="tok-string">"$1"</span>')
+        .replace(/\b(\d+)\b/g, '<span class="tok-number">$1</span>')
+        .replace(/([{}\[\]:,])/g, '<span class="tok-punct">$1</span>')
+      return `<span class="tok-key">${escapeHtml(key)}</span>=${highlightedValue}`
+    }
+    // Fallback: bare key with no value (e.g. "CUSTOM")
+    return `<span class="tok-key">${escapeHtml(line)}</span>`
+  }
+
+  async function loadEnvExample() {
+    const el = document.getElementById('setup-body')
+    try {
+      const res = await safeFetch('/api/envExample')
+      const data = await res.json()
+      const raw = data?.content ?? ''
+      if (!raw.trim()) {
+        el.textContent = '.env.example not found.'
+        el.setAttribute('data-raw', '')
+        return
+      }
+      el.setAttribute('data-raw', raw)
+      el.innerHTML = raw.split('\n').map(highlightEnvLine).join('<br>')
+    } catch {
+      el.textContent = 'Failed to load .env.example.'
+      el.setAttribute('data-raw', '')
+    }
+  }
+
+  // Toggle Password Visibility
+  function togglePassword(inputId, iconEl) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      iconEl.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      input.type = 'password';
+      iconEl.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  }
+
+  async function safeFetch(url, opts = {}) {
+    opts.headers = { ...(opts.headers || {}), 'bypass-tunnel-reminder': '1' }
+    const res = await fetch(url, opts)
+    // Kalau request ini kena halaman interstitial localtunnel ("Click to
+    // Continue"), responsenya text/html, bukan JSON, meskipun endpointnya
+    // /api/*. Deteksi ini di sini supaya errornya jelas, bukan cuma
+    // "Connection error." yang bikin bingung.
+    const contentType = res.headers.get('content-type') || ''
+    if (contentType.includes('text/html')) {
+      const err = new Error('TUNNEL_INTERSTITIAL')
+      err.isTunnelInterstitial = true
+      throw err
+    }
+    return res
+  }
+
+  function friendlyFetchError(err) {
+    if (err?.isTunnelInterstitial) {
+      return 'This link needs a one-time confirmation. Open the site URL directly in a new tab, tap "Click to Continue", then come back and try again.'
+    }
+    return 'Connection error.'
+  }
+
+  function showAlert(panel, message, isError = true) {
+    const alertEl = document.getElementById(`${panel}-alert`)
+    alertEl.textContent = message
+    alertEl.classList.add('show')
+    if (!isError) alertEl.classList.add('success-alert')
+    setTimeout(() => {
+      alertEl.classList.remove('show')
+      if (!isError) alertEl.classList.remove('success-alert')
+    }, 3000)
+  }
+
+  function setLoading(btn, loading) {
+    btn.disabled = loading
+    btn.textContent = loading ? '...' : (btn.id === 'login-btn' ? 'Login' : 'Register')
+  }
+
+  // Tab Switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      const tab = btn.getAttribute('data-tab')
+      document.getElementById('login-panel').classList.toggle('active-panel', tab === 'login')
+      document.getElementById('register-panel').classList.toggle('active-panel', tab === 'register')
+      document.getElementById('login-alert').classList.remove('show')
+      document.getElementById('register-alert').classList.remove('show')
+    })
+  })
+
+  // Check number exists via API
+  async function checkNumberExists(phone) {
+    try {
+      const res = await safeFetch('/api/check-number', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      })
+      const data = await res.json()
+      return data.exists === true
+    } catch (err) {
+      console.error('Check number error:', err)
+      return false
+    }
+  }
+
+  // ============ OTP FLOW ============
+  let otpState = { phone: null, pendingToken: null }
+  let otpResendTimer = null
+
+  function openOtpModal(phone, pendingToken) {
+    otpState = { phone, pendingToken }
+    document.getElementById('otp-code').value = ''
+    document.getElementById('otp-alert').classList.remove('show')
+    document.getElementById('otp-modal-body').textContent =
+      `We sent a 6-digit code to the WhatsApp number ending in ${phone.slice(-4)}. Enter it below.`
+    document.getElementById('otp-modal').classList.add('show')
+    startOtpResendCooldown()
+    setTimeout(() => document.getElementById('otp-code').focus(), 150)
+  }
+
+  function closeOtpModal() {
+    document.getElementById('otp-modal').classList.remove('show')
+    if (otpResendTimer) { clearInterval(otpResendTimer); otpResendTimer = null }
+  }
+
+  function startOtpResendCooldown() {
+    const btn = document.getElementById('otp-resend-btn')
+    let seconds = 60
+    btn.disabled = true
+    btn.textContent = `Resend code (${seconds}s)`
+    if (otpResendTimer) clearInterval(otpResendTimer)
+    otpResendTimer = setInterval(() => {
+      seconds--
+      if (seconds <= 0) {
+        clearInterval(otpResendTimer)
+        otpResendTimer = null
+        btn.disabled = false
+        btn.textContent = 'Resend code'
+      } else {
+        btn.textContent = `Resend code (${seconds}s)`
+      }
+    }, 1000)
+  }
+
+  function showOtpAlert(message) {
+    const el = document.getElementById('otp-alert')
+    el.textContent = message
+    el.classList.add('show')
+  }
+
+  async function submitOtp() {
+    const code = document.getElementById('otp-code').value.trim()
+    const btn = document.getElementById('otp-submit-btn')
+    if (!code || code.length !== 6) {
+      showOtpAlert('Enter the 6-digit code.')
+      return
+    }
+    btn.disabled = true
+    btn.textContent = '...'
+    try {
+      const res = await safeFetch('/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: otpState.phone, pendingToken: otpState.pendingToken, code })
+      })
+      const data = await res.json()
+      if (data.success) {
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('phone', otpState.phone)
+        window.location.href = '/profile'
+      } else {
+        showOtpAlert(data.message || 'Verification failed.')
+      }
+    } catch (err) {
+      showOtpAlert(friendlyFetchError(err))
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Verify'
+    }
+  }
+
+  async function resendOtp() {
+    const btn = document.getElementById('otp-resend-btn')
+    btn.disabled = true
+    try {
+      const res = await safeFetch('/api/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: otpState.phone })
+      })
+      const data = await res.json()
+      if (data.success) {
+        otpState.pendingToken = data.pendingToken
+        showOtpAlert('A new code has been sent.')
+        startOtpResendCooldown()
+      } else {
+        showOtpAlert(data.message || 'Failed to resend code.')
+        btn.disabled = false
+      }
+    } catch (err) {
+      showOtpAlert(friendlyFetchError(err))
+      btn.disabled = false
+    }
+  }
+
+  document.getElementById('otp-code')?.addEventListener('keypress', e => {
+    if (e.key === 'Enter') submitOtp()
+  })
+
+  async function doLogin() {
+    let phone = document.getElementById('login-phone').value.trim()
+    const password = document.getElementById('login-password').value
+    const btn = document.getElementById('login-btn')
+
+    phone = phone.replace(/\D/g, '');
+    
+    if (!phone || !password) {
+      showAlert('login', 'Please fill in all fields.')
+      return
+    }
+
+    setLoading(btn, true)
+    try {
+      const res = await safeFetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password })
+      })
+      const data = await res.json()
+      if (data.success) {
+        openOtpModal(data.phone || phone, data.pendingToken)
+      } else {
+        showAlert('login', data.message || 'Login failed.')
+      }
+    } catch (err) {
+      showAlert('login', friendlyFetchError(err))
+    } finally {
+      setLoading(btn, false)
+    }
+  }
+
+  async function doRegister() {
+    let phone = document.getElementById('register-phone').value.trim()
+    const password = document.getElementById('register-password').value
+    const password2 = document.getElementById('register-password2').value
+    const btn = document.getElementById('register-btn')
+
+    phone = phone.replace(/\D/g, '');
+
+    if (!phone || !password || !password2) {
+      showAlert('register', 'Please fill in all fields.')
+      return
+    }
+    if (password !== password2) {
+      showAlert('register', 'Passwords do not match.')
+      return
+    }
+    if (password.length < 6) {
+      showAlert('register', 'Password must be at least 6 characters.')
+      return
+    }
+
+    // Check if number exists in database
+    setLoading(btn, true)
+    try {
+      const exists = await checkNumberExists(phone)
+      if (!exists) {
+        showModal(`Number ${phone} is not listed in the database.\n\nPlease make sure you have used the bot before registering.`)
+        setLoading(btn, false)
+        return
+      }
+    } catch (err) {
+      showAlert('register', 'Cannot verify number. Please try again.')
+      setLoading(btn, false)
+      return
+    }
+
+    try {
+      const res = await safeFetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password })
+      })
+      const data = await res.json()
+      if (data.success) {
+        openOtpModal(data.phone || phone, data.pendingToken)
+      } else {
+        showAlert('register', data.message || 'Registration failed.')
+      }
+    } catch (err) {
+      showAlert('register', friendlyFetchError(err))
+    } finally {
+      setLoading(btn, false)
+    }
+  }
+
+  // Enter key support
+  document.getElementById('login-password')?.addEventListener('keypress', e => {
+    if (e.key === 'Enter') doLogin()
+  })
+  document.getElementById('register-password2')?.addEventListener('keypress', e => {
+    if (e.key === 'Enter') doRegister()
+  })
+</script>
+</body>
+</html>
