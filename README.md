@@ -51,7 +51,7 @@ Owner          > Plugin Management, Eval, Exec
 <br>
 
 <details>
-  <summary align=left><sub>AI MODEL</sub></summary>
+  <summary align=left><sub>AI INFO</sub></summary>
 <sub>
   
   ```bash
@@ -61,16 +61,9 @@ Gemini 3.1 Lite       > Daily conversation but more complex
 Gemma-4-31b-it        > For system Auto-repair / coding
 Gemma-4-26b-a4b-it    > For system Auto-repair / coding
   ```
-</sub>
-</details>
 
-<details>
-  <summary align=center><sub>TOOLS</sub></summary>
-<div align=left>
-<sub>
-  
 ```python
-✦ Total: 40
+✦ Total tools: 40
 - Reminder     : create, list, cancel
 - Memory       : remember, recall, list, forget, log_failure
 - File Ops     : read, write, list, delete, move, search
@@ -80,6 +73,111 @@ Gemma-4-26b-a4b-it    > For system Auto-repair / coding
 - Plugins      : list_plugins, run_plugin, read_plugin_guide
 - Messaging    : send_message, reply_now, send_as_file, send_codeblock, get_group_info
 - Dev          : shell_exec, run_python
+```
+
+</sub>
+</details>
+
+<details>
+  <summary align=center><sub>SENDMESSAGE</sub></summary>
+<div align=left>
+<sub>
+  
+```javascript
+//---Basic---
+conn.reply(m.chat, 'Hello world!', m)
+
+conn.sendFile(m.chat, media, filename, caption, m)
+// media > buffer / fs path
+// voice note > { ptt: true }
+// document > { document: true }
+
+conn.sendContact(m.chat, [
+  ['6281234567890', 'HirooSy'],
+  ['6289876543210', 'Hiro']
+], m)
+
+conn.react(m.chat, '👍', m.key)
+```
+
+```javascript
+//---location interactive ---
+conn.sendLocUrl(m.chat, 'https://example.com/thumb.jpg',  'Title',                     'Address', 'Text', 'Footer', 'https://github.com/hiroosy', m)
+
+//--- Url Preview ---
+conn.sendUrlPreview(
+  m.chat,
+  'https://example.com/thumb.jpg',
+  'https://example.com Hello World!',
+  'Url Preview Title',
+  'Url Description',
+  'IMAGE',   // true for highQuality, or ['IMAGE', true]
+  m
+)
+
+//--- Carousel ---
+conn.sendButton(m.chat, {
+    text: 'Interactive with Carousel!',
+    footer: 'HirooSy',
+    cards: [
+        {
+            image: { url: './path/to/image.jpg' },
+            caption: 'Image 1',
+            footer: 'Image 1',
+            nativeFlow: [{ text: 'Source', url: 'https://example.com', useWebview: true }]
+        },
+        {
+            image: { url: 'https://example.com/image.png' },
+            caption: 'Image 2',
+            footer: 'Image 2',
+            ltoText: 'New Coupon!',
+            ltoCode: 'HiroBot',
+            ltoUrl: 'https://example.com',
+            nativeFlow: [{ text: 'Source', url: 'https://example.com' }]
+        }
+    ]
+}, m)
+
+//--- Interactive buttons ---
+conn.sendButton(m.chat, {
+    image: { url: './path/to/image.jpg' },
+    caption: 'Interactive!',
+    footer: 'My Bot',
+    optionText: 'Select Options',
+    optionTitle: 'Select Options',
+    ltoText: 'HirooSy',
+    ltoCode: 'Hiro bot',
+    ltoUrl: 'https://example.com',
+    nativeFlow: [
+        { text: '👋🏻 Greeting', id: '#Greeting' },
+        { text: '📞 Call', call: '628123456789' },
+        { text: '📋 Copy', copy: 'Hiro bot' }, 
+        { text: '🌐 Source', url: 'https://example.com', useWebview: true },
+        {
+            text: '📋 Select',
+            sections: [
+                { title: '✨ Section 1', rows: [{ header: '', title: '🏷️ Coupon', description: '', id: '#CouponCode' }] },
+                { title: '✨ Section 2', highlight_label: '🔥 Popular', rows: [{ header: '', title: '💭 Secret Ingredient', description: '', id: '#SecretIngredient' }] }
+            ],
+        }
+    ]
+}, m)
+
+//--- Ai Rich ---
+await conn.aiRich()
+    .setTitle('Ai Rich Message') 
+    .addText('[HyperLink](https://example.com)\nCitation [](https://example.com)'\n[x^2+y^2=r^2|100|100](https://example.com/latex.png))
+    .addImage('https://example.com/image.png')
+    .addCode('javascript', `console.log('Hello World')`)
+    .addTable([
+        ['Name', 'HirooSy'],
+        ['Bio', 'Im developer'],
+        ['Age', '67']
+    ])
+    .addSource([['https://example.com/favicon.ico', 'https://example.com', 'Source']])
+    .addTip('Tip Text')
+    .addSuggest(['Continue', 'Cancel'])
+    .send(m.chat, { quoted: m })
 ```
 </sub>
 </div>

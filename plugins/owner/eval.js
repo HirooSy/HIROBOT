@@ -45,7 +45,6 @@ handler.customPrefix = /^<?< /
 handler.command = /(?:)/i
 
 handler.rowner = true
-handler.risk = 'medium'
 
 export default handler
 

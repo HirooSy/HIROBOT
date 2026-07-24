@@ -23,7 +23,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 handler.help = ['resize [ width ] [ height]']
 handler.tags = ['tools']
 handler.command = /^(resize)$/i
-handler.risk = 'low'
 
 export default handler
 

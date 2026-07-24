@@ -12,6 +12,5 @@ let handler = async (m, { conn }) => {
 handler.help = ['delete']
 handler.tags = ['tools']
 handler.command = /^(delete)$/i
-handler.risk = 'low'
 
 export default handler

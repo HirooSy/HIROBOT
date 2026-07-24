@@ -33,7 +33,6 @@ handler.dym = ["tourl", "upload"];
 handler.help = ['upload', 'tourl'].map(v => v + ' (reply media)');
 handler.tags = ['tools'];
 handler.command = /^(tourl|upload)$/i;
-handler.risk = 'low'
 
 export default handler;
 
