@@ -15,24 +15,19 @@ let handler = async (m, { conn }) => {
 handler.help = ['dashboard']
 handler.tags = ['info']
 handler.command = /^(db|dashboard)$/i
+handler.ai = { risk: 'low', isTool: true, description: "Commands usage statistics" }
 
 export default handler 
 	
 function parseMs(ms) {
   if (typeof ms !== 'number') throw 'Parameter must be filled with number'
   return {
-    days: Math.trunc(ms / 86400000),
-          
+    days: Math.trunc(ms / 86400000),       
     hours: Math.trunc(ms / 3600000) % 24,
-          
     minutes: Math.trunc(ms / 60000) % 60,
-          
     seconds: Math.trunc(ms / 1000) % 60,
-          
     milliseconds: Math.trunc(ms) % 1000,
-          
     microseconds: Math.trunc(ms * 1000) % 1000,
-          
     nanoseconds: Math.trunc(ms * 1e6) % 1000
   }
            }

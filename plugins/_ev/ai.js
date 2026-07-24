@@ -10,7 +10,7 @@ const {
     getUserIdentity,
     getApiKeys,
     MODELS,
-} = (await import("../../lib/tools/mcp.js"))
+} = (await import("../../lib/ai/mcp.js"))
 import crypto from 'crypto'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
     }
 
     if (sub === 'info') {
-        const identity = await getUserIdentity(senderJid, db, conn)
+        const identity = await getUserIdentity(senderJid, global.db, conn)
         const keys = getApiKeys()
 
         const userInfo = identity.isOwner
@@ -331,11 +331,11 @@ handler.all = async function (m) {
     const chat     = m.key?.remoteJid || m.chat
     const isGroup  = String(chat || '').endsWith('@g.us')
     
-    const isOwner  = (await getUserIdentity(m.sender, db, conn)).isOwner || m.fromMe
+    const isOwner  = (await getUserIdentity(m.sender, global.db, conn)).isOwner || m.fromMe
 
     // Private chat
     if (!isGroup) {
-        const chatDb = db.data.chats[chat]
+        const chatDb = global.db.data.chats[chat]
         if (!chatDb?.aiChat && !chatDb?.gptChat) return
 
         const hasContent = text.trim() || hasMedia(m) || hasQuotedMedia(m)
@@ -351,7 +351,7 @@ handler.all = async function (m) {
         const replied   = isReplyToBot(m, conn)
         if (!mentioned && !replied) return
 
-        const chatDb = db?.data?.chats?.[chat]
+        const chatDb = global.db?.data?.chats?.[chat]
         if (!chatDb?.aiChat && !chatDb?.gptChat) return
 
         const cleanedText = cleanText(text)

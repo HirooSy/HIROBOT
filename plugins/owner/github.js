@@ -234,5 +234,6 @@ handler.help = ['gitpush <commit message>', 'gitstats']
 handler.tags = ['owner']
 handler.command = /^(gitpush|gitstats)$/i
 handler.rowner = true
+handler.ai = { risk: 'low', isTool:true, description: "Push project to github repository" }
 
 export default handler

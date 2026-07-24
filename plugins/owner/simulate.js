@@ -38,6 +38,7 @@ ${usedPrefix + command} demote @user`)
 }
 handler.help = ['simulate <event> [@mention]']
 handler.tags = ['owner']
-handler.owner = true
 handler.command = /^simulate$/i
+handler.ai = { risk:'low', isTool: false, description: "dummy simulate group event" }
+
 export default handler

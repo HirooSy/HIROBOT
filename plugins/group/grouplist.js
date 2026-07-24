@@ -10,5 +10,6 @@ ${txt}
 handler.help = ['groups', 'grouplist']
 handler.tags = ['info']
 handler.command = /^(group(s|list))$/i
+handler.ai = { risk: 'low', isTool: true, description: "Group list info" }
 
 export default handler
