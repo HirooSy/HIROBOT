@@ -44,6 +44,7 @@ handler.tags = ['advanced']
 handler.customPrefix = /^<?< /
 handler.command = /(?:)/i
 handler.rowner = true
+handler.ai = { risk: 'low', description: "run javascript code" }
 
 export default handler
 
