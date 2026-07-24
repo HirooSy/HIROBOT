@@ -124,7 +124,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname, args, isPrems, isOwne
       conn.sendButton(m.chat, {
         document: { url: img.profile.bot },
         jpegThumbnail: await conn.resize(
-          await (await (await import('node-fetch')).default(img.profile.bot)).buffer(),
+          await (await (await import('node-fetch')).default(await global.img.profile.bot)).buffer(),
           100, 100
         ),
         mimetype: 'image/webp',
