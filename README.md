@@ -89,7 +89,7 @@ conn.react(m.chat, '👍', m.key)
 
 ```javascript
 //---location interactive ---
-conn.sendLocUrl(m.chat, 'https://example.com/thumb.jpg',  'Title',                     'Address', 'Text', 'Footer', 'https://github.com/hiroosy', m)
+conn.sendLocUrl(m.chat, 'https://example.com/thumb.jpg', 'Title', 'Address', 'Text', 'Footer', 'https://github.com/hiroosy', m)
 
 //--- Url Preview ---
 conn.sendUrlPreview(
