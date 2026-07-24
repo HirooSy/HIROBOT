@@ -49,5 +49,6 @@ handler.tags = ['downloader']
 handler.dym = ['tiktok', 'tiktokaudio']
 handler.command = /^(tt|tiktok)(audio)?$/i
 handler.limit = true
+handler.ai = { risk: "low", description: "download tiktok post" }
 
 export default handler

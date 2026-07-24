@@ -82,5 +82,6 @@ handler.help = ['twitter', 'x'].map(v => v + ' <url>');
 handler.tags = ['downloader'];
 handler.command = ['twitter', 'x'];
 handler.limit = 1;
+handler.ai = { risk: "low", description: "download twitter/x post" }
 
 export default handler;

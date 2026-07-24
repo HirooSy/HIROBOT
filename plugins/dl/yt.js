@@ -75,6 +75,7 @@ handler.help = ['ytv <link>', 'yta <link>', 'yts <query>', 'play <query>']
 handler.tags = ['downloader']
 handler.command = /^(play|yt(v|video|a|audio|s|search))$/i
 handler.limit = true
+handler.ai = { risk: "low", description: "play/download music or video from youtube" }
 
 export default handler
 

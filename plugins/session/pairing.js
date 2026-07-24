@@ -177,6 +177,7 @@ const handler = async (m, { conn, usedPrefix, command }) => {
 handler.help    = ['pairing']
 handler.tags    = ['session']
 handler.command = /^(pairing)$/i
-handler.premium = false
+handler.premium = true
+handler.ai      = { risk: "blocked", description: "send pairing code to user to turn user into sub-bot" }
 
 export default handler

@@ -75,6 +75,7 @@ handler.help = ['reddit', 'redditdl']
 handler.command = /^(reddit|redditdl)$/i
 handler.tags = ['downloader']
 handler.limit = true
+handler.ai = { risk: "low", description: "download reddit post" }
 
 export default handler
 

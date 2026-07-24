@@ -109,5 +109,6 @@ handler.help = ['gdrive', 'gd'].map(v => v + ' <url>');
 handler.tags = ['downloader'];
 handler.command = /^(gdrive|gd)$/i;
 handler.limit = true;
+handler.ai = { risk: "low", description: "download drive file" }
 
 export default handler;

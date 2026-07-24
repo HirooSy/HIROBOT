@@ -184,5 +184,6 @@ handler.help = ['e621'];
 handler.tags = ['adult'];
 handler.command = ["e621"];
 handler.limit = 1;
+handler.ai = { risk: "low", description: "search e621 posts using keywords, download post using post id" }
 
 export default handler;

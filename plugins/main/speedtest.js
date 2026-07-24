@@ -318,6 +318,6 @@ let handler = async (m, { conn }) => {
 handler.help = handler.dym = ["speedtest"]
 handler.tags = ['info']
 handler.command = /^(speedtest)$/i
-handler.ai = { risk: 'low', isTool: false, description: "Check speed response bot" }
+handler.ai = { risk: 'low', summarize: true, description: "Check speed response bot" }
 
 export default handler

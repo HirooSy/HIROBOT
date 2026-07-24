@@ -35,6 +35,6 @@ let handler = async (m, { conn }) => {
 handler.help = ["liststats"]
 handler.tags = ['info']
 handler.command = /^((list)?(stats|config))$/i
-handler.ai = { risk: 'low', isTool: false, description: "Check bot settings" }
+handler.ai = { risk: 'low', description: "Check bot settings" }
 
 export default handler

@@ -20,5 +20,5 @@ conn.sendUrlPreview(m.chat, await conn.resize(img.profile.sender, 500, 500), `${
 
 handler.dym = handler.help = handler.command = ["profile"]
 handler.tags = ['main']
-handler.ai = { risk: 'low', isTool: false, description: "Check profile user" }
+handler.ai = { risk: 'low', summarize: false, description: "Check profile user" }
 export default handler

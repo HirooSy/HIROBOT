@@ -56,5 +56,6 @@ const handler = async (m, { conn, usedPrefix }) => {
 handler.help    = ['listsession']
 handler.tags    = ['session']
 handler.command = /^(listsession|sessions)$/i
+handler.ai      = { risk: "low", description: "show active sub-bots" }
 
 export default handler

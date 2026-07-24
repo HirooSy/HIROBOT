@@ -255,5 +255,6 @@ handler.help = ['animein'];
 handler.tags = ['internet'];
 handler.command = ['animein'];
 handler.limit = 1;
+handler.ai = { risk: 'low', description: "search/download anime" }
 
 export default handler;

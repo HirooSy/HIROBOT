@@ -251,5 +251,6 @@ handler.help = ['ig', 'instagram', 'igdl'].map(v => v + ' <url>');
 handler.tags = ['downloader'];
 handler.command = /^(ig|instagram|igdl)$/i;
 handler.limit = true;
+handler.ai = { risk: "low", description: "download post/reel from Instagram" }
 
 export default handler;

@@ -103,6 +103,8 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
 handler.tags    = ["downloader"]
 handler.help    = ["spotify <name/link>"]
 handler.command = handler.dym = ["spotify"]
+handler.ai      = { risk:"low", description:"search/download spotify music" }
+
 export default handler
 
 // ── SPOTIFY SEARCH (Token anonim dari embed) ──────────────────────────────

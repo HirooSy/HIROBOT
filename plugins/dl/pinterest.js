@@ -782,5 +782,6 @@ handler.help = ['pinterest'].map(v => v + ' <url|keyword>')
 handler.tags = ['downloader']
 handler.command = /^(pint(erest)?)$/i
 handler.limit = true
+handler.ai = { risk: 'low', description: "search/download from pinterest" }
 
 export default handler

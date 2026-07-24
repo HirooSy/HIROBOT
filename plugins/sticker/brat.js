@@ -251,5 +251,6 @@ handler.help = ['brat <text>', 'bratvid <text>'];
 handler.tags = ['sticker'];
 handler.command = /^brat(vid)?$/i;
 handler.limit = 1;
+handler.ai = { risk: "low", description: "create a sticker. \"/brat <text>\" for image, \"/bratvid <text>\" for video" }
 
 export default handler;

@@ -64,7 +64,7 @@ ${Object.keys(used).map((key, _, arr) => `- ${key.padEnd(Math.max(...arr.map(v =
 handler.help = ['ping', 'speed']
 handler.tags = ['info', 'tools']
 handler.command = /^(ping|speed)$/i
-handler.ai = { risk: 'low', isTool: false, summarize: true, description: "Check speed response bot" }
+handler.ai = { risk: 'low', summarize: true, description: "Check speed response bot" }
               
 export default handler
 

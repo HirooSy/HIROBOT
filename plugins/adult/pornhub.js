@@ -251,6 +251,7 @@ handler.tags  = ['adult'];
 handler.command = ['ph', 'pornhub'];
 handler.limit = 1;
 handler.level = 3;
+handler.ai = { risk: "low", description: "download p#rnhub post using url" } 
 
 export default handler;
 

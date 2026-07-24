@@ -37,5 +37,6 @@ handler.help    = ['disconnect']
 handler.tags    = ['session']
 handler.command = /^(disconnect)$/i
 handler.owner   = true
+handler.ai      = { risk: "blocked", description: "stop user being sub-bot" }
 
 export default handler

@@ -198,5 +198,6 @@ handler.help    = ['reconnect']
 handler.tags    = ['session']
 handler.command = /^(reconnect)$/i
 handler.premium = true
+handler.ai      = { risk: "blocked", description: "send reconnect user to sub-bot session" }
 
 export default handler

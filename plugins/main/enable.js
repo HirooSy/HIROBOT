@@ -194,6 +194,6 @@ handler.help = ['en', 'dis'].map(v => v + 'able <option>')
 handler.tags = ['group', 'owner']
 handler.dym = ["disable", "enable"]
 handler.command = /^((en|dis)able|(tru|fals)e|(turn)?o(n|ff)|[01])$/i
-handler.ai = { risk: 'low', isTool: false, description: "Enable/disable option" }
+handler.ai = { risk: 'low', summarize: true, description: "Enable/disable option" }
 
 export default handler

@@ -8,6 +8,6 @@ let handler = async(m, { conn }) => {
 handler.help = handler.dym = ['owner', 'creator']
 handler.tags = ['info']
 handler.command = /^(owner|creator)$/i
-handler.ai = { risk: 'low', isTool:false, description: "Send owner contact" }
+handler.ai = { risk: 'low', description: "Send owner contact" }
 
 export default handler

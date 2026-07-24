@@ -53,5 +53,6 @@ handler.help = ['searchcode', 'scode'].map(v => v + " <keyword>")
 handler.tags = ['owner']
 handler.command = /^(s(earch)?code)$/i
 handler.rowner = true
+handler.ai = { risk: 'low', summarize: true, description: "search exact keywords using grep -r" }
 
 export default handler

@@ -15,7 +15,7 @@ let handler = async (m, { conn }) => {
 handler.help = ['dashboard']
 handler.tags = ['info']
 handler.command = /^(db|dashboard)$/i
-handler.ai = { risk: 'low', isTool: true, description: "Commands usage statistics" }
+handler.ai = { risk: 'low', summarize:true, description: "Commands usage statistics" }
 
 export default handler 
 	
