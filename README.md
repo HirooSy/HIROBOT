@@ -1,6 +1,9 @@
 <div align=center><img align=center width="40%" src="./lib/src/icon.png"/></div>
 
 <h1 align=center>H I R O - B O T</h1>
+  
+> [!WARNING]
+> <sub>Work in Progress, some features may error and kinda mess</sub>
 
 <p align=center>
 <sub>
