@@ -52,13 +52,23 @@ async function pushToGitHub(conn, m, args) {
 
         const ignoreRules = [
             '.cache/',
+            '.gitignore',
             'node_modules/',
             '.env',
-            'README.md',
-            'sessions/',
+            'data/',
             '*.log',
             '*.zip',
-            '.DS_Store'
+            '*.bin',
+            '*.pid',
+            '*.bak',
+            '.git',
+            '*.zip',
+            '*.tar.gz',
+            '*.log',
+            'package-lock.json',
+            'yarn.lock',
+            'pnpm-lock.json',
+            '.npmrc',
         ]
 
         if (!fs.existsSync(gitignorePath)) {
