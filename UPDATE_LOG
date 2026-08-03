@@ -1,0 +1,23 @@
+04/Aug/2026
+- Added AI THINKING MODE, for complex tasks
+- SPOTIFY_TOKEN as fallback
+- Connection.js
+
+Modified files:
+- .env.example
+- plugins/dl/spotify.js
+- lib/config.js
+- lib/ai/mcp.js
+- lib/handler.js
+- lib/ai/tools/plugin.js
+- plugins/ai/ai.js
+- lib/connection.js
+
+____________________
+
+03/Aug/2026
+- Auto reload lib files
+
+Modified files:
+- lib/config.js
+- all files in lib (i forgot which files)
