@@ -161,12 +161,12 @@ async function pushToGitHub(conn, m, args) {
         } catch {}
 
         await execAsync(
-            'git branch -M javascript',
+            'git branch -M main',
             { cwd: ROOT }
         )
 
         await execAsync(
-            'git push -u origin javascript --force',
+            'git push -u origin main --force',
             { cwd: ROOT }
         )
 
