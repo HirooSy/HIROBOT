@@ -70,7 +70,6 @@ HIROBOT
 >     E --> G[Done]
 >     F --> H[Note it as failure]
 >
-> style how fill: #fff, color: #000
 > process@{ animate: true }
 > style Error stroke:#f00
 > ```
