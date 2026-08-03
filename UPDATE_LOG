@@ -2,6 +2,7 @@
 - Added AI THINKING MODE, for complex tasks
 - SPOTIFY_TOKEN as fallback
 - Connection.js
+- some fixes
 
 Modified files:
 - .env.example
@@ -12,6 +13,7 @@ Modified files:
 - lib/ai/tools/plugin.js
 - plugins/ai/ai.js
 - lib/connection.js
+- lib/ai/tools/web.js
 
 ____________________
 
