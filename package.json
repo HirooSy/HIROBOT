@@ -1,6 +1,6 @@
 {
     "name": "HIRO-BOT",
-    "version": "1.3.01",
+    "version": "1.0.0",
     "description": "Simple Whatsapp Bot",
     "main": "lib/start.js",
     "type": "module",
