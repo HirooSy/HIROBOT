@@ -6,7 +6,7 @@ import { facebook } from "../../lib/scraper/facebook.js"
 ffmpeg.setFfmpegPath('/usr/bin/ffmpeg');
 
 function tmpFile(ext) {
-    return path.join(process.env.TMP || '/data/tmp', `fb_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
+    return path.join('/data/tmp', `fb_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
 }
 
 function cleanFiles(...files) {
@@ -22,9 +22,9 @@ function isFbUrl(text) {
     } catch { return false; }
 }
 
-let handler = async (m, { conn, args, prefix, command }) => {
+let handler = async (m, { conn, args, usedPrefix, command }) => {
     if (!args[0]) {
-        return m.reply(`Where's the URL?\n${prefix + command} https://facebook.com/....`);
+        return m.reply(`Where's the URL?\n${usedPrefix + command} https://facebook.com/....`);
     }
 
     const url = args[0].trim();
@@ -55,7 +55,7 @@ let handler = async (m, { conn, args, prefix, command }) => {
             return;
         }
 
-        await conn.sendMessage(m.chat, { video: { url: best.url }, mimetype: 'video/mp4', caption: '' }, { quoted: m });
+        await conn.sendMessage(m.chat, { video: { url: best.url }, mimetype: 'video/mp4', caption: metadata.title || '' }, { quoted: m });
         await m.react('✅');
 
     } catch (err) {

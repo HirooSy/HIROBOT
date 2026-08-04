@@ -61,7 +61,7 @@ async function gdrive(url) {
     }
 }
 
-let handler = async (m, { conn, args, prefix, command }) => {
+let handler = async (m, { conn, args, usedPrefix: prefix, command }) => {
     if (!args[0]) return m.reply(`Mana URL-nya?\n${prefix + command} https://drive.google.com/...`);
 
     const url = args[0].trim();

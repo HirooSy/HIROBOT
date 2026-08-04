@@ -167,7 +167,7 @@ async function processSelection(conn, m, state, choice) {
     return false;
 }
 
-let handler = async (m, { conn, args, prefix, command }) => {
+let handler = async (m, { conn, args, usedPrefix: prefix, command }) => {
     if (!args[0]) {
         return m.reply(`Where's the URL?\n${prefix + command} https://instagram.com/....`);
     }
