@@ -1,4 +1,4 @@
-import { sticker } from '../../lib/tools/sticker.js'
+import { sticker } from '../../lib/sticker.js'
 import upload from '../../lib/scraper/upload.js'
 import { webp2png } from '../../lib/scraper/ezgif.js'
 const { default: { Image }} = await import('node-webpmux')

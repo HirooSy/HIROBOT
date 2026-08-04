@@ -1,4 +1,4 @@
-import { addExif } from '../../lib/tools/sticker.js'
+import { addExif } from '../../lib/sticker.js'
 
 let handler = async (m, { conn, text }) => {
   if (!m.quoted) throw 'Quoted the sticker!'

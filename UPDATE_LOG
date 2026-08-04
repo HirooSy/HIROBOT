@@ -3,6 +3,7 @@
 - SPOTIFY_TOKEN as fallback
 - Connection.js
 - some fixes
+- moving converter.js and sticker.js to outside tools folder
 
 Modified files:
 - .env.example
