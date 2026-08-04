@@ -1,13 +1,20 @@
 import axios from "axios";
 const cheerio = (await import("cheerio"));
 import { URL_REGEX } from 'baileys';
+import fs from "fs";
+import path from "path";
+import { pipeline } from "stream/promises";
+import { randomUUID } from "crypto";
+import { spawn } from "child_process";
+
+const TMP_DOWNLOAD_DIR = path.join(process.cwd(), process.env.TMP || "data/tmp", "spotify");
+fs.mkdirSync(TMP_DOWNLOAD_DIR, { recursive: true });
 
 let handler = async(m, { conn, usedPrefix, command, text }) => {
     let chat = db.data.chats[m.chat]
     if (!text) return m.reply(`> *SEARCH -* [ ${usedPrefix + command} <Music_name> ]\n> *DOWNLOAD -* [ ${usedPrefix + command} <Spotify_link> ]`)
 
     if (!text.match(URL_REGEX)) {
-        // ==== SEARCH MODE (via spotidown.app) ====
         const res = await searchSpotify(text)
         if (!res?.success || !res?.results?.length) return m.reply("- *Error:* " + res.message)
 
@@ -43,7 +50,6 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
         return conn.sendButton(m.chat, payload, m)
 
     } else {
-        // ==== DOWNLOAD MODE (via spotidown.app) ====
         if (!/open\.spotify\.com/i.test(text)) {
             return m.reply("- Only support Spotify link.")
         }
@@ -52,7 +58,6 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
         try {
             result = await spotifyDownloadByUrl(text)
         } catch (err) {
-            console.error("spotifyDownloadByUrl error:", err.message)
             return m.reply(`- Failed to get song data.\n- Debug: ${err.message}`)
         }
 
@@ -68,7 +73,6 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
         const audioUrl   = links.mp3
 
         if (!audioUrl) {
-            console.error("spotifyDownloadByUrl: no mp3 link. Full payload:", JSON.stringify(result))
             return m.reply("- Failed to get song data.\n- Debug: link mp3 kosong, cek console log.")
         }
 
@@ -82,13 +86,67 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
             }
         }
 
-        await conn.sendMessage(m.chat, {
-            audio     : { url: audioUrl },
-            mimetype  : 'audio/mpeg',
-            asDocument: chat.useDocument,
-            fileName  : `${trackName}.mp3`,
-        }, { quoted: { key: { remoteJid: "0@s.whatsapp.net" }, message: { orderMessage: { orderId: '780642630945098', thumbnail: thumbBuffer, itemCount: 666, status: 1, surface: 1,message: trackName , orderTitle: trackName, sellerJid: '0@s.whatsapp.net', token: 'AR6pyJ/fz5vRFxggGxURL7EA/vCtjKrhcJSNhHqX1iJh8A==', totalAmount1000: "0", totalCurrencyCode: "IDR"}}} })
+        const tmpFile = path.join(TMP_DOWNLOAD_DIR, `spotify-${randomUUID()}.mp3`)
+        let sendFile = tmpFile
+        let compressedFile = null
+        try {
+            await streamToFile(audioUrl, tmpFile)
+
+            const stat = await fs.promises.stat(tmpFile)
+            const sizeMB = stat.size / 1024 / 1024
+
+            if (sizeMB > 15) {
+                compressedFile = path.join(TMP_DOWNLOAD_DIR, `spotify-${randomUUID()}-compressed.mp3`)
+                await compressAudio(tmpFile, compressedFile)
+                sendFile = compressedFile
+            }
+
+            await conn.sendMessage(m.chat, {
+                audio     : { url: sendFile },
+                mimetype  : 'audio/mpeg',
+                asDocument: chat.useDocument,
+                fileName  : `${trackName}.mp3`,
+            }, { quoted: { key: { remoteJid: "0@s.whatsapp.net" }, message: { orderMessage: { orderId: '780642630945098', thumbnail: thumbBuffer, itemCount: 666, status: 1, surface: 1,message: trackName , orderTitle: trackName, sellerJid: '0@s.whatsapp.net', token: 'AR6pyJ/fz5vRFxggGxURL7EA/vCtjKrhcJSNhHqX1iJh8A==', totalAmount1000: "0", totalCurrencyCode: "IDR"}}} })
+        } catch (err) {
+            return m.reply(`- Gagal mengirim audio.\n- Debug: ${err.message}`)
+        } finally {
+            fs.promises.unlink(tmpFile).catch(() => {})
+            if (compressedFile) fs.promises.unlink(compressedFile).catch(() => {})
+        }
     }
+}
+
+function compressAudio(inputPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        const ff = spawn('ffmpeg', [
+            '-y',
+            '-i', inputPath,
+            '-vn',
+            '-acodec', 'libmp3lame',
+            '-b:a', '128k',
+            '-ar', '44100',
+            outputPath
+        ])
+
+        let stderr = ''
+        ff.stderr.on('data', chunk => { stderr += chunk })
+
+        ff.on('error', reject)
+        ff.on('close', code => {
+            if (code === 0) return resolve()
+            reject(new Error(`ffmpeg exited with code ${code}: ${stderr.slice(-500)}`))
+        })
+    })
+}
+
+async function streamToFile(url, destPath) {
+    const response = await axios.get(url, {
+        responseType: 'stream',
+        headers: { 'User-Agent': USER_AGENT }
+    })
+
+    const writer = fs.createWriteStream(destPath)
+    await pipeline(response.data, writer)
 }
 
 handler.tags    = ["downloader"]
@@ -98,10 +156,6 @@ handler.ai      = { risk:"low", description:"search/download spotify music" }
 
 export default handler
 
-// ============================================================
-// SPOTIDOWN.APP SCRAPER (replaces old Spotify API + spotmate.online)
-// ============================================================
-
 const BASE_URL   = 'https://spotidown.app';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
@@ -109,9 +163,6 @@ const searchCache = new Map();
 const pendingSearches = new Map();
 const SEARCH_CACHE_TTL = 30_000;
 
-/**
- * Get session cookie + hidden form token from spotidown.app homepage
- */
 async function getSpotidownSession() {
     const response = await axios.get(`${BASE_URL}/en3`, {
         headers: {
@@ -147,9 +198,6 @@ async function getSpotidownSession() {
     return { sessionCookie, dynamicName, dynamicValue };
 }
 
-/**
- * Resolve a query or a Spotify URL into a list of track forms + metadata
- */
 async function spotidownResolve(queryOrUrl) {
     const { sessionCookie, dynamicName, dynamicValue } = await getSpotidownSession();
 
@@ -204,9 +252,6 @@ async function spotidownResolve(queryOrUrl) {
     return { tracks, sessionCookie };
 }
 
-/**
- * Fetch direct mp3 + cover download links for a resolved track form
- */
 async function spotidownGetLinks(form, sessionCookie) {
     const response = await axios.post(`${BASE_URL}/action/track`, new URLSearchParams(form).toString(), {
         headers: {
@@ -241,10 +286,6 @@ async function spotidownGetLinks(form, sessionCookie) {
     return links;
 }
 
-/**
- * High-level: search tracks by free-text query (used by SEARCH MODE)
- * Mimics the old searchSpotify() return shape so the handler code above stays unchanged.
- */
 async function searchSpotify(query) {
     const normalizedQuery = String(query || "").trim();
 
@@ -300,7 +341,6 @@ async function searchSpotify(query) {
 
             return result;
         } catch (error) {
-            console.error("Spotify (spotidown) search error:", error.message);
             return {
                 success: false,
                 message: error.message || "Gagal mencari lagu"
@@ -314,10 +354,6 @@ async function searchSpotify(query) {
     return searchPromise;
 }
 
-/**
- * High-level: resolve + download a specific Spotify track URL (used by DOWNLOAD MODE)
- * Returns { metadata, links: { mp3, cover } }
- */
 async function spotifyDownloadByUrl(spotifyUrl) {
     const { tracks, sessionCookie } = await spotidownResolve(spotifyUrl);
 
