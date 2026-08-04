@@ -36,6 +36,7 @@ HIROBOT
 │   ├── ai               # Ai system
 │   ├── config.js        # Set your bot's preference here
 │   ├── connection.js    # connection manager
+│   ├── converter.js     # Converter tool
 │   ├── database.js      # database manager
 │   ├── handler.js       # event handler
 │   ├── helper.js        # lib helper
@@ -44,7 +45,7 @@ HIROBOT
 │   ├── server.js        # Website endpoint
 │   ├── simple.js        # Functions conn
 │   ├── start.js         # Start script
-│   ├── tools            # Tools
+│   ├── sticker.js       # Sticker builder
 │   └── views            # HTML folder
 ├── data                 # Sessions, database, TMP, Tunnel data, All .json
 ├── plugins              # commands here
