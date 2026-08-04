@@ -7,6 +7,7 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
     if (!text) return m.reply(`> *SEARCH -* [ ${usedPrefix + command} <Music_name> ]\n> *DOWNLOAD -* [ ${usedPrefix + command} <Spotify_link> ]`)
 
     if (!text.match(URL_REGEX)) {
+        // ==== SEARCH MODE (via spotidown.app) ====
         const res = await searchSpotify(text)
         if (!res?.success || !res?.results?.length) return m.reply("- *Error:* " + res.message)
 
@@ -42,38 +43,33 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
         return conn.sendButton(m.chat, payload, m)
 
     } else {
+        // ==== DOWNLOAD MODE (via spotidown.app) ====
         if (!/open\.spotify\.com/i.test(text)) {
             return m.reply("- Only support Spotify link.")
         }
 
-        const [infoResult, downloadResult] = await Promise.allSettled([
-            spotifyGetInfo(text),
-            spotifyDownload(text)
-        ])
-
-        if (infoResult.status === "rejected") {
-            console.error("spotifyGetInfo error:", infoResult.reason?.response?.status, infoResult.reason?.response?.data || infoResult.reason?.message)
-        }
-        if (downloadResult.status === "rejected") {
-            console.error("spotifyDownload error:", downloadResult.reason?.response?.status, downloadResult.reason?.response?.data || downloadResult.reason?.message)
+        let result
+        try {
+            result = await spotifyDownloadByUrl(text)
+        } catch (err) {
+            console.error("spotifyDownloadByUrl error:", err.message)
+            return m.reply(`- Failed to get song data.\n- Debug: ${err.message}`)
         }
 
-        const info = infoResult.status === "fulfilled" ? infoResult.value : null
-        const download = downloadResult.status === "fulfilled" ? downloadResult.value : null
-
-        if (!info || !download) {
-            const errMsg = infoResult.reason?.message || downloadResult.reason?.message || "Unknown error"
-            return m.reply(`- Failed to get song data.\n- Debug: ${errMsg}`)
+        if (!result) {
+            return m.reply("- Failed to get song data.\n- Debug: track tidak ditemukan di spotidown.app")
         }
 
-        const trackName  = info.name
-        const artistName = Object.values(info.artists || {}).map(v => v.name).join(', ') || 'Unknown Artist'
-        const coverUrl   = info.album?.images?.[0]?.url ?? null
-        const audioUrl   = download.url
+        const { metadata, links } = result
+
+        const trackName  = metadata.name || 'Unknown Title'
+        const artistName = metadata.artist || 'Unknown Artist'
+        const coverUrl   = links.cover || metadata.cover || null
+        const audioUrl   = links.mp3
 
         if (!audioUrl) {
-            console.error("spotifyDownload returned no url. Full payload:", JSON.stringify(download))
-            return m.reply("- Failed to get song data.\n- Debug: download.url kosong, cek console log.")
+            console.error("spotifyDownloadByUrl: no mp3 link. Full payload:", JSON.stringify(result))
+            return m.reply("- Failed to get song data.\n- Debug: link mp3 kosong, cek console log.")
         }
 
         let thumbBuffer
@@ -102,224 +98,162 @@ handler.ai      = { risk:"low", description:"search/download spotify music" }
 
 export default handler
 
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36";
+// ============================================================
+// SPOTIDOWN.APP SCRAPER (replaces old Spotify API + spotmate.online)
+// ============================================================
 
-let cachedToken = null;
-let tokenExpiry = 0;
-let tokenPromise = null;
+const BASE_URL   = 'https://spotidown.app';
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 const searchCache = new Map();
 const pendingSearches = new Map();
-
 const SEARCH_CACHE_TTL = 30_000;
-const MAX_RETRIES = 3;
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-const MAX_RETRY_DELAY_MS = 15_000;
-
-function getRetryDelay(error, attempt) {
-    const retryAfter = Number(
-        error.response?.headers?.["retry-after"]
-    );
-
-    if (Number.isFinite(retryAfter) && retryAfter >= 0) {
-        return Math.min(retryAfter * 1000, MAX_RETRY_DELAY_MS);
-    }
-
-    return Math.min(1000 * (2 ** attempt), MAX_RETRY_DELAY_MS)
-        + Math.floor(Math.random() * 500);
-}
-
-async function axiosWithRetry(config, maxRetries = MAX_RETRIES) {
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-            return await axios(config);
-        } catch (error) {
-            const status = error.response?.status;
-
-            if (status !== 429 || attempt === maxRetries) {
-                throw error;
-            }
-
-            const delay = getRetryDelay(error, attempt);
-
-            console.warn(
-                `Spotify 429, retry in ${Math.ceil(delay / 1000)} s`
-            );
-
-            await sleep(delay);
-        }
-    }
-
-    throw new Error("Request Spotify failed");
-}
-
-let tokenSource = null;
-
-async function fetchAnonymousToken() {
-    const { data: html } = await axios({
-        method: "GET",
-        url: "https://open.spotify.com/embed/track/3HHqVJHqwgkxWhOQ4MhLB6",
+/**
+ * Get session cookie + hidden form token from spotidown.app homepage
+ */
+async function getSpotidownSession() {
+    const response = await axios.get(`${BASE_URL}/en3`, {
         headers: {
-            "User-Agent": UA,
-            "Accept-Language": "en-US,en;q=0.9",
-            Accept: "text/html"
-        },
-        timeout: 15_000
+            'User-Agent': USER_AGENT,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+        }
     });
 
-    const tokenMatch = html.match(/"accessToken"\s*:\s*"([^"]+)"/);
-    const expiryMatch = html.match(/"accessTokenExpirationTimestampMs"\s*:\s*(\d+)/);
+    const cookies = response.headers['set-cookie'] || [];
+    if (!cookies.length) {
+        throw new Error('spotidown.app tidak mengirim set-cookie header (mungkin situs down / berubah / diblokir)');
+    }
+    const sessionCookie = cookies.map(c => c.split(';')[0]).join('; ');
 
-    const token = tokenMatch?.[1];
-    if (!token) {
-        throw new Error("Failed to retrieve anonymous access token from embed page");
+    const $ = cheerio.load(response.data);
+    const form = $('form[name="spotifyurl"]');
+    if (!form.length) {
+        throw new Error('Form pencarian Spotify tidak ditemukan di homepage spotidown.app (HTML mungkin berubah struktur)');
     }
 
-    const expiry = Number(expiryMatch?.[1]) || Date.now() + 3_600_000;
+    let dynamicName = '';
+    let dynamicValue = '';
+    form.find('input[type="hidden"]').each((i, elem) => {
+        const name = $(elem).attr('name');
+        const val = $(elem).attr('value');
+        if (name && name !== 'g-recaptcha-response') {
+            dynamicName = name;
+            dynamicValue = val;
+        }
+    });
 
-    return { token, expiry, source: "anon" };
+    return { sessionCookie, dynamicName, dynamicValue };
 }
 
-async function fetchClientCredentialsToken() {
-    const raw = process.env.SPOTIFY_TOKEN;
+/**
+ * Resolve a query or a Spotify URL into a list of track forms + metadata
+ */
+async function spotidownResolve(queryOrUrl) {
+    const { sessionCookie, dynamicName, dynamicValue } = await getSpotidownSession();
 
-    if (!raw || !raw.includes(":")) {
-        throw new Error("SPOTIFY_TOKEN has not been set (format: client_id:client_secret)");
+    const payload = {
+        url: queryOrUrl,
+        'g-recaptcha-response': '',
+    };
+    if (dynamicName) {
+        payload[dynamicName] = dynamicValue;
     }
 
-    const idx = raw.indexOf(":");
-    const clientId = raw.slice(0, idx).trim();
-    const clientSecret = raw.slice(idx + 1).trim();
-
-    if (!clientId || !clientSecret) {
-        throw new Error("SPOTIFY_TOKEN exists but client_id/client_secret is empty");
-    }
-
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-
-    const { data } = await axios({
-        method: "POST",
-        url: "https://accounts.spotify.com/api/token",
+    const response = await axios.post(`${BASE_URL}/action`, new URLSearchParams(payload).toString(), {
         headers: {
-            "Authorization": `Basic ${auth}`,
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        data: new URLSearchParams({ grant_type: "client_credentials" }).toString(),
-        timeout: 15_000
+            'User-Agent': USER_AGENT,
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Origin': BASE_URL,
+            'Referer': `${BASE_URL}/en3`,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cookie': sessionCookie
+        }
     });
 
-    const token = data?.access_token;
-    if (!token) {
-        throw new Error("Failed to retrieve access token from Client Credentials Flow (SPOTIFY_TOKEN)");
+    if (response.data.error) {
+        throw new Error(response.data.message || 'Lookup gagal di spotidown.app');
     }
 
-    const expiresInMs = (Number(data?.expires_in) || 3600) * 1000;
+    const $ = cheerio.load(response.data.data);
+    const tracks = [];
 
-    return { token, expiry: Date.now() + expiresInMs, source: "client_credentials" };
-}
+    $('form[name="submitspurl"]').each((i, formElem) => {
+        const form = $(formElem);
+        const data  = form.find('input[name="data"]').val();
+        const base  = form.find('input[name="base"]').val();
+        const token = form.find('input[name="token"]').val();
 
-async function getSpotifyToken(forceRefresh = false, skipAnon = false) {
-    const tokenStillValid =
-        cachedToken &&
-        Date.now() < tokenExpiry - 60_000;
-
-    if (!forceRefresh && tokenStillValid) {
-        return cachedToken;
-    }
-
-    if (tokenPromise) {
-        return tokenPromise;
-    }
-
-    tokenPromise = (async () => {
-        let result = null;
-        let anonError = null;
-
-        if (!skipAnon) {
+        if (data && base && token) {
+            let metadata = {};
             try {
-                result = await fetchAnonymousToken();
-            } catch (err) {
-                anonError = err;
+                const decodedMeta = Buffer.from(data, 'base64').toString('utf8');
+                metadata = JSON.parse(decodedMeta);
+            } catch (e) {
+                metadata = { error: 'Failed parsing metadata' };
             }
+
+            tracks.push({
+                metadata,
+                form: { data, base, token }
+            });
         }
-
-        if (!result) {
-            try {
-                result = await fetchClientCredentialsToken();
-            } catch (fallbackErr) {
-                throw anonError || fallbackErr;
-            }
-        }
-
-        cachedToken = result.token;
-        tokenExpiry = result.expiry;
-        tokenSource = result.source;
-
-        return result.token;
-    })().finally(() => {
-        tokenPromise = null;
     });
 
-    return tokenPromise;
+    return { tracks, sessionCookie };
 }
 
-async function requestSpotifySearch(query, attempt = 0) {
-    const token = await getSpotifyToken();
-
-    try {
-        return await axios({
-            method: "GET",
-            url: "https://api.spotify.com/v1/search",
-            headers: {
-                "User-Agent": UA,
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json"
-            },
-            params: {
-                q: query,
-                type: "track",
-                limit: 20,
-                market: "ID"
-            },
-            timeout: 15_000
-        });
-    } catch (error) {
-        const status = error.response?.status;
-
-        if (status === 401 && attempt === 0) {
-            cachedToken = null;
-            tokenExpiry = 0;
-            await getSpotifyToken(true);
-            return requestSpotifySearch(query, attempt + 1);
+/**
+ * Fetch direct mp3 + cover download links for a resolved track form
+ */
+async function spotidownGetLinks(form, sessionCookie) {
+    const response = await axios.post(`${BASE_URL}/action/track`, new URLSearchParams(form).toString(), {
+        headers: {
+            'User-Agent': USER_AGENT,
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Origin': BASE_URL,
+            'Referer': `${BASE_URL}/en3`,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cookie': sessionCookie
         }
+    });
 
-        if (status === 429 && tokenSource === "anon" && attempt === 0) {
-            console.warn("Spotify search 429 (token anonim kena limit), switch ke Client Credentials...");
-            cachedToken = null;
-            tokenExpiry = 0;
-            await getSpotifyToken(true, true);
-            return requestSpotifySearch(query, attempt + 1);
-        }
-
-        throw error;
+    if (response.data.error) {
+        throw new Error(response.data.message || 'Gagal mengambil link download dari spotidown.app');
     }
+
+    const $ = cheerio.load(response.data.data);
+    const links = { mp3: null, cover: null };
+
+    $('a').each((i, elem) => {
+        const href = $(elem).attr('href');
+        const txt  = $(elem).text().trim().replace(/\s+/g, ' ').toLowerCase();
+        if (!href) return;
+
+        if (txt.includes('download mp3')) {
+            links.mp3 = href;
+        } else if (txt.includes('download cover')) {
+            links.cover = href;
+        }
+    });
+
+    return links;
 }
 
+/**
+ * High-level: search tracks by free-text query (used by SEARCH MODE)
+ * Mimics the old searchSpotify() return shape so the handler code above stays unchanged.
+ */
 async function searchSpotify(query) {
     const normalizedQuery = String(query || "").trim();
 
     if (!normalizedQuery) {
-        return {
-            success: false,
-            message: "Query pencarian tidak boleh kosong"
-        };
+        return { success: false, message: "Query pencarian tidak boleh kosong" };
     }
 
     const cacheKey = normalizedQuery.toLowerCase();
     const cached = searchCache.get(cacheKey);
-
     if (cached && Date.now() < cached.expiresAt) {
         return cached.result;
     }
@@ -330,41 +264,33 @@ async function searchSpotify(query) {
 
     const searchPromise = (async () => {
         try {
-            const { data } = await requestSpotifySearch(
-                normalizedQuery
-            );
+            const { tracks } = await spotidownResolve(normalizedQuery);
 
-            const tracks = data.tracks?.items || [];
+            const results = tracks.map(t => {
+                const meta = t.metadata || {};
+                const spotifyUrl = meta.tid
+                    ? `https://open.spotify.com/track/${meta.tid}`
+                    : null;
+
+                return {
+                    id: meta.tid || null,
+                    title: meta.name || 'Unknown Title',
+                    artists: meta.artist ? [meta.artist] : [],
+                    durationMs: null,
+                    duration: meta.duration || '0:00',
+                    spotifyUrl,
+                    album: {
+                        name: meta.album || null,
+                        cover: meta.cover || null
+                    }
+                };
+            }).filter(v => v.spotifyUrl);
 
             const result = {
-                success: true,
-                total: data.tracks?.total || 0,
-                results: tracks.map(track => ({
-                    id: track.id,
-                    title: track.name,
-                    artists:
-                        track.artists?.map(artist => artist.name)
-                        || [],
-                    artistIds:
-                        track.artists?.map(artist => artist.id)
-                        || [],
-                    durationMs: track.duration_ms,
-                    duration: msToClock(track.duration_ms),
-                    isExplicit: track.explicit,
-                    popularity: track.popularity ?? null,
-                    previewUrl: track.preview_url || null,
-                    spotifyUrl:
-                        track.external_urls?.spotify
-                        || `https://open.spotify.com/track/${track.id}`,
-                    album: {
-                        name: track.album?.name || null,
-                        id: track.album?.id || null,
-                        releaseDate:
-                            track.album?.release_date || null,
-                        cover:
-                            track.album?.images?.[0]?.url || null
-                    }
-                }))
+                success: results.length > 0,
+                total: results.length,
+                results,
+                message: results.length ? undefined : 'Tidak ada hasil ditemukan'
             };
 
             searchCache.set(cacheKey, {
@@ -374,27 +300,10 @@ async function searchSpotify(query) {
 
             return result;
         } catch (error) {
-            const retryAfter = Number(
-                error.response?.headers?.["retry-after"]
-            );
-
-            console.error("Spotify search error:", {
-                status: error.response?.status,
-                retryAfter,
-                data: error.response?.data
-            });
-
+            console.error("Spotify (spotidown) search error:", error.message);
             return {
                 success: false,
-                status: error.response?.status || 500,
-                retryAfter:
-                    Number.isFinite(retryAfter)
-                        ? retryAfter
-                        : null,
-                message:
-                    error.response?.data?.error?.message
-                    || error.message
-                    || "Gagal mencari lagu"
+                message: error.message || "Gagal mencari lagu"
             };
         } finally {
             pendingSearches.delete(cacheKey);
@@ -402,68 +311,25 @@ async function searchSpotify(query) {
     })();
 
     pendingSearches.set(cacheKey, searchPromise);
-
     return searchPromise;
 }
 
-function msToClock(ms) {
-    const s = Math.round(ms / 1000);
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
+/**
+ * High-level: resolve + download a specific Spotify track URL (used by DOWNLOAD MODE)
+ * Returns { metadata, links: { mp3, cover } }
+ */
+async function spotifyDownloadByUrl(spotifyUrl) {
+    const { tracks, sessionCookie } = await spotidownResolve(spotifyUrl);
 
-function buildCookieHeader(setCookieArr) {
-    if (!Array.isArray(setCookieArr) || setCookieArr.length === 0) {
-        throw new Error("spotmate.online tidak mengirim set-cookie header (mungkin situs down / berubah / diblokir)")
-    }
-    return setCookieArr.map(c => c.split(";")[0]).join("; ")
-}
-
-async function spotifyDownload(urls) {
-    const resp = await axios({ method: "GET", url: "https://spotmate.online" })
-    const _$ = cheerio.load(resp.data)
-    const cookieHeader = buildCookieHeader(resp.headers["set-cookie"])
-    const csrfToken = _$("meta[name='csrf-token']").attr("content")
-
-    if (!csrfToken) {
-        console.error("spotifyDownload: CSRF token tidak ditemukan di halaman spotmate.online, HTML mungkin berubah struktur")
+    if (!tracks.length) {
+        return null;
     }
 
-    const res = await axios({
-        method: "POST",
-        url   : "https://spotmate.online/convert",
-        data  : { urls },
-        headers: {
-            "Cookie"      : cookieHeader,
-            "Content-Type": "application/json",
-            "Referer"     : "https://spotmate.online/",
-            "Origin"      : "https://spotmate.online",
-            "X-Csrf-Token": csrfToken
-        }
-    })
-    return res.data
-}
+    const track = tracks[0];
+    const links = await spotidownGetLinks(track.form, sessionCookie);
 
-async function spotifyGetInfo(urls) {
-    const resp = await axios({ method: "GET", url: "https://spotmate.online" })
-    const _$ = cheerio.load(resp.data)
-    const cookieHeader = buildCookieHeader(resp.headers["set-cookie"])
-    const csrfToken = _$("meta[name='csrf-token']").attr("content")
-
-    if (!csrfToken) {
-        console.error("spotifyGetInfo: CSRF token tidak ditemukan di halaman spotmate.online, HTML mungkin berubah struktur")
-    }
-
-    const res = await axios({
-        method: "POST",
-        url   : "https://spotmate.online/getTrackData",
-        data  : { spotify_url: urls },
-        headers: {
-            "Cookie"      : cookieHeader,
-            "Content-Type": "application/json",
-            "Referer"     : "https://spotmate.online/",
-            "Origin"      : "https://spotmate.online",
-            "X-Csrf-Token": csrfToken
-        }
-    })
-    return res.data
+    return {
+        metadata: track.metadata,
+        links
+    };
 }
