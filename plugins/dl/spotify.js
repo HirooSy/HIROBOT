@@ -1,14 +1,6 @@
 import axios from "axios";
 const cheerio = (await import("cheerio"));
 import { URL_REGEX } from 'baileys';
-import fs from "fs";
-import path from "path";
-import { pipeline } from "stream/promises";
-import { randomUUID } from "crypto";
-import { spawn } from "child_process";
-
-const TMP_DOWNLOAD_DIR = path.join(process.cwd(), process.env.TMP || "data/tmp", "spotify");
-fs.mkdirSync(TMP_DOWNLOAD_DIR, { recursive: true });
 
 let handler = async(m, { conn, usedPrefix, command, text }) => {
     let chat = db.data.chats[m.chat]
@@ -67,10 +59,9 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
 
         const { metadata, links } = result
 
-        const trackName  = metadata.name || 'Unknown Title'
-        const artistName = metadata.artist || 'Unknown Artist'
-        const coverUrl   = links.cover || metadata.cover || null
-        const audioUrl   = links.mp3
+        const trackName = metadata.name || 'Unknown Title'
+        const coverUrl  = links.cover || metadata.cover || null
+        const audioUrl  = links.mp3
 
         if (!audioUrl) {
             return m.reply("- Failed to get song data.\n- Debug: link mp3 kosong, cek console log.")
@@ -86,67 +77,12 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
             }
         }
 
-        const tmpFile = path.join(TMP_DOWNLOAD_DIR, `spotify-${randomUUID()}.mp3`)
-        let sendFile = tmpFile
-        let compressedFile = null
-        try {
-            await streamToFile(audioUrl, tmpFile)
-
-            const stat = await fs.promises.stat(tmpFile)
-            const sizeMB = stat.size / 1024 / 1024
-
-            if (sizeMB > 15) {
-                compressedFile = path.join(TMP_DOWNLOAD_DIR, `spotify-${randomUUID()}-compressed.mp3`)
-                await compressAudio(tmpFile, compressedFile)
-                sendFile = compressedFile
-            }
-
-            await conn.sendMessage(m.chat, {
-                audio     : { url: sendFile },
-                mimetype  : 'audio/mpeg',
-                asDocument: chat.useDocument,
-                fileName  : `${trackName}.mp3`,
-            }, { quoted: { key: { remoteJid: "0@s.whatsapp.net" }, message: { orderMessage: { orderId: '780642630945098', thumbnail: thumbBuffer, itemCount: 666, status: 1, surface: 1,message: trackName , orderTitle: trackName, sellerJid: '0@s.whatsapp.net', token: 'AR6pyJ/fz5vRFxggGxURL7EA/vCtjKrhcJSNhHqX1iJh8A==', totalAmount1000: "0", totalCurrencyCode: "IDR"}}} })
-        } catch (err) {
-            return m.reply(`- Gagal mengirim audio.\n- Debug: ${err.message}`)
-        } finally {
-            fs.promises.unlink(tmpFile).catch(() => {})
-            if (compressedFile) fs.promises.unlink(compressedFile).catch(() => {})
-        }
-    }
-}
-
-function compressAudio(inputPath, outputPath) {
-    return new Promise((resolve, reject) => {
-        const ff = spawn('ffmpeg', [
-            '-y',
-            '-i', inputPath,
-            '-vn',
-            '-acodec', 'libmp3lame',
-            '-b:a', '128k',
-            '-ar', '44100',
-            outputPath
-        ])
-
-        let stderr = ''
-        ff.stderr.on('data', chunk => { stderr += chunk })
-
-        ff.on('error', reject)
-        ff.on('close', code => {
-            if (code === 0) return resolve()
-            reject(new Error(`ffmpeg exited with code ${code}: ${stderr.slice(-500)}`))
+        return conn.sendFile(m.chat, audioUrl, `${trackName}.mp3`, '', m, false, {
+            mimetype: 'audio/mpeg',
+            asDocument: chat.useDocument,
+            quoted: { key: { remoteJid: "0@s.whatsapp.net" }, message: { orderMessage: { orderId: '780642630945098', thumbnail: thumbBuffer, itemCount: 666, status: 1, surface: 1, message: trackName, orderTitle: trackName, sellerJid: '0@s.whatsapp.net', token: 'AR6pyJ/fz5vRFxggGxURL7EA/vCtjKrhcJSNhHqX1iJh8A==', totalAmount1000: "0", totalCurrencyCode: "IDR" } } }
         })
-    })
-}
-
-async function streamToFile(url, destPath) {
-    const response = await axios.get(url, {
-        responseType: 'stream',
-        headers: { 'User-Agent': USER_AGENT }
-    })
-
-    const writer = fs.createWriteStream(destPath)
-    await pipeline(response.data, writer)
+    }
 }
 
 handler.tags    = ["downloader"]
