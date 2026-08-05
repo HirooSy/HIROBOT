@@ -1,3 +1,16 @@
+05/Aug/2026
+- Fix spotify
+- Fix tmp issue 
+- Fix reload/watch files for lib
+
+modified files:
+- lib/config.js
+- plugins/dl/spotify.js
+- lib/converter.js
+- lib/main.js
+
+____________________
+
 04/Aug/2026
 - Added AI THINKING MODE, for complex tasks
 - SPOTIFY_TOKEN as fallback
