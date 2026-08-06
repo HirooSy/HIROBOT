@@ -2,6 +2,7 @@
 - Update AI Agent Guide (AGENT.md) to English
 - Update README.md
 - Refactor lib/ai/mcp.js
+- Update changelog update instructions in mcp.js
 
 Modified files:
 - AGENT.md
