@@ -55,7 +55,12 @@
     }
 
     body {
-      background: var(--bg);
+      background:
+        radial-gradient(ellipse 650px 380px at 8% -8%, rgba(200,40,60,0.20), transparent 60%),
+        radial-gradient(ellipse 700px 400px at 40% -5%, rgba(76,60,180,0.16), transparent 60%),
+        radial-gradient(ellipse 600px 350px at 100% 0%, rgba(30,50,140,0.18), transparent 55%),
+        var(--bg);
+      background-attachment: fixed;
       color: var(--text);
       font-family: var(--font);
       min-height: 100vh;
@@ -67,6 +72,10 @@
       z-index: 1;
       max-width: 480px;
       margin: 0 auto;
+    }
+
+    @media (min-width: 900px) {
+      .page { max-width: 1100px; }
     }
 
     #loading {
@@ -93,63 +102,106 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 4px;
+      flex-wrap: wrap;
+      gap: 14px;
     }
 
-    .header-left { display: flex; align-items: center; gap: 9px; }
-    .logo { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
-    .logo-text { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text); }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .logo { width: 28px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+    .logo-text { font-size: 15px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--text); }
 
-    .logout-btn {
-      background: transparent;
-      border: 1px solid var(--border2);
-      border-radius: 5px;
-      color: var(--muted2);
-      padding: 6px 12px;
-      font-size: 10px;
-      font-family: var(--font);
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .bell-wrap { position: relative; }
+    .bell-btn {
+      position: relative;
+      width: 26px;
+      height: 26px;
+      background: var(--surface2);
+      border: none;
+      border-radius: 50%;
+      font-size: 11px;
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s;
     }
-    .logout-btn:hover { border-color: var(--error); color: var(--error); }
+    .bell-btn svg { width: 12px; height: 12px; stroke: var(--text); fill: none; }
+    .bell-btn:hover { border-color: var(--border); }
+    .bell-dot {
+      position: absolute;
+      top: 4px;
+      right: 5px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--error);
+      box-shadow: 0 0 6px var(--error);
+    }
+    .bell-tooltip {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 240px;
+      max-height: 320px;
+      overflow-y: auto;
+      background: var(--surface2);
+      border: none;
+      color: var(--text);
+      font-size: 11px;
+      line-height: 1.5;
+      padding: 12px 14px;
+      border-radius: 8px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      z-index: 30;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .bell-tooltip.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .bell-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      right: 10px;
+      border: 5px solid transparent;
+      border-bottom-color: var(--surface2);
+    }
+    .bell-tooltip .bt-empty { color: var(--muted); }
+    .bell-tooltip .bt-item { padding: 6px 0; border-bottom: none; }
+    .bell-tooltip .bt-item:last-child { border-bottom: none; }
+    .bell-tooltip .bt-time { font-size: 9px; color: var(--muted); margin-top: 2px; }
 
     /* Navigation */
     .nav-tabs {
       display: flex;
-      gap: 4px;
-      margin-bottom: 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 4px;
-      overflow-x: auto;
-      flex-wrap: nowrap;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .nav-btn {
-      flex: 1;
-      min-width: 50px;
-      background: transparent;
+      background: var(--surface2);
       border: none;
-      border-radius: 5px;
-      padding: 8px 6px;
-      font-size: 8px;
+      border-radius: 6px;
+      padding: 7px 13px;
+      font-size: 9px;
       font-weight: 700;
       font-family: var(--font);
       letter-spacing: 1px;
-      text-transform: uppercase;
+      text-transform: none;
       color: var(--muted2);
       cursor: pointer;
       transition: all 0.15s ease;
       white-space: nowrap;
     }
 
-    .nav-btn.active { background: var(--accent); color: #080808; }
-    .nav-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
+    .nav-btn.active { background: var(--accent); color: #080808; border-color: var(--accent); }
+    .nav-btn:not(.active):hover { background: var(--surface); border-color: var(--border); color: var(--text); }
 
     .tab-panel { display: none; animation: fadeUp 0.25s ease; }
     .tab-panel.active-panel { display: block; }
@@ -157,7 +209,7 @@
     /* Cards */
     .card {
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: 7px;
       padding: 16px;
       margin-bottom: 10px;
@@ -186,82 +238,209 @@
     .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
     /* Profile */
-    .profile-top {
+    .profile-card {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(155deg, #141414 0%, #0d0d0d 100%);
+      border: none;
+      padding: 0;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      right: -20%;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .profile-hero {
       display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 12px;
+      align-items: flex-start;
+      position: relative;
+      z-index: 1;
     }
 
     .avatar-wrap {
-      width: 56px;
-      height: 56px;
+      width: 40%;
       flex-shrink: 0;
       position: relative;
+      background: var(--surface2);
+      aspect-ratio: 1 / 1;
+      max-height: 170px;
+    }
+    .avatar-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 55%, #0d0d0d 100%);
+      z-index: 2;
+      pointer-events: none;
     }
 
     .avatar {
-      width: 56px; height: 56px;
+      width: 100%; height: 100%;
       background: var(--surface2);
-      border: 2px solid var(--border2);
-      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 32px;
       font-weight: 700;
-      color: var(--text);
+      color: var(--muted2);
       position: absolute;
       inset: 0;
     }
 
     #profile-pic {
-      width: 56px; height: 56px;
-      border-radius: 50%;
+      width: 100%; height: 100%;
       object-fit: cover;
-      border: 2px solid var(--border2);
       position: absolute;
       inset: 0;
       z-index: 1;
       display: none;
     }
 
-    .profile-info { flex: 1; min-width: 0; }
-    .profile-name { font-size: 16px; font-weight: 700; color: var(--text); }
-    .profile-sub { font-size: 10px; color: var(--muted2); margin-top: 2px; letter-spacing: 0.5px; }
-
-    .premium-wrap { position: relative; flex-shrink: 0; }
-    .premium-badge {
-      width: 20px;
-      height: 20px;
-      border-radius: 6px;
-      background: rgba(249,168,37,0.12);
-      border: 1px solid rgba(249,168,37,0.4);
-      color: #f9a825;
-      font-size: 9px;
-      cursor: pointer;
+    .profile-hero-info {
+      flex: 1;
+      min-width: 0;
+      padding: 14px 18px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
+      gap: 9px;
     }
-    .premium-tooltip {
+
+    .profile-hero-top { text-align: center; }
+    .profile-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge-row { display: flex; flex-direction: column; gap: 4px; }
+    .badge-row-label { font-size: 7px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .badge-icons { display: flex; align-items: center; gap: 10px; }
+    .badge-icon-wrap { position: relative; }
+    .badge-row-icon {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-size: 14px;
+      font-family: var(--font);
+      color: var(--muted2);
+      cursor: default;
+      line-height: 1;
+    }
+    .badge-row-icon.clickable { cursor: pointer; }
+    .badge-row-icon.badge-active { color: #ffffff; }
+    .badge-row-icon.badge-developer { color: #4ade80; font-size: 12px; }
+    .badge-tooltip {
       position: absolute;
-      top: -8px;
-      right: 0;
-      transform: translateY(-100%);
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
       background: var(--surface2);
-      border: 1px solid var(--border2);
       color: var(--text);
       font-size: 10px;
-      font-weight: 600;
+      font-weight: 400;
       letter-spacing: 0.5px;
       padding: 7px 12px;
       border-radius: 6px;
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      z-index: 25;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    }
+    .badge-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--surface2);
+    }
+    .badge-tooltip.open { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+    .profile-hero-bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .divider-lg { height: 1px; background: var(--border); margin: 24px 0; }
+
+    .home-grid {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .daily-bonus-card { flex: 1; min-width: 0; }
+    .menu-col { flex: 1.4; min-width: 0; }
+    @media (max-width: 480px) {
+      .home-grid { flex-direction: column; }
+    }
+
+    .daily-bonus-card { position: relative; padding-bottom: 48px; }
+    .daily-claim-btn { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); }
+
+    .menu-col { display: flex; flex-direction: column; gap: 7px; }
+
+    .section-heading {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 10px;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .premium-wrap { display: none !important; }
+    .premium-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: linear-gradient(155deg, rgba(249,168,37,0.16), rgba(249,168,37,0.06));
+      border: none;
+      color: #f9a825;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .premium-badge:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(249,168,37,0.15); }
+    .premium-tooltip {
+      position: absolute;
+      top: -8px;
+      right: 0;
+      transform: translateY(-100%);
+      background: var(--surface2);
+      border: none;
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 9px 13px;
+      border-radius: 7px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
       transition: opacity 0.15s ease;
       z-index: 20;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
     }
     .premium-tooltip::after {
       content: '';
@@ -272,6 +451,13 @@
       border-top-color: var(--surface2);
     }
     .premium-tooltip.open { opacity: 1; visibility: visible; }
+    .premium-tooltip .pt-label { color: var(--muted2); font-weight: 500; margin-right: 5px; }
+    .premium-tooltip .pt-value { color: #f9a825; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .shimmer-premium-white {
+      color: #ffffff;
+      font-weight: 700;
+    }
 
     .shimmer-premium {
       background: linear-gradient(90deg, #f9a825 0%, #ffe082 40%, #fff9c4 47%, #ffffff 50%, #fff9c4 53%, #ffe082 60%, #f9a825 100%);
@@ -293,132 +479,231 @@
       font-weight: 700;
     }
 
-    /* Stats Grid - All white */
+    /* Stats Grid */
     .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      margin-bottom: 12px;
+      display: flex;
+      justify-content: center;
+      gap: 26px;
+      margin-bottom: 2px;
+      position: relative;
+      z-index: 1;
     }
 
     .stat-item {
-      background: var(--surface2);
-      padding: 12px 6px;
       text-align: center;
+      padding: 2px;
     }
 
     .stat-value {
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 14px;
+      font-weight: 400;
       color: var(--text);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 1.5px;
     }
 
     .stat-label {
       font-size: 7px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
+      font-weight: 400;
+      color: var(--muted2);
+      text-transform: capitalize;
       letter-spacing: 1.5px;
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     /* EXP Bar */
-    .exp-bar-wrap { margin-top: 8px; }
-    .exp-bar-header { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted2); margin-bottom: 5px; letter-spacing: 0.5px; }
+    .exp-bar-wrap { position: relative; z-index: 1; }
+    .exp-bar-header { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted2); margin-bottom: 4px; letter-spacing: 0.5px; }
     .exp-bar-track { height: 3px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
-    .exp-bar-fill { height: 100%; background: var(--text); border-radius: 99px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); }
-    .exp-bar-sub { text-align: right; font-size: 9px; color: var(--muted); letter-spacing: 0.5px; margin-top: 4px; }
+    .exp-bar-fill {
+      height: 100%;
+      background: var(--text);
+      border-radius: 99px;
+      transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+    }
+    .exp-bar-sub { font-size: 9px; color: var(--muted2); letter-spacing: 0.5px; }
 
     .tierup-btn {
-      width: 100%;
-      margin-top: 10px;
-      padding: 10px;
-      background: var(--accent);
-      color: #080808;
+      padding: 8px 16px;
+      background: var(--surface2);
+      color: var(--text);
       border: none;
-      border-radius: 5px;
-      font-size: 10px;
+      border-radius: 6px;
+      font-size: 8px;
       font-weight: 700;
       font-family: var(--font);
-      letter-spacing: 2px;
+      letter-spacing: 1px;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background 0.15s, opacity 0.15s;
+      transition: background 0.15s, opacity 0.15s, transform 0.1s;
       display: none;
+      position: relative;
+      z-index: 1;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
-    .tierup-btn:hover:not(:disabled) { background: #cccccc; }
+    .tierup-btn:hover:not(:disabled) { background: var(--border2); }
+    .tierup-btn:active:not(:disabled) { transform: scale(0.98); }
     .tierup-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    /* ============ FAB ============ */
-    .fab-container {
-      position: fixed;
-      left: 50%;
-      bottom: 24px;
-      transform: translateX(-50%);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      z-index: 150;
-    }
-    .fab-container.visible { display: flex; }
-    .fab-container.tab-hidden { display: none; }
-    .fab-main {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
+    /* Menu buttons (Gacha/Shop/Info) */
+    .menu-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+    .menu-btn {
+      width: 100%;
+      padding: 8px;
       background: var(--accent);
-      color: #080808;
       border: none;
-      font-size: 22px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-      transition: transform 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-      outline: none;
-    }
-    .fab-main.open { transform: rotate(135deg); }
-    .fab-menu {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(8px);
-      transition: all 0.2s ease;
-    }
-    .fab-menu.open { opacity: 1; visibility: visible; transform: translateY(0); }
-    .fab-sub-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
+      border-radius: 6px;
+      color: #080808;
       font-family: var(--font);
-      -webkit-tap-highlight-color: transparent;
-      outline: none;
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      letter-spacing: 2.5px;
       text-transform: uppercase;
-      padding: 8px 14px;
-      border-radius: 20px;
       cursor: pointer;
-      white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      transition: all 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
     }
-    .fab-sub-btn:hover { background: var(--surface); border-color: var(--border2); }
+    .menu-btn:hover { opacity: 0.85; }
+    .menu-btn.active { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+
+    .search-box {
+      position: relative;
+      margin-bottom: 8px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted2);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 8px 10px 8px 30px;
+      background: var(--surface);
+      border: none;
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 10px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--border2); }
+    .search-input::placeholder { color: var(--muted); }
+
+    .section-panel { display: none; animation: fadeUp 0.2s ease; margin-bottom: 10px; }
+    .section-panel.open { display: block; }
+
+    /* Shop */
+    .shop-grid { display: flex; flex-direction: column; gap: 10px; }
+    .shop-card { margin-bottom: 0; }
+    .shop-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .shop-card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .shop-card-price { font-size: 9px; color: var(--muted2); background: var(--surface2); border: none; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px; }
+    .shop-slider {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 3px;
+      background: var(--border2);
+      border-radius: 99px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .shop-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--text);
+      cursor: pointer;
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+    }
+    .shop-slider::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--text);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+    }
+    .shop-card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .shop-card-qty { font-size: 11px; color: var(--muted2); }
+
+    /* Badge Info */
+    .badge-info-list { display: flex; flex-direction: column; gap: 14px; }
+    .badge-info-item { display: flex; align-items: center; gap: 12px; }
+    .badge-info-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+    .badge-info-name { font-size: 12px; font-weight: 700; color: var(--text); }
+    .badge-info-desc { font-size: 10px; color: var(--muted2); margin-top: 2px; }
+    .badge-info-note { font-size: 10px; color: var(--muted2); line-height: 1.5; }
+
+    /* Search results */
+    .search-results-label { font-size: 9px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin: 4px 0 8px; }
+    .search-result-card {
+      background: var(--surface);
+      border: none;
+      border-radius: 7px;
+      padding: 0;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: stretch;
+      min-height: 76px;
+      overflow: hidden;
+    }
+    .sr-avatar-wrap {
+      width: 30%;
+      max-width: 120px;
+      flex-shrink: 0;
+      position: relative;
+      background: var(--surface2);
+    }
+    .sr-avatar-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 55%, var(--surface) 100%);
+      pointer-events: none;
+    }
+    .sr-avatar {
+      width: 100%; height: 100%;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--muted2);
+      object-fit: cover;
+    }
+    .sr-info { flex: 1; min-width: 0; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+    .sr-name { font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sr-badges { display: flex; align-items: center; gap: 8px; }
+    .sr-badge-icon { font-size: 11px; font-weight: 400; color: var(--muted2); line-height: 1; }
+    .sr-badge-icon.sr-badge-premium { color: #ffffff; }
+    .sr-badge-icon.sr-badge-developer { color: #4ade80; font-size: 10px; }
+    .sr-tier { text-align: center; flex-shrink: 0; align-self: center; padding: 10px 14px; }
+    .sr-tier-value { font-size: 11px; font-weight: 400; color: var(--text); white-space: nowrap; }
+    .sr-tier-label { font-size: 6px; font-weight: 400; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px; }
+    .search-empty { font-size: 10px; font-weight: 400; color: var(--muted); text-align: center; padding: 16px; }
+
+    /* ============ FAB (removed — replaced by menu-list/section-panel) ============ */
 
     .qty-btn {
       width: 26px;
       height: 26px;
       border-radius: 50%;
       background: var(--surface2);
-      border: 1px solid var(--border);
+      border: none;
       color: var(--text);
       font-size: 14px;
       font-weight: 700;
@@ -460,7 +745,7 @@
     .btn.loading .btn-text { display: none; }
     .btn.loading .spinner { display: block; }
 
-    .btn-secondary { background: transparent; border: 1px solid var(--border2); color: var(--text); }
+    .btn-secondary { background: transparent; border: none; color: var(--text); }
     .btn-secondary:hover:not(:disabled) { background: var(--surface2); border-color: var(--border); }
     .btn-success { background: var(--success); color: #080808; }
     .btn-success:hover:not(:disabled) { background: #44bb66; }
@@ -471,13 +756,14 @@
     .btn-small { padding: 6px 12px; font-size: 8px; width: auto; display: inline-block; }
 
     .btn-success.ready { background: var(--success); color: #080808; }
-    .btn-success.claimed { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); cursor: not-allowed; }
+    .btn-success.claimed { background: var(--surface2); color: var(--muted); border: none; cursor: not-allowed; }
+    .btn.claimed { background: var(--surface2); color: var(--muted); border: none; cursor: not-allowed; }
 
     .input-field {
       width: 100%;
       padding: 8px 10px;
       background: var(--surface2);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: 5px;
       color: var(--text);
       font-size: 12px;
@@ -561,7 +847,7 @@
       width: 55px;
       height: 55px;
       background: var(--surface2);
-      border: 2px solid var(--border2);
+      border: none;
       border-radius: 10px;
       display: flex;
       align-items: center;
@@ -582,7 +868,7 @@
     .prize-button {
       width: 100%;
       background: transparent;
-      border: 1px solid var(--border2);
+      border: none;
       border-radius: 8px;
       padding: 10px 0;
       font-size: 16px;
@@ -601,8 +887,8 @@
       animation: fadeUp 0.3s ease;
       margin-top: 8px;
     }
-    .slot-result.win { background: rgba(68,255,102,0.1); border: 1px solid rgba(68,255,102,0.2); color: var(--success); }
-    .slot-result.lose { background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.2); color: var(--error); }
+    .slot-result.win { background: rgba(68,255,102,0.1); border: none; color: var(--success); }
+    .slot-result.lose { background: rgba(255,68,68,0.1); border: none; color: var(--error); }
 
     /* Prize Modal */
     .prize-modal {
@@ -612,7 +898,7 @@
       transform: translateY(-50%) translateX(120%);
       width: 260px;
       background: var(--surface);
-      border: 1px solid var(--border2);
+      border: none;
       border-radius: 12px;
       z-index: 300;
       transition: transform 0.3s ease;
@@ -620,11 +906,11 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     .prize-modal.open { transform: translateY(-50%) translateX(0); }
-    .prize-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .prize-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: none; }
     .prize-modal-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); }
     .prize-modal-close { background: transparent; border: none; color: var(--muted2); font-size: 18px; cursor: pointer; padding: 0 6px; line-height: 1; }
     .prize-list { display: flex; flex-direction: column; gap: 8px; }
-    .prize-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 10px; }
+    .prize-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: none; font-size: 10px; }
     .prize-item:last-child { border-bottom: none; }
     .prize-icons { display: flex; gap: 4px; font-size: 14px; font-weight: 600; }
     .prize-value.positive { color: var(--success); }
@@ -645,7 +931,7 @@
     /* ============ ACCOUNT ============ */
     .db-user-item {
       background: var(--surface2);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: 6px;
       margin-bottom: 8px;
       overflow: hidden;
@@ -666,7 +952,7 @@
     .db-user-fields {
       display: none;
       padding: 12px;
-      border-top: 1px solid var(--border);
+      border-top: none;
       background: rgba(0,0,0,0.2);
     }
     .db-user-fields.open { display: block; }
@@ -689,7 +975,7 @@
     .db-field-input {
       height: 28px;
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: 4px;
       color: var(--text);
       font-family: var(--font);
@@ -722,7 +1008,7 @@
       bottom: 22px; left: 50%;
       transform: translateX(-50%) translateY(16px);
       background: var(--surface2);
-      border: 1px solid var(--border2);
+      border: none;
       color: var(--text);
       padding: 10px 18px;
       border-radius: 5px;
@@ -754,7 +1040,7 @@
 
     .modal {
       background: var(--surface);
-      border: 1px solid var(--border2);
+      border: none;
       border-radius: 8px;
       padding: 28px 22px;
       max-width: 360px;
@@ -808,7 +1094,7 @@
       gap: 8px;
       padding: 8px 10px;
       background: rgba(0,0,0,0.2);
-      border: 1px solid var(--border);
+      border: none;
       border-radius: 5px;
     }
     .gc-item-code { font-size: 11px; font-weight: 700; color: var(--text); letter-spacing: 1px; }
@@ -816,7 +1102,7 @@
 
     .gc-del-btn {
       background: transparent;
-      border: 1px solid rgba(255,85,85,0.3);
+      border: none;
       border-radius: 4px;
       color: var(--error);
       font-size: 12px;
@@ -832,8 +1118,15 @@
     .gc-del-btn:hover { background: rgba(255,85,85,0.1); }
 
     @media (max-width: 420px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .nav-btn { font-size: 7px; padding: 6px 4px; letter-spacing: 0.5px; }
+      .stats-grid { flex-wrap: wrap; gap: 18px; }
+      .nav-btn { font-size: 10px; padding: 9px 14px; letter-spacing: 1px; }
+      .logo-text { font-size: 14px; letter-spacing: 3px; }
+      .profile-hero { flex-direction: column; }
+      .avatar-wrap { width: 100%; aspect-ratio: 16 / 9; max-height: 160px; }
+      .avatar { font-size: 32px; }
+      .profile-hero-bottom { flex-direction: column; align-items: stretch; }
+      .tierup-btn { width: 100%; }
+      .section-heading { font-size: 20px; letter-spacing: 6px; }
     }
   </style>
 </head>
@@ -847,88 +1140,209 @@
   <div id="content">
     <!-- Header -->
     <div class="header">
-      <div class="header-left">
+      <div class="header-left" onclick="window.location.href='/'" style="cursor:pointer">
         <div class="logo">
           <img src="" alt="Bot" id="header-logo-img" draggable="false" oncontextmenu="return false">
         </div>
         <span class="logo-text" id="header-logo-text">HIRO BOT</span>
       </div>
-      <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
-
-    <!-- Navigation Tabs -->
-    <div class="nav-tabs">
-      <button class="nav-btn active" data-tab="home">Home</button>
-      <button class="nav-btn" data-tab="account">Account</button>
-      <button class="nav-btn" data-tab="database" id="db-tab" style="display:none">DB</button>
+      <div class="header-right">
+        <div class="bell-wrap" id="bell-wrap">
+          <button class="bell-btn" id="bell-btn" onclick="toggleBellTooltip()">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="bell-dot" id="bell-dot" style="display:none"></span>
+          </button>
+          <div class="bell-tooltip" id="bell-tooltip"></div>
+        </div>
+        <div class="nav-tabs">
+          <button class="nav-btn active" data-tab="home">Home</button>
+          <button class="nav-btn" data-tab="account">Account</button>
+          <button class="nav-btn" data-tab="database" id="db-tab" style="display:none">DB</button>
+        </div>
+      </div>
     </div>
 
     <!-- ==================== TAB: HOME ==================== -->
     <div id="tab-home" class="tab-panel active-panel">
       <!-- Profile Card -->
-      <div class="card">
-        <div class="profile-top">
+      <div class="card profile-card">
+        <div class="profile-hero">
           <div class="avatar-wrap">
             <div class="avatar" id="avatar-letter">?</div>
             <img id="profile-pic" src="" alt="">
           </div>
-          <div class="profile-info">
-            <div class="profile-name" id="profile-name">-</div>
-            <div class="profile-sub" id="profile-sub">USER</div>
-          </div>
-          <div class="premium-wrap" id="premium-wrap" style="display:none">
-            <button class="premium-badge" id="premium-badge" onclick="togglePremiumTooltip()">⭐</button>
-            <div class="premium-tooltip" id="premium-tooltip"></div>
-          </div>
-        </div>
+          <div class="profile-hero-info">
+            <div class="profile-hero-top">
+              <div class="profile-name" id="profile-name">-</div>
+              <div class="premium-wrap" id="premium-wrap" style="display:none">
+                <button class="premium-badge" id="premium-badge" onclick="togglePremiumTooltip()" style="display:none">⭐</button>
+                <div class="premium-tooltip" id="premium-tooltip"></div>
+              </div>
+            </div>
 
-        <!-- Stats - All White -->
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value" id="stat-tier">✧</div>
-            <div class="stat-label">Tier</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="stat-exp">0</div>
-            <div class="stat-label">EXP</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="stat-gems">0</div>
-            <div class="stat-label" style="color:var(--gem)">♦ Gems</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="stat-limit">0</div>
-            <div class="stat-label">Limit</div>
-          </div>
-        </div>
+            <!-- Stats -->
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-value" id="stat-tier">✧</div>
+                <div class="stat-label">Tier</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="stat-exp">0</div>
+                <div class="stat-label">Exp</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="stat-gems">0</div>
+                <div class="stat-label">Gem</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="stat-limit">0</div>
+                <div class="stat-label">Limit</div>
+              </div>
+            </div>
 
-        <!-- EXP Bar -->
-        <div class="exp-bar-wrap" id="exp-bar-wrap">
-          <div class="exp-bar-header">
-            <span id="exp-bar-label">Progress to next tier</span>
-            <span id="exp-bar-pct">0%</span>
+            <!-- EXP Bar -->
+            <div class="exp-bar-wrap" id="exp-bar-wrap">
+              <div class="exp-bar-track">
+                <div class="exp-bar-fill" id="exp-bar-fill" style="width:0%"></div>
+              </div>
+              <div class="exp-bar-header">
+                <span id="exp-bar-sub"></span>
+                <span id="exp-bar-pct">0%</span>
+              </div>
+            </div>
+
+            <div class="profile-hero-bottom">
+              <div class="badge-row">
+                <div class="badge-row-label">Badge</div>
+                <div class="badge-icons" id="badge-icons"></div>
+              </div>
+              <button class="tierup-btn" id="tierup-btn" onclick="doTierUp()">
+                <span class="btn-text">↑ Tier Up</span>
+                <div class="spinner"></div>
+              </button>
+            </div>
           </div>
-          <div class="exp-bar-track">
-            <div class="exp-bar-fill" id="exp-bar-fill" style="width:0%"></div>
-          </div>
-          <div id="exp-bar-sub" class="exp-bar-sub"></div>
         </div>
-        <button class="tierup-btn" id="tierup-btn" onclick="doTierUp()">
-          <span class="btn-text">Tier Up</span>
-          <div class="spinner"></div>
-        </button>
       </div>
 
-      <!-- Daily Reward -->
-      <div class="card">
-        <div class="flex-between">
-          <div>
-            <div class="text-md font-bold">Daily Bonus</div>
-            <div class="text-sm text-muted2">+500 EXP · +5 Gems</div>
-            <div class="text-xs text-warn" id="reward-timer">Ready to claim!</div>
-          </div>
-          <button class="btn btn-small btn-success ready" id="reward-btn" onclick="claimReward()">Claim</button>
+      <div class="divider-lg"></div>
+
+      <div class="home-grid">
+        <!-- Daily Reward -->
+        <div class="card daily-bonus-card">
+          <div class="text-md font-bold">Daily Bonus</div>
+          <div class="text-sm text-muted2">500 Exp . 5 Gems</div>
+          <button class="btn btn-small ready daily-claim-btn" id="reward-btn" onclick="claimReward()">Claim</button>
         </div>
+
+        <!-- Menu -->
+        <div class="menu-col">
+          <div class="menu-list">
+            <button class="menu-btn" id="menu-gacha" onclick="toggleSection('gacha')">Gacha</button>
+            <button class="menu-btn" id="menu-shop" onclick="toggleSection('shop')">Shop</button>
+            <button class="menu-btn" id="menu-info" onclick="toggleSection('info')">Info</button>
+          </div>
+          <div class="search-box">
+            <span class="search-icon"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+            <input type="text" id="user-search-input" class="search-input" placeholder="Search user by their number/username" oninput="onUserSearchInput()">
+          </div>
+        </div>
+      </div>
+
+      <div class="divider-lg" id="section-divider" style="display:none"></div>
+
+      <!-- ============ SECTION: GACHA ============ -->
+      <div class="section-panel" id="section-gacha">
+        <div class="section-heading">GACHA</div>
+        <div class="card">
+          <div class="card-title">♣ Slot</div>
+          <div class="slot-machine">
+            <div class="slot-row">
+              <div class="slot-spin-btn">
+                <button class="spin-button" id="slot-btn" onclick="spinSlot()">SPIN</button>
+              </div>
+              <div class="slot-display">
+                <div class="slot-box" id="slot1">✿</div>
+                <div class="slot-box" id="slot2">♦</div>
+                <div class="slot-box" id="slot3">7</div>
+              </div>
+              <div class="slot-prize-btn">
+                <button class="prize-button" onclick="openPrizeModal()">&lt;</button>
+              </div>
+            </div>
+            <div class="slot-cost-info">⚡ 200 EXP per spin</div>
+            <div class="slot-cost-info" style="color:var(--muted2);margin-top:-8px">🛡 Pity: <span id="pity-count">0</span>/100 losses</div>
+            <div id="slot-result" class="slot-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SECTION: SHOP ============ -->
+      <div class="section-panel" id="section-shop">
+        <div class="section-heading">SHOP</div>
+        <div class="shop-grid">
+          <div class="card shop-card">
+            <div class="shop-card-header">
+              <span class="shop-card-title">Limit</span>
+              <span class="shop-card-price">1 Gem / Limit</span>
+            </div>
+            <input type="range" class="shop-slider" id="limit-slider" min="1" max="1" value="1" oninput="onLimitSliderInput()">
+            <div class="shop-card-footer">
+              <span class="shop-card-qty" id="limit-qty-label">5 limits</span>
+              <button class="btn btn-small btn-flat" onclick="buyLimit()">Buy</button>
+            </div>
+          </div>
+          <div class="card shop-card">
+            <div class="shop-card-header">
+              <span class="shop-card-title">Premium</span>
+              <span class="shop-card-price">100 Gem / week</span>
+            </div>
+            <input type="range" class="shop-slider" id="premium-slider" min="1" max="1" value="1" oninput="onPremiumSliderInput()">
+            <div class="shop-card-footer">
+              <span class="shop-card-qty" id="premium-qty-label">1 week</span>
+              <button class="btn btn-small btn-flat" onclick="buyPremium()">Buy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SECTION: INFO ============ -->
+      <div class="section-panel" id="section-info">
+        <div class="section-heading">INFO</div>
+        <div class="card">
+          <div class="card-title">Badge Info</div>
+          <div class="badge-info-list">
+            <div class="badge-info-item">
+              <span class="badge-info-icon">✦</span>
+              <div>
+                <div class="badge-info-name">Newcomer</div>
+                <div class="badge-info-desc">0–1 month of continuous premium.</div>
+              </div>
+            </div>
+            <div class="badge-info-item">
+              <span class="badge-info-icon shimmer-gold">✦</span>
+              <div>
+                <div class="badge-info-name shimmer-gold">Gold Streak</div>
+                <div class="badge-info-desc">2+ months of continuous premium.</div>
+              </div>
+            </div>
+            <div class="badge-info-item">
+              <span class="badge-info-icon shimmer-diamond">✦</span>
+              <div>
+                <div class="badge-info-name shimmer-diamond">Diamond Streak</div>
+                <div class="badge-info-desc">4+ months of continuous premium.</div>
+              </div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="badge-info-note">Missing a renewal breaks your streak, but you get a 1-day grace period after expiry to renew and keep it alive.</div>
+        </div>
+      </div>
+
+      <!-- ============ SEARCH RESULTS ============ -->
+      <div class="section-panel" id="section-search-results" style="display:none">
+        <div class="search-results-label">Search Results</div>
+        <div id="search-results-list"></div>
       </div>
 
     </div>
@@ -963,6 +1377,11 @@
           <div class="spinner"></div>
         </button>
         <div id="gc-result" style="display:none;margin-top:10px;padding:10px;border-radius:5px;text-align:center;font-size:11px;font-weight:600;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Logout</div>
+        <button class="btn btn-secondary mt-8" onclick="logout()">Logout</button>
       </div>
     </div>
 
@@ -1012,7 +1431,7 @@
       <div class="prize-item"><div class="prize-icons">✿ ✿ ✿</div><div class="prize-value positive">+500 EXP <span style="font-size:8px;color:var(--muted2)">4%</span></div></div>
       <div class="prize-item"><div class="prize-icons">× × ×</div><div class="prize-value negative">−300 EXP <span style="font-size:8px;color:var(--muted2)">~30%</span></div></div>
       <div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">−200 EXP <span style="font-size:8px;color:var(--muted2)">~57.9%</span></div></div>
-      <div class="prize-item" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="prize-icons" style="font-size:10px;color:var(--warn)">⭐ PITY</div><div class="prize-value" style="font-size:9px;color:var(--warn)">Guaranteed ✦/7/♦ every 100 losses</div></div>
+      <div class="prize-item" style="border-top: none;margin-top:4px;padding-top:8px"><div class="prize-icons" style="font-size:10px;color:var(--warn)">⭐ PITY</div><div class="prize-value" style="font-size:9px;color:var(--warn)">Guaranteed ✦/7/♦ every 100 losses</div></div>
     </div>
   </div>
 
@@ -1024,78 +1443,6 @@
       <div class="modal-body" id="modal-body"></div>
       <button class="modal-close" onclick="closeModal()">OK</button>
     </div>
-  </div>
-
-  <!-- Gacha (Slot) Modal -->
-  <div class="modal-overlay" id="gacha-modal">
-    <div class="modal">
-      <div class="modal-title">♣ SLOT</div>
-      <div class="modal-body">
-        <div class="slot-machine">
-          <div class="slot-row">
-            <div class="slot-spin-btn">
-              <button class="spin-button" id="slot-btn" onclick="spinSlot()">SPIN</button>
-            </div>
-            <div class="slot-display">
-              <div class="slot-box" id="slot1">✿</div>
-              <div class="slot-box" id="slot2">♦</div>
-              <div class="slot-box" id="slot3">7</div>
-            </div>
-            <div class="slot-prize-btn">
-              <button class="prize-button" onclick="openPrizeModal()">&lt;</button>
-            </div>
-          </div>
-          <div class="slot-cost-info">⚡ 200 EXP per spin</div>
-          <div class="slot-cost-info" style="color:var(--muted2);margin-top:-8px">🛡 Pity: <span id="pity-count">0</span>/100 losses</div>
-          <div id="slot-result" class="slot-result"></div>
-        </div>
-      </div>
-      <button class="modal-close" onclick="closeGachaModal()">Close</button>
-    </div>
-  </div>
-
-  <!-- Buy Limit Modal -->
-  <div class="modal-overlay" id="limit-modal">
-    <div class="modal modal-buy">
-      <div class="modal-buy-title">BUY LIMIT</div>
-      <div class="modal-buy-qty">
-        <span class="qty-display" id="limit-qty-display">0</span>
-        <button class="qty-btn" id="limit-qty-minus" onclick="changeLimitQty(-1)">−</button>
-        <button class="qty-btn" id="limit-qty-plus" onclick="changeLimitQty(1)">+</button>
-      </div>
-      <div class="modal-buy-sub">1 ♦ / limit</div>
-      <div class="modal-buy-actions">
-        <button class="btn btn-small btn-secondary" onclick="closeLimitModal()">Cancel</button>
-        <button class="btn btn-small btn-flat" onclick="buyLimit()">Buy</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Buy Premium Modal -->
-  <div class="modal-overlay" id="premium-modal">
-    <div class="modal modal-buy">
-      <div class="modal-buy-title">BUY PREMIUM</div>
-      <div class="modal-buy-qty">
-        <span class="qty-display" id="premium-qty-display">0</span>
-        <button class="qty-btn" id="premium-qty-minus" onclick="changePremiumQty(-1)">−</button>
-        <button class="qty-btn" id="premium-qty-plus" onclick="changePremiumQty(1)">+</button>
-      </div>
-      <div class="modal-buy-sub">100 ♦ / week</div>
-      <div class="modal-buy-actions">
-        <button class="btn btn-small btn-secondary" onclick="closePremiumModal()">Cancel</button>
-        <button class="btn btn-small btn-flat" onclick="buyPremium()">Buy</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Floating Action Button -->
-  <div class="fab-container">
-    <div class="fab-menu" id="fab-menu">
-      <button class="fab-sub-btn" onclick="openGachaModal()">Gacha</button>
-      <button class="fab-sub-btn" onclick="openLimitModal()">Limit</button>
-      <button class="fab-sub-btn" onclick="openPremiumModal()">Premium</button>
-    </div>
-    <button class="fab-main" id="fab-main" onclick="toggleFab()">✦</button>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -1131,8 +1478,6 @@ let currentLevel = 0
 let currentLimit = 0
 let currentGems = 0
 let currentPremiumTime = 0
-let limitBuyQty = 0
-let premiumBuyQty = 0
 let isOwner = false
 let timerInterval = null
 let shopResetAt = null
@@ -1216,8 +1561,6 @@ function switchTab(tabId) {
   document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active-panel'))
   document.getElementById(`tab-${tabId}`).classList.add('active-panel')
 
-  document.querySelector('.fab-container').classList.toggle('tab-hidden', tabId !== 'home')
-
   if (tabId === 'database' && isOwner) { loadDatabaseData(); loadGiftCodes() }
 }
 
@@ -1239,19 +1582,30 @@ function closePrizeModal() {
 // ============ FAB ============
 // ============ PREMIUM TOOLTIP ============
 function formatPremiumRemaining(ms) {
-  if (ms <= 0) return '0m'
-  const totalMinutes = Math.floor(ms / 60000)
-  const totalDays = Math.floor(totalMinutes / 1440)
-  const minutesOfDay = totalMinutes % 1440
+  if (ms <= 0) return 'Expired'
+  const totalSeconds = Math.floor(ms / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
 
-  const months = Math.floor(totalDays / 30)
-  const days = totalDays % 30
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  if (minutes > 0) return `${minutes}m ${seconds}s`
+  return `${seconds}s`
+}
 
-  const parts = []
-  if (months > 0) parts.push(`${months}mo`)
-  if (days > 0) parts.push(`${days}d`)
-  if (parts.length === 0) parts.push(`${minutesOfDay}m`)
-  return parts.join(' ')
+let premiumTooltipInterval = null
+
+function tickPremiumTooltip() {
+  const tooltip = document.getElementById('premium-tooltip')
+  if (!tooltip || !tooltip.classList.contains('open')) return
+  const remaining = currentPremiumTime - Date.now()
+  tooltip.innerHTML = `<span class="pt-label">Premium expires in</span><span class="pt-value">${formatPremiumRemaining(remaining)}</span>`
+  if (remaining <= 0) {
+    clearInterval(premiumTooltipInterval)
+    premiumTooltipInterval = null
+  }
 }
 
 function togglePremiumTooltip() {
@@ -1259,63 +1613,77 @@ function togglePremiumTooltip() {
   const isOpen = tooltip.classList.contains('open')
   if (isOpen) {
     tooltip.classList.remove('open')
+    if (premiumTooltipInterval) { clearInterval(premiumTooltipInterval); premiumTooltipInterval = null }
     return
   }
-  const remaining = currentPremiumTime - Date.now()
-  tooltip.textContent = `Premium: ${formatPremiumRemaining(remaining)} left`
+  tickPremiumTooltip()
   tooltip.classList.add('open')
+  if (premiumTooltipInterval) clearInterval(premiumTooltipInterval)
+  premiumTooltipInterval = setInterval(tickPremiumTooltip, 1000)
 }
 
 document.addEventListener('click', (e) => {
   const wrap = document.getElementById('premium-wrap')
   if (wrap && !wrap.contains(e.target)) {
     document.getElementById('premium-tooltip').classList.remove('open')
+    if (premiumTooltipInterval) { clearInterval(premiumTooltipInterval); premiumTooltipInterval = null }
   }
 })
 
-function toggleFab() {
-  document.getElementById('fab-menu').classList.toggle('open')
-  document.getElementById('fab-main').classList.toggle('open')
-}
-function closeFab() {
-  document.getElementById('fab-menu').classList.remove('open')
-  document.getElementById('fab-main').classList.remove('open')
-}
+// ============ SECTION TOGGLE (Gacha/Shop/Info) ============
+const SECTION_IDS = ['gacha', 'shop', 'info']
+let activeSection = null
 
-function openGachaModal() {
-  closeFab()
-  document.getElementById('gacha-modal').classList.add('show')
-}
-function closeGachaModal() {
-  document.getElementById('gacha-modal').classList.remove('show')
+function toggleSection(id) {
+  const isSame = activeSection === id
+  hideSearchResults()
+
+  SECTION_IDS.forEach(s => {
+    document.getElementById('section-' + s).classList.remove('open')
+    document.getElementById('menu-' + s).classList.remove('active')
+  })
+
+  if (!isSame) {
+    document.getElementById('section-' + id).classList.add('open')
+    document.getElementById('menu-' + id).classList.add('active')
+    activeSection = id
+    if (id === 'shop') { renderLimitSlider(true); renderPremiumSlider(true) }
+  } else {
+    activeSection = null
+  }
 }
 
 const LIMIT_PRICE = 1
 const PREMIUM_PRICE = 100
 
-function openLimitModal() {
-  closeFab()
-  limitBuyQty = 0
-  renderLimitQty()
-  document.getElementById('limit-modal').classList.add('show')
+function renderLimitSlider(reset) {
+  const slider = document.getElementById('limit-slider')
+  const label = document.getElementById('limit-qty-label')
+  const btn = document.querySelector('#limit-slider')?.closest('.shop-card')?.querySelector('.btn')
+  const maxAffordable = Math.floor(currentGems / LIMIT_PRICE)
+
+  if (maxAffordable < 1) {
+    slider.min = 1
+    slider.max = 1
+    slider.value = 1
+    slider.disabled = true
+    if (btn) btn.disabled = true
+    label.textContent = 'Not enough Gems'
+    return
+  }
+
+  slider.disabled = false
+  if (btn) btn.disabled = false
+  slider.min = 1
+  slider.max = maxAffordable
+  if (reset || Number(slider.value) > maxAffordable || Number(slider.value) < 1) slider.value = 1
+  label.textContent = `${slider.value} limit${slider.value == 1 ? '' : 's'}`
 }
-function closeLimitModal() {
-  document.getElementById('limit-modal').classList.remove('show')
-}
-function renderLimitQty() {
-  document.getElementById('limit-qty-display').textContent = limitBuyQty
-  const maxQty = Math.floor((currentGems || 0) / LIMIT_PRICE)
-  document.getElementById('limit-qty-plus').disabled = limitBuyQty >= maxQty
-  document.getElementById('limit-qty-minus').disabled = limitBuyQty <= 0
-}
-function changeLimitQty(delta) {
-  const maxQty = Math.floor((currentGems || 0) / LIMIT_PRICE)
-  limitBuyQty = Math.min(maxQty, Math.max(0, limitBuyQty + delta))
-  renderLimitQty()
-}
+function onLimitSliderInput() { renderLimitSlider(false) }
+
 async function buyLimit() {
-  const amount = limitBuyQty
-  if (amount <= 0) { showToast('Enter an amount first.', 'warn'); return }
+  const amount = parseInt(document.getElementById('limit-slider').value)
+  if (!amount || amount <= 0) { showToast('Select an amount first.', 'warn'); return }
   try {
     const res = await safeFetch('/api/buy-limit', {
       method: 'POST',
@@ -1325,37 +1693,42 @@ async function buyLimit() {
     const data = await res.json()
     if (data.success) {
       showToast(data.message || 'Limit purchased!', 'success')
-      closeLimitModal()
-      loadProfile(true)
+      await loadProfile(true)
+      renderLimitSlider(false)
     } else {
       showToast(data.message || 'Purchase failed.', 'error')
     }
   } catch { showToast('Connection error.', 'error') }
 }
 
-function openPremiumModal() {
-  closeFab()
-  premiumBuyQty = 0
-  renderPremiumQty()
-  document.getElementById('premium-modal').classList.add('show')
+function renderPremiumSlider(reset) {
+  const slider = document.getElementById('premium-slider')
+  const label = document.getElementById('premium-qty-label')
+  const btn = document.querySelector('#premium-slider')?.closest('.shop-card')?.querySelector('.btn')
+  const maxAffordable = Math.floor(currentGems / PREMIUM_PRICE)
+
+  if (maxAffordable < 1) {
+    slider.min = 1
+    slider.max = 1
+    slider.value = 1
+    slider.disabled = true
+    if (btn) btn.disabled = true
+    label.textContent = 'Not enough Gems'
+    return
+  }
+
+  slider.disabled = false
+  if (btn) btn.disabled = false
+  slider.min = 1
+  slider.max = maxAffordable
+  if (reset || Number(slider.value) > maxAffordable || Number(slider.value) < 1) slider.value = 1
+  label.textContent = `${slider.value} week${slider.value == 1 ? '' : 's'}`
 }
-function closePremiumModal() {
-  document.getElementById('premium-modal').classList.remove('show')
-}
-function renderPremiumQty() {
-  document.getElementById('premium-qty-display').textContent = premiumBuyQty
-  const maxQty = Math.floor((currentGems || 0) / PREMIUM_PRICE)
-  document.getElementById('premium-qty-plus').disabled = premiumBuyQty >= maxQty
-  document.getElementById('premium-qty-minus').disabled = premiumBuyQty <= 0
-}
-function changePremiumQty(delta) {
-  const maxQty = Math.floor((currentGems || 0) / PREMIUM_PRICE)
-  premiumBuyQty = Math.min(maxQty, Math.max(0, premiumBuyQty + delta))
-  renderPremiumQty()
-}
+function onPremiumSliderInput() { renderPremiumSlider(false) }
+
 async function buyPremium() {
-  const weeks = premiumBuyQty
-  if (weeks <= 0) { showToast('Enter an amount first.', 'warn'); return }
+  const weeks = parseInt(document.getElementById('premium-slider').value)
+  if (!weeks || weeks <= 0) { showToast('Select an amount first.', 'warn'); return }
   try {
     const res = await safeFetch('/api/buy-premium', {
       method: 'POST',
@@ -1365,13 +1738,194 @@ async function buyPremium() {
     const data = await res.json()
     if (data.success) {
       showToast(data.message || 'Premium purchased!', 'success')
-      closePremiumModal()
-      loadProfile(true)
+      await loadProfile(true)
+      renderPremiumSlider(false)
     } else {
       showToast(data.message || 'Purchase failed.', 'error')
     }
   } catch { showToast('Connection error.', 'error') }
 }
+
+// ============ USER SEARCH (live, no enter needed) ============
+let userSearchDebounce = null
+
+function hideSearchResults() {
+  document.getElementById('section-search-results').style.display = 'none'
+}
+
+function onUserSearchInput() {
+  const q = document.getElementById('user-search-input').value.trim()
+  clearTimeout(userSearchDebounce)
+
+  if (!q) { hideSearchResults(); return }
+
+  userSearchDebounce = setTimeout(() => runUserSearch(q), 300)
+}
+
+async function runUserSearch(q) {
+  try {
+    const res = await safeFetch('/api/user-search?q=' + encodeURIComponent(q), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    const data = await res.json()
+
+    // Close menu sections so search results don't overlap Gacha/Shop/Info
+    SECTION_IDS.forEach(s => {
+      document.getElementById('section-' + s).classList.remove('open')
+      document.getElementById('menu-' + s).classList.remove('active')
+    })
+    activeSection = null
+
+    const list = document.getElementById('search-results-list')
+
+    if (data.success === false) {
+      list.innerHTML = `<div class="search-empty">✕ ${escapeHtml(data.message || 'Search failed.')}</div>`
+      document.getElementById('section-search-results').style.display = 'block'
+      return
+    }
+
+    const results = data.results || []
+
+    if (results.length === 0) {
+      list.innerHTML = '<div class="search-empty">No users found.</div>'
+    } else {
+      list.innerHTML = results.map(u => {
+        const initials = (u.name && u.name !== '-' ? u.name : u.phone).slice(0, 2).toUpperCase()
+        const avatarHtml = u.profilePicCache
+          ? `<div class="sr-avatar-wrap"><img class="sr-avatar" src="${escapeHtml(u.profilePicCache)}" alt=""></div>`
+          : `<div class="sr-avatar-wrap"><div class="sr-avatar">${escapeHtml(initials)}</div></div>`
+        const nameClass = getPremiumBadgeClass(u)
+        const badgesHtml = renderBadgeIcons(u.badge, true)
+        return `
+          <div class="search-result-card">
+            ${avatarHtml}
+            <div class="sr-info">
+              <div class="sr-name ${nameClass}">${escapeHtml(u.name || u.phone)}</div>
+              ${badgesHtml}
+            </div>
+            <div class="sr-tier">
+              <div class="sr-tier-value">${escapeHtml(u.tier)}</div>
+              <div class="sr-tier-label">Tier</div>
+            </div>
+          </div>
+        `
+      }).join('')
+    }
+
+    document.getElementById('section-search-results').style.display = 'block'
+  } catch {
+    // silent fail on transient network errors while typing
+  }
+}
+
+// ============ BADGES (db.data.users[user].badge) ============
+// Shape: { premium: { active: true, since: <ts> }, developer: true }
+function getBadgeItems(badge) {
+  const items = []
+  if (!badge) return items
+  if (badge.developer) {
+    items.push({ type: 'developer', icon: '</>', tooltip: 'Developer' })
+  }
+  if (badge.premium && badge.premium.active) {
+    const sinceDate = badge.premium.since
+      ? new Date(badge.premium.since).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      : ''
+    items.push({ type: 'premium', icon: '✦', tooltip: sinceDate ? `Premium since ${sinceDate}` : 'Premium' })
+  }
+  return items
+}
+
+// Compact, non-interactive icon row used in search results.
+function renderBadgeIcons(badge) {
+  const items = getBadgeItems(badge)
+  if (items.length === 0) return ''
+  return `<div class="sr-badges">${items.map(it =>
+    `<span class="sr-badge-icon sr-badge-${it.type}" title="${escapeHtml(it.tooltip)}">${escapeHtml(it.icon)}</span>`
+  ).join('')}</div>`
+}
+
+// Interactive icon row used on the main profile card - each icon toggles
+// a small tooltip (e.g. "Premium since ...") when tapped.
+function renderTopBadgeRow(badge) {
+  const container = document.getElementById('badge-icons')
+  const items = getBadgeItems(badge)
+  if (items.length === 0) {
+    container.innerHTML = '<span class="badge-row-icon">–</span>'
+    return
+  }
+  container.innerHTML = items.map((it, i) => `
+    <div class="badge-icon-wrap">
+      <button type="button" class="badge-row-icon clickable badge-active badge-${it.type}" onclick="toggleBadgeTooltip(this)">${escapeHtml(it.icon)}</button>
+      <div class="badge-tooltip">${escapeHtml(it.tooltip)}</div>
+    </div>
+  `).join('')
+}
+
+function toggleBadgeTooltip(btn) {
+  const tooltip = btn.nextElementSibling
+  const isOpen = tooltip.classList.contains('open')
+  document.querySelectorAll('.badge-tooltip.open').forEach(t => t.classList.remove('open'))
+  if (!isOpen) tooltip.classList.add('open')
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.badge-icon-wrap')) {
+    document.querySelectorAll('.badge-tooltip.open').forEach(t => t.classList.remove('open'))
+  }
+})
+
+function getPremiumBadgeClass(u) {
+  if (!u.premium) return ''
+  if (!u.premiumSince) return ''
+  const months = Math.floor((Date.now() - u.premiumSince) / (30 * 86400000))
+  if (months >= 4) return 'shimmer-diamond'
+  if (months >= 2) return 'shimmer-gold'
+  return ''
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div')
+  div.textContent = str == null ? '' : String(str)
+  return div.innerHTML
+}
+
+function formatNumber(n) {
+  n = n || 0
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+  return String(n)
+}
+
+// ============ BELL NOTIFICATIONS ============
+function renderNotifications(list) {
+  const dot = document.getElementById('bell-dot')
+  const tooltip = document.getElementById('bell-tooltip')
+  const items = Array.isArray(list) ? list.slice(0, 10) : []
+
+  if (items.length === 0) {
+    dot.style.display = 'none'
+    tooltip.innerHTML = '<span class="bt-empty">No notifications.</span>'
+    return
+  }
+
+  dot.style.display = 'block'
+  tooltip.innerHTML = items.map(n => {
+    const msg = typeof n === 'string' ? n : (n.message || '')
+    const time = (n && n.time) ? `<div class="bt-time">${escapeHtml(new Date(n.time).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</div>` : ''
+    return `<div class="bt-item">${escapeHtml(msg)}${time}</div>`
+  }).join('')
+}
+
+function toggleBellTooltip() {
+  document.getElementById('bell-tooltip').classList.toggle('open')
+}
+
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('bell-wrap')
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('bell-tooltip').classList.remove('open')
+  }
+})
 
 // ============ UPDATE UI ============
 function updateTierDisplay() {
@@ -1401,10 +1955,12 @@ function updateTierDisplay() {
   btn.style.display = 'block'
   if (currentExp >= needed) {
     btn.disabled = false
-    btn.querySelector('.btn-text').textContent = `↑ Tier Up to ${nextTierName}`
+    btn.querySelector('.btn-text').textContent = '↑ Tier Up'
+    btn.title = `Advance to ${nextTierName}`
   } else {
     btn.disabled = true
-    btn.querySelector('.btn-text').textContent = `↑ Need ${fmtExp(needed - currentExp)} more EXP`
+    btn.querySelector('.btn-text').textContent = '↑ Tier Up'
+    btn.title = `Need ${fmtExp(needed - currentExp)} more EXP`
   }
 }
 
@@ -1435,7 +1991,7 @@ async function loadProfile(silent = false) {
 
       const nameEl = document.getElementById('profile-name')
       if (u.premium && u.premiumTime > Date.now()) {
-        nameEl.className = 'shimmer-premium'
+        nameEl.className = getPremiumBadgeClass({ premium: u.premium, premiumSince: u.premiumSince }) || 'shimmer-premium-white'
         currentPremiumTime = u.premiumTime
         document.getElementById('premium-wrap').style.display = 'block'
       } else {
@@ -1443,6 +1999,7 @@ async function loadProfile(silent = false) {
         currentPremiumTime = 0
         document.getElementById('premium-wrap').style.display = 'none'
         document.getElementById('premium-tooltip').classList.remove('open')
+        if (premiumTooltipInterval) { clearInterval(premiumTooltipInterval); premiumTooltipInterval = null }
       }
       nameEl.textContent = displayName
 
@@ -1457,7 +2014,8 @@ async function loadProfile(silent = false) {
         avatarEl.style.display = 'flex'
       }
 
-      document.getElementById('profile-sub').textContent = isOwner ? 'OWNER' : 'USER'
+      renderTopBadgeRow(u.badge)
+
       document.getElementById('stat-exp').textContent = fmtExp(currentExp)
       document.getElementById('stat-gems').textContent = fmtExp(currentGems)
       document.getElementById('stat-limit').textContent = currentLimit
@@ -1467,21 +2025,21 @@ async function loadProfile(silent = false) {
       if (u.daily && (Date.now() - u.daily) < 86400000) {
         startRewardTimer(u.daily + 86400000)
       } else {
-        document.getElementById('reward-timer').textContent = 'Ready to claim!'
         const btn = document.getElementById('reward-btn')
         btn.disabled = false
         btn.textContent = 'Claim'
-        btn.className = 'btn btn-small btn-success ready'
+        btn.className = 'btn btn-small ready daily-claim-btn'
       }
 
       document.getElementById('loading').style.display = 'none'
       document.getElementById('content').style.display = 'block'
-      document.querySelector('.fab-container').classList.add('visible')
+      renderNotifications(u.notification || [])
     } else {
       document.getElementById('stat-exp').textContent = fmtExp(currentExp)
       document.getElementById('stat-gems').textContent = fmtExp(currentGems)
       document.getElementById('stat-limit').textContent = currentLimit
       updateTierDisplay()
+      renderNotifications(u.notification || [])
     }
   } catch (err) {
     console.error('[loadProfile]', err)
@@ -1497,28 +2055,21 @@ async function loadProfile(silent = false) {
 // ============ DAILY REWARD ============
 function startRewardTimer(nextTime) {
   if (timerInterval) clearInterval(timerInterval)
-  const timerEl = document.getElementById('reward-timer')
   const btn = document.getElementById('reward-btn')
 
   const update = () => {
     const diff = nextTime - Date.now()
     if (diff <= 0) {
       clearInterval(timerInterval)
-      timerEl.textContent = 'Ready to claim!'
       btn.disabled = false
       btn.textContent = 'Claim'
-      btn.className = 'btn btn-small btn-success ready'
-      return
+      btn.className = 'btn btn-small ready daily-claim-btn'
     }
-    const h = Math.floor(diff / 3600000)
-    const m = Math.floor((diff % 3600000) / 60000)
-    const s = Math.floor((diff % 60000) / 1000)
-    timerEl.textContent = `Available in ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
   }
 
   btn.disabled = true
-  btn.textContent = 'Waiting'
-  btn.className = 'btn btn-small btn-success claimed'
+  btn.textContent = 'Claim'
+  btn.className = 'btn btn-small claimed daily-claim-btn'
   update()
   timerInterval = setInterval(update, 1000)
 }
@@ -1527,7 +2078,7 @@ async function claimReward() {
   const btn = document.getElementById('reward-btn')
   btn.disabled = true
   btn.textContent = '...'
-  btn.className = 'btn btn-small btn-success claimed'
+  btn.className = 'btn btn-small claimed daily-claim-btn'
 
   try {
     const res = await safeFetch('/api/daily', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } })
@@ -1544,13 +2095,13 @@ async function claimReward() {
       showToast(data.message || 'Failed to claim.', 'error')
       btn.disabled = false
       btn.textContent = 'Claim'
-      btn.className = 'btn btn-small btn-success ready'
+      btn.className = 'btn btn-small ready daily-claim-btn'
     }
   } catch {
     showToast('Connection error.', 'error')
     btn.disabled = false
     btn.textContent = 'Claim'
-    btn.className = 'btn btn-small btn-success ready'
+    btn.className = 'btn btn-small ready daily-claim-btn'
   }
 }
 

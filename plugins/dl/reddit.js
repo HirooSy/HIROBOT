@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) return m.reply(`Masukkan URL Reddit!\n\nContoh:\n${usedPrefix + command} https://www.reddit.com/r/...`)
+  if (!text) return m.reply(`Where\'s the URL?`)
 
   if (!/reddit\.com|redd\.it/i.test(text)) return m.reply(`Invalid Reddit Url!`)
 
@@ -12,7 +12,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     const data = await scrapeRapidSave(text)
 
     if (!data || !data.download) {
-      return m.reply('Gagal ambil data. Link mungkin private atau salah.')
+      return m.reply('Failed to fetch data. Link may be private or incorrect.')
     }
 
     if (data.type === 'image') {
@@ -25,7 +25,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         m.chat,
         {
           image: img.data,
-          caption: `*REDDIT IMAGE*\n${data.title || ''}`
+          caption: `${data.title || ''}`
         },
         { quoted: m }
       )
@@ -41,7 +41,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         m.chat,
         {
           video: vid.data,
-          caption: `*REDDIT VIDEO*\n${data.title || ''}`
+          caption: `${data.title || ''}`
         },
         { quoted: m }
       )

@@ -47,6 +47,178 @@
       padding: 0 0 60px;
     }
 
+    /* ============ PORTFOLIO HERO ============ */
+    .phero {
+      position: relative;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 56px 20px 40px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .phero::before {
+      content: "";
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 480px;
+      height: 320px;
+      background: radial-gradient(ellipse at center, rgba(139,92,246,0.18), rgba(236,72,153,0.10) 45%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .phero-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .phero-title {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 14px;
+      word-break: break-word;
+    }
+
+    .phero-title .accent {
+      color: #ffffff;
+    }
+
+    .phero-desc {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 30px;
+    }
+
+    .phero-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 420px;
+      margin: 22px auto 0;
+      font-size: 13px;
+    }
+
+    .phero-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 13px 26px;
+      border-radius: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      font-weight: 600;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .phero-links a svg {
+      width: 15px;
+      height: 15px;
+      flex: none;
+      stroke: var(--muted);
+      fill: none;
+      stroke-width: 2.4;
+    }
+
+    .phero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      max-width: 420px;
+      margin: 0 auto 30px;
+    }
+
+    .phero-stat {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 16px 14px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .phero-stat-icon {
+      flex: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: #0a0a0a;
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phero-stat-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .phero-stat-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .phero-stat-label {
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .phero-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 420px;
+      padding: 13px 26px;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #0a0a0a;
+      font-family: var(--font);
+      font-weight: 600;
+      font-size: 13px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0 auto;
+    }
+
+    .phero-cta svg {
+      width: 15px;
+      height: 15px;
+      stroke: #0a0a0a;
+      fill: none;
+      stroke-width: 2.4;
+    }
+
+    @media (max-width: 480px) {
+      .phero-title { font-size: 30px; }
+      .phero { padding: 44px 16px 32px; }
+    }
+
     /* ============ TOP NAV ============ */
     .topnav {
       max-width: 760px;
@@ -822,94 +994,59 @@
 </head>
 <body>
 
-<!-- Top nav -->
-<div class="topnav">
-  <button class="log-btn" onclick="handleAccountClick()" aria-label="Login or Register">
-    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-  </button>
-</div>
-
-<div class="doc-wrap">
-<div class="doc-container">
-
-  <!-- Hero / header -->
-  <div class="hero">
-    <div class="hero-logo">
-      <img src="" alt="" draggable="false" oncontextmenu="return false" id="hero-logo-img">
+<!-- Portfolio hero -->
+<div class="phero">
+  <div class="phero-inner">
+    <div class="phero-title">
+      <span class="accent" id="phero-title-b">Bot</span>
     </div>
-    <div class="hero-text">
-      <div class="hero-title" id="brand-title">&nbsp;</div>
-      <div class="hero-sub">Documentary</div>
-      <div class="hero-desc" id="brand-desc">
-        This bot is a high-performance WhatsApp automation framework powered by Google Gemini AI.
-        Engineered for stability, efficiency, and intelligence, it features a self-healing
-        architecture designed to ensure seamless operation and minimal downtime.
-      </div>
-      <div class="hero-rule"></div>
-      <div class="hero-nav">
-        <button aria-label="previous section" onclick="prevSection()">&lt;</button>
-        <button aria-label="next section" onclick="nextSection()">&gt;</button>
-      </div>
+    <div class="phero-desc" id="phero-desc">
+      High-performance WhatsApp automation framework. Self-healing architecture built for stability, speed, and reliability.
     </div>
-  </div>
 
-  <!-- #blank -->
-  <div class="section-slide" data-section="blank"></div>
-
-  <!-- #command -->
-  <div class="section-slide" data-section="command">
-    <div class="doc-block">
-      <div class="doc-block-label"># COMMAND</div>
-      <div class="doc-block-body">
-        <div id="cmd-count" class="cmd-count">Loading commands…</div>
-        <div class="cmd-divider"></div>
-        <div id="cmd-list" class="cmd-list"></div>
+    <div class="phero-stats">
+      <div class="phero-stat">
+        <div class="phero-stat-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="phero-stat-value" id="phero-uptime">—</div>
+          <div class="phero-stat-label">Uptime</div>
+        </div>
       </div>
-    </div>
-  </div>
-
-  <!-- #install & setup -->
-  <div class="section-slide" data-section="install">
-    <div class="doc-block">
-      <div class="doc-block-label"># INSTALL</div>
-      <div class="code-wrap">
-        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
-          <svg class="icon-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          <svg class="icon-check" viewBox="0 0 24 24" style="display:none"><path d="M20 6L9 17l-5-5"/></svg>
-        </button>
-        <div class="doc-block-body code-body" data-raw="git clone https://github.com/HirooSy/HIROBOT.git
-npm install
-cp .env.example .env
-nano .env
-npm start">
-          <span class="tok-prompt">$</span> <span class="tok-cmd">git</span> <span class="tok-arg">clone</span> <span class="tok-string">https://github.com/HirooSy/HIROBOT.git</span><br>
-          <span class="tok-prompt">$</span> <span class="tok-cmd">npm</span> <span class="tok-arg">install</span><br>
-          <span class="tok-prompt">$</span> <span class="tok-cmd">cp</span> <span class="tok-arg">.env.example .env</span><br>
-          <span class="tok-prompt">$</span> <span class="tok-cmd">nano</span> <span class="tok-arg">.env</span><br>
-          <span class="tok-prompt">$</span> <span class="tok-cmd">npm</span> <span class="tok-arg">start</span>
+      <div class="phero-stat">
+        <div class="phero-stat-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <div class="phero-stat-value" id="phero-users">—</div>
+          <div class="phero-stat-label">Total Users</div>
         </div>
       </div>
     </div>
-    <div class="doc-block">
-      <div class="doc-block-label"># SET UP</div>
-      <div class="code-wrap">
-        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
-          <svg class="icon-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          <svg class="icon-check" viewBox="0 0 24 24" style="display:none"><path d="M20 6L9 17l-5-5"/></svg>
-        </button>
-        <div id="setup-body" class="doc-block-body code-body" data-raw="">Loading .env.example…</div>
-      </div>
+
+    <button class="phero-cta" onclick="handleAccountClick()">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Login / Register
+    </button>
+
+    <div class="phero-links">
+      <a id="phero-trybot" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span class="plabel">Chat Bot</span>
+      </a>
+      <a href="https://whatsapp.com/channel/0029VaVJo460bIdoxTVoJY3e" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+        <span class="plabel">Channel</span>
+      </a>
+    </div>
+
+    <div class="doc-footer">
+      <a href="https://github.com/hiroosy" target="_blank" rel="noopener" aria-label="GitHub">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
     </div>
   </div>
-
-  <!-- footer -->
-  <div class="doc-footer">
-    <a href="https://github.com/hiroosy" target="_blank" rel="noopener" aria-label="GitHub">
-      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-    </a>
-  </div>
-
-</div>
 </div>
 
 <!-- ============ AUTH MODAL (Login / Register) ============ -->
@@ -1060,53 +1197,6 @@ npm start">
     } catch (_) { /* fall through to manual login below */ }
     openAuth()
   }
-
-  // Section navigation (1 section per "page", like Carrd section breaks)
-  const sectionOrder = ['blank', 'command', 'install']
-  let currentSectionIndex = 0
-
-  function showSection(index) {
-    currentSectionIndex = (index + sectionOrder.length) % sectionOrder.length
-    const name = sectionOrder[currentSectionIndex]
-    document.querySelectorAll('.section-slide').forEach(el => {
-      el.classList.toggle('active', el.getAttribute('data-section') === name)
-    })
-  }
-
-  function prevSection() { showSection(currentSectionIndex - 1) }
-  function nextSection() { showSection(currentSectionIndex + 1) }
-
-  document.addEventListener('DOMContentLoaded', () => showSection(0))
-
-  // Copy code block to clipboard (GitHub-style copy button)
-  async function copyCode(btn) {
-    const wrap = btn.closest('.code-wrap')
-    const codeEl = wrap.querySelector('.code-body')
-    const raw = codeEl.getAttribute('data-raw') || codeEl.innerText
-    try {
-      await navigator.clipboard.writeText(raw)
-    } catch {
-      // fallback for older browsers / no clipboard permission
-      const ta = document.createElement('textarea')
-      ta.value = raw
-      ta.style.position = 'fixed'
-      ta.style.opacity = '0'
-      document.body.appendChild(ta)
-      ta.select()
-      try { document.execCommand('copy') } catch {}
-      document.body.removeChild(ta)
-    }
-    const iconCopy = btn.querySelector('.icon-copy')
-    const iconCheck = btn.querySelector('.icon-check')
-    btn.classList.add('copied')
-    iconCopy.style.display = 'none'
-    iconCheck.style.display = ''
-    setTimeout(() => {
-      btn.classList.remove('copied')
-      iconCopy.style.display = ''
-      iconCheck.style.display = 'none'
-    }, 1500)
-  }
 </script>
 
 <script>
@@ -1139,8 +1229,6 @@ npm start">
       }
     });
     loadBotName();
-    loadCommandList();
-    loadEnvExample();
   });
 
   async function loadBotName() {
@@ -1149,90 +1237,58 @@ npm start">
       const data = await res.json()
       if (data && data.icon) {
         document.getElementById('favicon').href = data.icon
-        document.getElementById('hero-logo-img').src = data.icon
         document.querySelectorAll('.brand-icon img').forEach(img => img.src = data.icon)
       }
       if (data && data.name) {
         document.title = data.name
-        document.getElementById('brand-title').textContent = data.name
         document.getElementById('brand-title-modal').textContent = data.name
         document.querySelectorAll('.brand-icon img').forEach(img => img.alt = data.name)
-        return
+        document.getElementById('phero-title-b').textContent = data.name
+      }
+      if (data && data.number) {
+        document.getElementById('phero-trybot').href = `https://wa.me/${data.number}`
+      } else {
+        document.getElementById('phero-trybot').style.display = 'none'
+      }
+      if (typeof data?.uptime === 'number') {
+        startUptimeTicker(data.uptime)
+      }
+      if (typeof data?.totalUsers === 'number') {
+        document.getElementById('phero-users').textContent = data.totalUsers.toLocaleString('en-US')
       }
     } catch {}
     // Kalau /api/botInfo gagal atau BOT_NAME kosong, biarkan judul/brand kosong
     // (tidak ada nama hardcoded sebagai fallback)
   }
 
-  async function loadCommandList() {
-    const countEl = document.getElementById('cmd-count')
-    const listEl = document.getElementById('cmd-list')
-    try {
-      const res = await safeFetch('/api/commandList')
-      const data = await res.json()
-      const total = data?.total ?? 0
-      const commands = Array.isArray(data?.commands) ? data.commands : []
-      countEl.textContent = `${total} Commands available`
-      listEl.innerHTML = commands.map(c => `<span>${c}</span>`).join('')
-    } catch {
-      countEl.textContent = '0 Commands available'
-      listEl.innerHTML = ''
-    }
+  function formatUptime(seconds) {
+    seconds = Math.floor(seconds)
+    const d = Math.floor(seconds / 86400)
+    const h = Math.floor((seconds % 86400) / 3600)
+    const m = Math.floor((seconds % 3600) / 60)
+    const s = seconds % 60
+
+    if (d > 0) return `${d}d ${h}h ${m}m`
+    if (h > 0) return `${h}h ${m}m`
+    if (m > 0) return `${m}m ${s}s`
+    return `${s}s`
   }
 
-  function escapeHtml(str) {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-  }
+  let uptimeBaseSeconds = null
+  let uptimeBaseTimestamp = null
+  let uptimeTickInterval = null
 
-  // Turn a raw .env file into syntax-highlighted HTML, line by line
-  function highlightEnvLine(line) {
-    const trimmed = line.trim()
-    if (trimmed === '') return '<br>'
+  function startUptimeTicker(initialSeconds) {
+    uptimeBaseSeconds = initialSeconds
+    uptimeBaseTimestamp = Date.now()
 
-    // Section separator comment, e.g. "# ── Main ──────"
-    if (/^#\s*[─—-]{2,}/.test(trimmed) || /[─—-]{2,}\s*$/.test(trimmed) && trimmed.startsWith('#')) {
-      return `<span class="tok-section">${escapeHtml(line)}</span>`
-    }
-    // Plain comment line
-    if (trimmed.startsWith('#')) {
-      return `<span class="tok-comment">${escapeHtml(line)}</span>`
-    }
-    // KEY=VALUE line
-    const eq = line.indexOf('=')
-    if (eq !== -1) {
-      const key = line.slice(0, eq)
-      let value = line.slice(eq + 1)
-      // Highlight JSON-ish punctuation/strings/numbers inside the value
-      let highlightedValue = escapeHtml(value)
-        .replace(/"([^"]*)"/g, '<span class="tok-string">"$1"</span>')
-        .replace(/\b(\d+)\b/g, '<span class="tok-number">$1</span>')
-        .replace(/([{}\[\]:,])/g, '<span class="tok-punct">$1</span>')
-      return `<span class="tok-key">${escapeHtml(key)}</span>=${highlightedValue}`
-    }
-    // Fallback: bare key with no value (e.g. "CUSTOM")
-    return `<span class="tok-key">${escapeHtml(line)}</span>`
-  }
-
-  async function loadEnvExample() {
-    const el = document.getElementById('setup-body')
-    try {
-      const res = await safeFetch('/api/envExample')
-      const data = await res.json()
-      const raw = data?.content ?? ''
-      if (!raw.trim()) {
-        el.textContent = '.env.example not found.'
-        el.setAttribute('data-raw', '')
-        return
-      }
-      el.setAttribute('data-raw', raw)
-      el.innerHTML = raw.split('\n').map(highlightEnvLine).join('<br>')
-    } catch {
-      el.textContent = 'Failed to load .env.example.'
-      el.setAttribute('data-raw', '')
-    }
+    if (uptimeTickInterval) clearInterval(uptimeTickInterval)
+    uptimeTickInterval = setInterval(() => {
+      if (uptimeBaseSeconds === null) return
+      const elapsed = (Date.now() - uptimeBaseTimestamp) / 1000
+      const el = document.getElementById('phero-uptime')
+      if (el) el.textContent = formatUptime(uptimeBaseSeconds + elapsed)
+    }, 1000)
   }
 
   // Toggle Password Visibility
