@@ -16,6 +16,7 @@
 > [!TIP]
 > <div align=center><sub>`+. Hirobot is a Lightweight Whatsapp bot using Baileys with AI Agent using Gemini that can help you maintain your project. </sub><br><br>
 > ──────────────</div>
+> <div align=left><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img width="30%" src="https://img.shields.io/badge/CHANGE_LOG-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a></div>
 >
 > - [x] <sub>AI Agent Tools Using Gemini</sub>
 > - [x] <sub> Multi Sessions. </sub> 
@@ -424,17 +425,36 @@ export default {
   
 ---
 
+> [!IMPORTANT]
+> <sub>CC BY-NC 4.0</sub>
+> 
+> <sub>Copyright (c) 2026 HirooSy</sub>
+> <sub>Repository: https://github.com/HirooSy/HIROBOT </sub>
+> 
+> <sub>This work is licensed under the Creative Commons</sub> 
+> <sub>Attribution-NonCommercial 4.0 International License.</sub>
+> <sub>To view a copy of this license, visit</sub>
+> <sub>http://creativecommons.org/licenses/by-nc/4.0/ </sub>
+> 
+> <sub>You are free to:</sub><br>
+> <sub> 1. Share - copy and redistribute the material</sub><br>
+> <sub> 2. Adapt - remix, transform, and build upon the material</sub><br>
+> 
+> <sub>Under the following terms:</sub><br>
+> <sub> 1. Attribution - You must give appropriate credit, provide a link to</sub><br>
+>    <sub>the license, and indicate if changes were made.</sub><br>
+> <sub> 2. NonCommercial - You may not use the material for commercial purposes.</sub>
+
 <sub align=left>
   
-> [!WARNING]
-> ```diff
-> - REQUIRE : NODEJS V22+, RAM 500MB+, SERVER WITH IP AND PORT
-> 
-> $ git clone https://github.com/HirooSy/HIROBOT.git
-> $ cp .env.example .env
-> $ nano .env
-> $ node .
-> ```
+```diff
+- REQUIRE : NODEJS V22+, RAM 500MB+, SERVER WITH IP AND PORT
+
+$ git clone https://github.com/HirooSy/HIROBOT.git
+$ cp .env.example .env
+$ nano .env
+$ node .
+```
 </sub>
 
 <div align=center>

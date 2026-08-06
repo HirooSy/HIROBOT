@@ -1,103 +1,107 @@
-# AGENT.md — Panduan AI Agent untuk Repo HIRO-BOT
+# AGENT.md — AI Agent Guide for the HIRO-BOT Repo
 
-Dokumen ini adalah panduan wajib untuk AI coding agent (Claude Code, Cursor, Copilot,
-dsb) yang bekerja di repo ini. Baca dokumen ini sebelum melakukan perubahan apapun.
+This document is a mandatory guide for AI coding agents (Claude Code, Cursor, Copilot,
+etc.) working in this repo. Read it before making any changes.
 
-HIRO-BOT adalah WhatsApp bot berbasis [Baileys](https://github.com/whiskeysockets/baileys)
-dengan AI Agent internal (Gemini) yang punya tool-calling sendiri. Jadi ada **dua lapis
-"AI"** yang jangan sampai tertukar:
+HIRO-BOT is a WhatsApp bot built on [Baileys](https://github.com/whiskeysockets/baileys)
+with an internal AI Agent (Gemini) that has its own tool-calling. So there are **two
+layers of "AI"** that must not be confused:
 
-1. **Kamu (coding agent)** — yang mengedit source code repo ini.
-2. **AI Agent bawaan bot** (didefinisikan di `lib/ai/mcp.js`) — persona/asisten yang
-   berjalan di runtime bot dan membalas chat WhatsApp user. System prompt-nya panjang
-   dan sudah sangat dituning (anti prompt-injection, gaya bahasa, dsb) — **jangan
-   diubah** kecuali user secara eksplisit minta ubah perilaku AI Agent bot ini.
+1. **You (the coding agent)** — editing this repo's source code.
+2. **The bot's built-in AI Agent** (defined in `lib/ai/mcp.js`) — the persona/assistant
+   that runs at bot runtime and replies to WhatsApp chats. Its system prompt is long and
+   already heavily tuned (anti prompt-injection, tone of voice, etc.) — **do not change
+   it** unless the user explicitly asks you to change this AI Agent's behavior.
 
 ---
 
-## 1. Rules Wajib untuk AI Coding Agent
+## 1. Mandatory Rules for the AI Coding Agent
 
-### 1.1. Larangan Keras
-- **JANGAN PERNAH membaca, menulis, atau mengubah file `.env`.** File ini berisi token/secret
-  asli (GIT_TOKEN, AI_KEYS, DISCORD_WEBHOOK, dsb) dan **tidak boleh** disentuh, dicetak ke
-  chat/log, di-commit, atau di-push dengan cara apapun.
-  - Kalau perlu menambah konfigurasi baru, **selalu edit `.env.example`** saja (dengan value
-    kosong/placeholder), lalu beri tahu user untuk mengisi `.env` miliknya sendiri secara manual.
-  - `.env` sudah otomatis masuk `.gitignore` lewat `plugins/owner/github.js`, jangan pernah
-    menghapus rule itu.
-- **JANGAN** commit/push folder `data/` (sessions WhatsApp, database lokal, tmp, cache tunnel),
-  `.cache/`, `node_modules/`, lockfile (`package-lock.json`, dst), atau file `*.log/*.zip/*.bin`.
-  Semua itu sudah ada di ignore-rules bawaan `github.js`.
-- **JANGAN** mengubah `SYSTEM_PROMPT_BASE` / `DEFAULT_PERSONALITY` di `lib/ai/mcp.js` kecuali
-  diminta eksplisit oleh user — terutama bagian **"ANTI PROMPT-INJECTION"**, itu adalah safety
-  rail bot, bukan boilerplate yang boleh disederhanakan.
-- **JANGAN** menghapus/melonggarkan gating akses tool AI (`rowner`, `owner`, risk level
-  `blocked/high/medium/low`) di `lib/ai/tools/*.js` atau `lib/ai/mcp.js` tanpa instruksi
-  eksplisit — banyak tool (`shell_exec`, `run_eval`, `run_python`, dsb) sengaja dibatasi ketat
-  ke real owner saja.
-- **JANGAN** membuat file baru sembarang di root project untuk hal yang sudah punya tempatnya
-  (plugin baru → `plugins/<kategori>/`, tool AI baru → `lib/ai/tools/`, scraper baru →
+### 1.1. Hard Prohibitions
+- **NEVER read, write, or modify the `.env` file.** It holds real tokens/secrets
+  (GIT_TOKEN, AI_KEYS, DISCORD_WEBHOOK, etc.) and must **never** be touched, printed to
+  chat/logs, committed, or pushed in any way.
+  - If a new config value is needed, **always edit `.env.example`** instead (with an
+    empty/placeholder value), then tell the user to fill in their own `.env` manually.
+  - `.env` is already auto-added to `.gitignore` by `plugins/owner/github.js` — never
+    remove that rule.
+- **NEVER** commit/push the `data/` folder (WhatsApp sessions, local database, tmp,
+  tunnel cache), `.cache/`, `node_modules/`, lockfiles (`package-lock.json`, etc.), or
+  `*.log/*.zip/*.bin` files. All of these are already in `github.js`'s built-in ignore
+  rules.
+- **NEVER** modify `SYSTEM_PROMPT_BASE` / `DEFAULT_PERSONALITY` in `lib/ai/mcp.js` unless
+  explicitly asked by the user — especially the **"ANTI PROMPT-INJECTION"** section; it's
+  a bot safety rail, not boilerplate that can be simplified.
+- **NEVER** remove or loosen AI tool access gating (`rowner`, `owner`, risk levels
+  `blocked/high/medium/low`) in `lib/ai/tools/*.js` or `lib/ai/mcp.js` without explicit
+  instruction — many tools (`shell_exec`, `run_eval`, `run_python`, etc.) are
+  intentionally locked down to the real owner only.
+- **NEVER** create new files in the project root for things that already have a proper
+  place (new plugin → `plugins/<category>/`, new AI tool → `lib/ai/tools/`, new scraper →
   `lib/scraper/`).
 
-### 1.2. Konvensi Kode
-- Project pakai **ESM murni** (`"type": "module"` di `package.json`), Node.js **v22+**.
-  Selalu `import`/`export`, jangan `require`.
-- Ikuti gaya file yang sedang diedit (indentasi, ada/tidaknya semicolon — repo ini campuran,
-  jadi cocokkan dengan file yang sedang disentuh, jangan reformat massal file lain).
-- Banyak file lib (`config.js`, dsb) pakai **hot-reload via `fs.watchFile`** dan plugin folder
-  di-watch otomatis oleh `lib/plugins.js` — jangan heran kalau perubahan langsung ke-reload
-  saat bot jalan, ini fitur, bukan bug.
-- Plugin (`plugins/**/*.js`) HARUS mengikuti salah satu dari 4 format di bawah (lihat §3.3).
-  Jangan buat format baru sendiri.
-- Kalau menambah tool AI baru di `lib/ai/tools/`, ikuti pola yang sudah ada: default export
-  array of `{ name, description, parameters, execute }`, import helper dari `../mcp.js` (bukan
-  sebaliknya — lihat §4), dan **selalu isi `description` yang jelas** karena itu satu-satunya
-  panduan buat AI Agent bot memutuskan kapan tool itu dipanggil.
-- Jangan hardcode secret/token di kode — selalu lewat `process.env.*` dan didaftarkan di
-  `.env.example`.
+### 1.2. Code Conventions
+- The project uses **pure ESM** (`"type": "module"` in `package.json`), Node.js **v22+**.
+  Always `import`/`export`, never `require`.
+- Follow the style of the file being edited (indentation, semicolons or not — this repo
+  is mixed, so match the file you're touching, don't mass-reformat other files).
+- Many lib files (`config.js`, etc.) use **hot-reload via `fs.watchFile`**, and the
+  plugin folder is auto-watched by `lib/plugins.js` — don't be surprised if changes
+  reload live while the bot is running; that's a feature, not a bug.
+- Plugins (`plugins/**/*.js`) MUST follow one of the 4 formats below (see §3.3). Don't
+  invent a new format.
+- When adding a new AI tool in `lib/ai/tools/`, follow the existing pattern: default
+  export an array of `{ name, description, parameters, execute }`, import helpers from
+  `../mcp.js` (not the other way around — see §4), and **always write a clear
+  `description`**, since that's the only guide the bot's AI Agent has for deciding when
+  to call that tool.
+- Don't hardcode secrets/tokens in code — always go through `process.env.*` and register
+  them in `.env.example`.
 
-### 1.3. Testing / Verifikasi
-- Repo ini **tidak punya automated test suite**. Verifikasi perubahan dengan:
-  - `node -c <file>` atau baca ulang logikanya dengan teliti (syntax error di plugin akan
-    otomatis terdeteksi oleh `syntax-error` saat hot-reload dan hanya di-skip, tidak crash bot).
-  - Untuk perubahan besar di `lib/`, jelaskan ke user apa yang berubah dan risikonya, karena
-    `lib/` di-reload otomatis saat bot production jalan (lihat catatan di `UPDATE_LOG`: "Auto
-    reload lib files").
+### 1.3. Testing / Verification
+- This repo has **no automated test suite**. Verify changes by:
+  - `node -c <file>` or carefully re-reading the logic (a syntax error in a plugin is
+    auto-detected by `syntax-error` on hot-reload and just gets skipped, it doesn't crash
+    the bot).
+  - For large changes in `lib/`, explain to the user what changed and the risk, because
+    `lib/` auto-reloads while the bot is running in production (see the note in
+    `UPDATE_LOG`: "Auto reload lib files").
 
 ---
 
-## 2. Rule Git Push (WAJIB diikuti persis urutannya)
+## 2. Git Push Rule (MUST be followed in exact order)
 
-Kalau user minta **push ke GitHub / commit perubahan / "gitpush"**, agent **tidak boleh**
-langsung `git push`. Ikuti alur berikut:
+If the user asks to **push to GitHub / commit changes / "gitpush"**, the agent **must
+not** run `git push` directly. Follow this flow:
 
-1. **Cek folder `.git`.**
-   - Kalau `.git` **tidak ada**, berarti repo belum pernah di-init secara lokal oleh agent —
-     jalankan `git status` dulu untuk pastikan, dan kalau memang belum ada history, beri tahu
-     user bahwa ini akan jadi init pertama (perilaku `plugins/owner/github.js` juga melakukan
-     `git init` otomatis kalau belum ada).
-   - Kalau `.git` **ada**, lanjut ke langkah 2.
-2. **Cari tahu file apa saja yang berubah**, pakai kombinasi:
+1. **Check for the `.git` folder.**
+   - If `.git` **doesn't exist**, the repo has never been locally init'd by the agent —
+     run `git status` first to confirm, and if there's really no history yet, tell the
+     user this will be the first init (`plugins/owner/github.js`'s behavior also runs
+     `git init` automatically if it's missing).
+   - If `.git` **exists**, proceed to step 2.
+2. **Find out which files changed**, using a combination of:
    ```
    git status --porcelain
    git diff --stat
    ```
-3. **Cari tahu APA yang berubah** di tiap file (bukan cuma nama filenya), pakai:
+3. **Find out WHAT changed** in each file (not just the filename), using:
    ```
    git diff -- <file>
    ```
-   untuk file yang sudah pernah di-track, dan baca isi file untuk file yang statusnya baru (`??`).
-   Rangkum perubahan per file secara singkat dan human-readable (mis. "Fix bug X di
-   `plugins/dl/spotify.js`", "Tambah tool Y di `lib/ai/tools/media.js`") — **jangan asal
-   copy-paste diff mentah**.
-4. **Update `CHANGELOG.md`** di root project SEBELUM commit/push:
-   - Kalau `CHANGELOG.md` belum ada, buat baru. Ikuti format yang sudah dipakai project di file
-     `UPDATE_LOG` (urutan terbaru di atas, dipisah `____________________`, ada tanggal, daftar
-     ringkas perubahan, lalu daftar "Modified files:"). Contoh entri:
+   for already-tracked files, and by reading the file content for new files (status
+   `??`). Summarize the change per file briefly and in human-readable form (e.g. "Fix bug
+   X in `plugins/dl/spotify.js`", "Add tool Y in `lib/ai/tools/media.js`") — **don't just
+   paste the raw diff**.
+4. **Update `CHANGELOG.md`** at the project root BEFORE committing/pushing:
+   - If `CHANGELOG.md` doesn't exist yet, create it. Follow the format already used by
+     the project's `UPDATE_LOG` file (newest entry on top, separated by
+     `____________________`, with a date, a short list of changes, then a "Modified
+     files:" list). Example entry:
      ```
      06/Aug/2026
-     - Fix bug download Spotify saat token expired
-     - Tambah tool ai_edit_image di media.js
+     - Fix Spotify download bug on expired token
+     - Add ai_edit_image tool in media.js
 
      Modified files:
      - plugins/dl/spotify.js
@@ -105,75 +109,82 @@ langsung `git push`. Ikuti alur berikut:
 
      ____________________
      ```
-   - Tambahkan entri baru di **paling atas** file (paling baru di atas), jangan menghapus
-     entri lama.
-   - Ambil tanggal dari waktu berjalan saat ini (bukan menebak).
-5. **Baru setelah `CHANGELOG.md` ter-update**, lakukan commit & push. Ikuti perilaku yang
-   sudah ada di `plugins/owner/github.js` sebagai referensi:
-   - Pastikan `.gitignore` mengandung minimal: `.cache/`, `node_modules/`, `.env`, `data/`,
-     `*.log`, `*.zip`, `*.bin`, `*.pid`, `*.bak`, lockfile.
+   - Add the new entry at the **very top** of the file (newest on top), don't delete
+     older entries.
+   - Take the date from the current runtime clock (don't guess).
+5. **Only after `CHANGELOG.md` has been updated**, commit & push. Follow the behavior
+   already implemented in `plugins/owner/github.js` as a reference:
+   - Make sure `.gitignore` contains at least: `.cache/`, `node_modules/`, `.env`,
+     `data/`, `*.log`, `*.zip`, `*.bin`, `*.pid`, `*.bak`, lockfiles.
    - `git add .`
-   - Commit message singkat & deskriptif berdasarkan rangkuman langkah 3 (bukan pesan generik
-     seperti "update").
-   - Push ke branch `main`.
-6. **Jangan pernah** menyertakan isi `.env` di commit manapun, walau tidak sengaja ter-`git add`.
-   Selalu double-check `git status`/`git diff --cached` sebelum commit untuk pastikan `.env`
-   tidak ikut ter-stage.
+   - A short, descriptive commit message based on the step-3 summary (not a generic
+     message like "update").
+   - Push to branch `main`.
+6. **Never** include `.env` contents in any commit, even if accidentally `git add`-ed.
+   Always double-check `git status`/`git diff --cached` before committing to make sure
+   `.env` was not staged.
 
-Command bot yang sudah mengimplementasikan sebagian alur ini (tanpa langkah CHANGELOG) ada di
-`plugins/owner/github.js` (`.gitpush` dan `.gitstats`) — dipanggil oleh AI Agent bot sendiri
-lewat tool `run_plugin`. Kalau kamu (coding agent) diminta push repo ini dari sisi development
-(bukan dari chat WhatsApp), lakukan manual via git CLI dengan mengikuti urutan di atas.
+The bot command that already implements part of this flow (without the CHANGELOG step)
+lives in `plugins/owner/github.js` (`.gitpush` and `.gitstats`) — called by the bot's own
+AI Agent via the `run_plugin` tool. If you (the coding agent) are asked to push this repo
+from the development side (not from WhatsApp chat), do it manually via the git CLI
+following the order above.
 
 ---
 
-## 3. Cara Kerja Project
+## 3. How the Project Works
 
 ### 3.1. Entry point & lifecycle
 ```
-lib/start.js   → supervisor process: install dependency kalau belum ada,
-                 load .env, fork() child process (lib/main.js) lewat cluster,
-                 auto-restart kalau crash (dengan backoff), watch file main.js
-                 untuk restart saat berubah.
-lib/main.js    → proses utama: init koneksi WhatsApp (Connection), load plugin,
-                 setup tunnel (Cloudflare) + website server, interval cleanup
-                 tmp/store, memory watchdog, global state (lihat §4).
-lib/connection.js → wrapper Baileys: pairing/QR, multi-session, reconnect logic,
-                 watchdog koneksi.
-lib/handler.js → event handler pusat: terima pesan masuk (via simple.js →
-                 smsg()), cek permission (owner/mods/premium/group/dsb),
-                 resolve command & prefix, jalankan plugin yang match,
-                 serialize error ke autoHeal (AI).
-lib/simple.js  → ekstensi/monkey-patch di object `conn` Baileys (protoType):
-                 semua method conn.reply/conn.sendFile/conn.aiRich()/dst
-                 (lihat contoh lengkap di README.md).
-lib/plugins.js → plugin loader: baca semua file di /plugins secara rekursif,
-                 watch folder untuk hot-reload, syntax-check sebelum reload.
-lib/database.js→ database abstraction: default JSON lokal (lowdb-style di
-                 data/*.json), atau adapter MongoDB/MySQL/SQLite/Cloud
-                 tergantung env DATABASE.
-lib/server.js  → HTTP server (website: index.html, profile.html) + expose
-                 endpoint publik lewat Cloudflare Tunnel / hostname custom.
-lib/ai/mcp.js  → "otak" AI Agent bot: system prompt, agent loop (runAgent),
-                 tool registry (loadToolsDir dari lib/ai/tools/*.js), rate
-                 limit/rotasi API key Gemini, auto-heal error via Gemma.
+lib/start.js   → supervisor process: installs dependencies if missing, loads
+                 .env, fork()s a child process (lib/main.js) via cluster,
+                 auto-restarts on crash (with backoff), watches main.js for
+                 restart on change.
+lib/main.js    → main process: initializes the WhatsApp connection
+                 (Connection), loads plugins, sets up the tunnel
+                 (Cloudflare) + website server, cleanup intervals for
+                 tmp/store, memory watchdog, global state (see §4).
+lib/connection.js → Baileys wrapper: pairing/QR, multi-session, reconnect
+                 logic, connection watchdog.
+lib/handler.js → central event handler: receives incoming messages (via
+                 simple.js → smsg()), checks permissions
+                 (owner/mods/premium/group/etc.), resolves command &
+                 prefix, runs the matching plugin, forwards errors to
+                 autoHeal (AI).
+lib/simple.js  → extensions/monkey-patches on the Baileys `conn` object
+                 (protoType): all the conn.reply/conn.sendFile/conn.aiRich()/etc
+                 methods (see full examples in README.md).
+lib/plugins.js → plugin loader: recursively reads all files under /plugins,
+                 watches the folder for hot-reload, syntax-checks before
+                 reload.
+lib/database.js→ database abstraction: defaults to local JSON (lowdb-style
+                 in data/*.json), or a MongoDB/MySQL/SQLite/Cloud adapter
+                 depending on the DATABASE env var.
+lib/server.js  → HTTP server (website: index.html, profile.html) + exposes
+                 a public endpoint via Cloudflare Tunnel / custom hostname.
+lib/ai/mcp.js  → the bot's AI Agent "brain": system prompt, agent loop
+                 (runAgent), tool registry (loadToolsDir from
+                 lib/ai/tools/*.js), Gemini API key rate-limit/rotation,
+                 auto-heal errors via Gemma.
 ```
 
-### 3.2. Alur pesan masuk (simplified)
+### 3.2. Incoming message flow (simplified)
 ```
 WhatsApp → Baileys (connection.js) → messages.upsert
-  → simple.js: smsg(conn, msg) → normalize jadi object `m`
-  → handler.js: cek self/pconly/gconly/queue/restrict, resolve plugin dari
-    prefix + command
-  → jalankan plugin.run/handler(m, { conn, args, command, ... })
-  → kalau ada handler.ai & pesan trigger AI (mention/reply/prefix .ai/dsb)
-    → lib/ai/mcp.js: runAgent() → panggil Gemini dengan tools yang terdaftar
-      → tool bisa manggil balik plugin lain via run_plugin (execPluginCommand)
-  → error di plugin manapun → autoHeal (handleError di mcp.js) → opsional
-    auto-fix pakai model Gemma kalau settings.ai.autoheal = true
+  → simple.js: smsg(conn, msg) → normalize into an `m` object
+  → handler.js: checks self/pconly/gconly/queue/restrict, resolves the
+    plugin from prefix + command
+  → runs plugin.run/handler(m, { conn, args, command, ... })
+  → if handler.ai exists & the message triggers AI (mention/reply/.ai
+    prefix/etc.)
+    → lib/ai/mcp.js: runAgent() → calls Gemini with the registered tools
+      → a tool can call back into another plugin via run_plugin
+        (execPluginCommand)
+  → error in any plugin → autoHeal (handleError in mcp.js) → optional
+    auto-fix using the Gemma model if settings.ai.autoheal = true
 ```
 
-### 3.3. Format plugin (4 varian yang didukung)
+### 3.3. Plugin format (4 supported variants)
 ```javascript
 // A. Handler style
 let handler = async (m, { conn }) => { /* ... */ };
@@ -187,86 +198,87 @@ handler.customPrefix = String;
 handler.ai = { risk: 'low'|'medium'|'high'|'blocked', summarize: Boolean, description: String };
 export default handler;
 
-// B. Handler dengan before-hook (jalan sebelum command matching, mis. utk state 2-step)
+// B. Handler with a before-hook (runs before command matching, e.g. for 2-step state)
 let handler = (m) => m;
 handler.before = async (m, { conn }) => { /* ... */ };
 export default handler;
 
-// C. Export-object style (setara A, tapi run: bukan default function)
+// C. Export-object style (equivalent to A, but run: instead of a default function)
 export default { run: async (m, { conn }) => {}, command, tags, help, ...flags };
 
-// D. Export-object dengan before saja
+// D. Export-object with only a before hook
 export default { async before(m, { conn }) { /* ... */ } };
 ```
-`handler.ai` menentukan apakah plugin ini bisa dijalankan AI Agent lewat `run_plugin`
-(tanpa `handler.ai`, plugin dianggap internal-only dan tidak akan pernah muncul ke AI).
+`handler.ai` determines whether this plugin can be run by the AI Agent via `run_plugin`
+(without `handler.ai`, a plugin is treated as internal-only and never exposed to the AI).
 
-### 3.4. Struktur folder
+### 3.4. Folder structure
 ```
 HIROBOT
 ├── lib
 │   ├── ai/
-│   │   ├── mcp.js          # otak AI agent + tool loader
-│   │   └── tools/*.js      # semua tool AI (lihat §4.2)
-│   ├── scraper/*.js        # scraper per-platform (tiktok, ig, x, ytdl, dst)
-│   ├── config.js           # global.settings (owner/mods/tier/pesan default)
-│   ├── connection.js       # koneksi Baileys
-│   ├── converter.js        # convert media (via ffmpeg dsb)
+│   │   ├── mcp.js          # AI agent brain + tool loader
+│   │   └── tools/*.js      # all AI tools (see §4.2)
+│   ├── scraper/*.js        # per-platform scrapers (tiktok, ig, x, ytdl, etc.)
+│   ├── config.js           # global.settings (owner/mods/tier/default messages)
+│   ├── connection.js       # Baileys connection
+│   ├── converter.js        # media conversion (via ffmpeg etc.)
 │   ├── database.js         # database manager (json/mongo/mysql/sqlite)
 │   ├── handler.js          # event handler
-│   ├── helper.js           # util umum (jadi sumber banyak global, lihat §4.1)
-│   ├── main.js             # tunnel, semua interval, global bootstrap
+│   ├── helper.js           # general utils (source of many globals, see §4.1)
+│   ├── main.js             # tunnel, all intervals, global bootstrap
 │   ├── plugins.js          # plugin loader + hot reload
 │   ├── server.js           # website endpoint
-│   ├── simple.js           # ekstensi method di object conn
+│   ├── simple.js           # extension methods on the conn object
 │   ├── sticker.js          # sticker builder
 │   ├── start.js            # supervisor/entrypoint (`node .`)
-│   └── views/*.html        # halaman website
-├── data/                   # sessions, database json, tmp, tunnel data (JANGAN di-commit)
-├── plugins/                # semua command bot, per kategori folder
+│   └── views/*.html        # website pages
+├── data/                   # sessions, database json, tmp, tunnel data (DO NOT commit)
+├── plugins/                # all bot commands, per category folder
 │   ├── ai/ group/ sticker/ dl/ owner/ tools/ main/ subbot/ _event/
-├── .env                    # token asli — JANGAN DISENTUH
-├── .env.example            # template env — edit di sini kalau perlu var baru
+├── .env                    # real tokens — DO NOT TOUCH
+├── .env.example            # env template — edit this if a new var is needed
 ├── package.json
 ├── README.md
-└── UPDATE_LOG              # riwayat perubahan manual (lihat juga CHANGELOG.md §2)
+└── UPDATE_LOG              # manual changelog (see also CHANGELOG.md §2)
 ```
 
 ---
 
-## 4. Function & Global yang Tersedia
+## 4. Available Functions & Globals
 
 ### 4.1. Global variables
-Sebagian besar global di-set lewat `Object.assign(global, { ...Helper, timestamp:
-{ start: Date.now() } })` di `lib/main.js` (jadi semua export dari `lib/helper.js` otomatis
-jadi global juga), plus beberapa di-set manual di tempat lain:
+Most globals are set via `Object.assign(global, { ...Helper, timestamp:
+{ start: Date.now() } })` in `lib/main.js` (so every export from `lib/helper.js`
+automatically becomes global too), plus a few set manually elsewhere:
 
-| Global | Asal | Isi |
+| Global | Source | Contents |
 |---|---|---|
-| `global.settings` | `lib/config.js` | owner/mods list, ai (thinking/autoheal), subbot config, tier, pesan default (`msg.rowner`, dst) |
-| `global.readmore` | `lib/config.js` | karakter invisible buat "read more" WA |
-| `global.db` | `lib/handler.js` | instance database aktif (`db.data.users/chats/stats/msgs/settings`) |
-| `global.opts` | `lib/helper.js` (via Object.assign) | hasil parse CLI args (`--self`, `--pconly`, `--gconly`, `--swonly`, `--queue`, `--noprint`, `--autoread`, `--restrict`, `--nyimak`, dst) |
-| `global.prefix` | `lib/helper.js` (via Object.assign) | RegExp prefix command aktif |
-| `global.__filename/__dirname/__require/checkFileExists/saveStreamToFile/isReadableStream/importFile` | `lib/helper.js` | util filesystem/module (lihat §4.3) |
-| `global.timestamp` | `lib/main.js` | `{ start, connect }` — waktu proses & waktu koneksi WA connect |
-| `global.support` | `lib/main.js` | `{ ffmpeg, ffprobe, ffmpegWebp, find }` — path/status binary media tools |
-| `global.tunnel` | `lib/main.js` | state Cloudflare tunnel `{ proc, url, pid, reused, static, named }` |
-| `global.websiteState` | `lib/main.js` | `{ mode, url }` mode publik website |
-| `global.getServerUrl()` | `lib/main.js` | fungsi ambil URL publik aktif |
-| `global.startTunnel` / `global.restartTunnel` | `lib/main.js` | kontrol manual tunnel |
-| `global.activeIntervals` | `lib/main.js` | `Set` semua `setInterval` aktif (buat cleanup) |
-| `global.server` | `lib/server.js` | instance HTTP server |
-| `global.ephemeral` | dipakai di `simple.js` | durasi ephemeral message default |
-| `global.img` | `plugins/_event/system.js` | cache/state terkait gambar |
-| `global.igDownloadState` / `global.pinterestDlState` | plugin terkait | state sesi download multi-step |
-| `global.dfail` | `lib/handler.js` | `async (type, m, conn)` — helper kirim pesan gagal standar |
-| `global.gc` | Node.js (`--expose-gc`) | manual garbage collection trigger (dipakai di memory watchdog) |
+| `global.settings` | `lib/config.js` | owner/mods list, ai (thinking/autoheal), subbot config, tier, default messages (`msg.rowner`, etc.) |
+| `global.readmore` | `lib/config.js` | invisible character used for WA "read more" |
+| `global.db` | `lib/handler.js` | the active database instance (`db.data.users/chats/stats/msgs/settings`) |
+| `global.opts` | `lib/helper.js` (via Object.assign) | parsed CLI args (`--self`, `--pconly`, `--gconly`, `--swonly`, `--queue`, `--noprint`, `--autoread`, `--restrict`, `--nyimak`, etc.) |
+| `global.prefix` | `lib/helper.js` (via Object.assign) | the active command prefix RegExp |
+| `global.__filename/__dirname/__require/checkFileExists/saveStreamToFile/isReadableStream/importFile` | `lib/helper.js` | filesystem/module utils (see §4.5) |
+| `global.timestamp` | `lib/main.js` | `{ start, connect }` — process start time & WA connect time |
+| `global.support` | `lib/main.js` | `{ ffmpeg, ffprobe, ffmpegWebp, find }` — path/status of media-tool binaries |
+| `global.tunnel` | `lib/main.js` | Cloudflare tunnel state `{ proc, url, pid, reused, static, named }` |
+| `global.websiteState` | `lib/main.js` | `{ mode, url }` for the website's public mode |
+| `global.getServerUrl()` | `lib/main.js` | function to get the current public URL |
+| `global.startTunnel` / `global.restartTunnel` | `lib/main.js` | manual tunnel control |
+| `global.activeIntervals` | `lib/main.js` | a `Set` of all active `setInterval`s (for cleanup) |
+| `global.server` | `lib/server.js` | the HTTP server instance |
+| `global.ephemeral` | used in `simple.js` | default ephemeral message duration |
+| `global.img` | `plugins/_event/system.js` | image-related cache/state |
+| `global.igDownloadState` / `global.pinterestDlState` | related plugins | multi-step download session state |
+| `global.dfail` | `lib/handler.js` | `async (type, m, conn)` — standard failure-message helper |
+| `global.gc` | Node.js (`--expose-gc`) | manual garbage-collection trigger (used in the memory watchdog) |
 
-### 4.2. Tool AI (`lib/ai/tools/*.js`)
-Semua tool ini dipanggil oleh AI Agent bot (Gemini) lewat function-calling di `lib/ai/mcp.js`.
-Setiap tool berupa `{ name, description, parameters, execute }`, di-load otomatis oleh
-`loadToolsDir` — tinggal tambah file baru di folder ini untuk register tool baru.
+### 4.2. AI Tools (`lib/ai/tools/*.js`)
+All of these tools are called by the bot's AI Agent (Gemini) via function-calling in
+`lib/ai/mcp.js`. Each tool is a `{ name, description, parameters, execute }` object,
+auto-loaded by `loadToolsDir` — just add a new file to this folder to register a new
+tool.
 
 | File | Tools |
 |---|---|
@@ -281,7 +293,7 @@ Setiap tool berupa `{ name, description, parameters, execute }`, di-load otomati
 | `system.js` | `system_time`, `shell_exec`, `run_python`, `system_info`, `restart_bot`, `install_package` |
 | `web.js` | `view_website`, `fetch_html_raw`, `view_link_post`, `search_web` |
 
-### 4.3. Helper/function penting dari `lib/ai/mcp.js` (dipakai oleh tool files)
+### 4.3. Key helpers/functions from `lib/ai/mcp.js` (used by the tool files)
 ```
 -- Session / chat history --
 getSession(jid) / resetSession(jid) / getPinnedNotesReadOnly(jid)
@@ -318,14 +330,14 @@ getApiKeys() / getNextKey() / rotateKey() / resetRateLimit(jid)
 normalizeApiKeys(input) / getPersonality() / MODELS
 setCurrentContext(...) / hasPending() / confirmPending() / cancelPending()
 
--- Context helper (dipakai di dalam tool files) --
-ctx() -> { currentJid, conn, isOwner, isROwner, timezone, ... } (selalu fresh)
+-- Context helper (used inside tool files) --
+ctx() -> { currentJid, conn, isOwner, isROwner, timezone, ... } (always fresh)
 ```
-Catatan penting: `mcp.js` **tidak pernah** static-import file di `./tools` (di-load dinamis
-lewat `loadToolsDir`), jadi tool file boleh `import { ctx, ... } from '../mcp.js'` di top-level
-tanpa masalah circular import.
+Important note: `mcp.js` **never** statically imports files from `./tools` (they're
+loaded dynamically via `loadToolsDir`), so a tool file can safely `import { ctx, ... }
+from '../mcp.js'` at the top level with no circular-import issue.
 
-### 4.4. Function penting di `conn` (dari `lib/simple.js`, dipatch ke object Baileys)
+### 4.4. Key `conn` functions (from `lib/simple.js`, patched onto the Baileys object)
 ```javascript
 conn.reply(m.chat, text, m)
 conn.sendFile(m.chat, media, filename, caption, m)   // media: buffer/fs path
@@ -338,15 +350,16 @@ conn.aiRich().setTitle().addText().addImage().addCode().addTable().addSource().a
   .addSuggest().send(m.chat, { quoted: m })
 conn.sendStickerPack(m.chat, { cover, stickers, name, publisher, description })
 ```
-Detail lengkap tiap fungsi + contoh ada di `README.md` (bagian "Send Message").
+Full details for each function + examples are in `README.md` (the "Send Message"
+section).
 
-### 4.5. Helper umum (`lib/helper.js`, default export `Helper`)
+### 4.5. General helpers (`lib/helper.js`, default export `Helper`)
 ```
 Helper.__filename(pathURL, rmPrefix?) / Helper.__dirname(pathURL)
 Helper.__require(dir?) / Helper.checkFileExists(file)
 Helper.saveStreamToFile(stream, file) / Helper.isReadableStream(stream)
-Helper.importFile(module)   // dynamic import dengan cache-busting by file hash
-Helper.opts / Helper.prefix // sama seperti global.opts / global.prefix
+Helper.importFile(module)   // dynamic import with cache-busting by file hash
+Helper.opts / Helper.prefix // same as global.opts / global.prefix
 ```
 
 ### 4.6. `MODELS` mapping (`lib/ai/mcp.js`)
@@ -360,141 +373,149 @@ export const MODELS = {
     'gemma-moe': 'gemma-4-26b-a4b-it',  // .ai:gemma-moe — no tools, reasoning/coding only
 };
 ```
-Model Gemma dipakai juga secara internal untuk **auto-heal** (lihat §5.7), bukan cuma dipanggil
-manual lewat command.
+The Gemma model is also used internally for **auto-heal** (see §5.7), not just called
+manually via command.
 
 ---
 
-## 5. Detail Teknis Modul Lain di `lib/`
+## 5. Technical Detail of Other Modules in `lib/`
 
 ### 5.1. `lib/connection.js`
-Wrapper di atas Baileys (`makeWASocket`) untuk koneksi bot utama. Yang perlu diketahui:
-- Support **pairing code** (termasuk custom pairing via env `CUSTOM_PAIRING`, harus 8 karakter)
-  maupun **QR code** — fallback otomatis kalau salah satu gagal.
-- Ada **connection watchdog** (`global._optikWatchdog`, `setInterval`) yang memantau status
-  socket dan auto-reconnect kalau putus, dengan penanganan khusus untuk `DisconnectReason`
-  (loggedOut vs restartRequired vs error biasa).
-- `global.timestamp.connect` diisi begitu socket berhasil connect.
-- Dipakai ulang oleh `plugins/subbot/connect.js` untuk multi-session (subbot), lihat §5.6.
+A wrapper around Baileys (`makeWASocket`) for the main bot connection. Things to know:
+- Supports **pairing code** (including a custom pairing code via the `CUSTOM_PAIRING`
+  env var, must be 8 characters) as well as **QR code** — automatic fallback if one
+  fails.
+- There's a **connection watchdog** (`global._optikWatchdog`, `setInterval`) that
+  monitors socket status and auto-reconnects on drop, with special handling for
+  `DisconnectReason` (loggedOut vs restartRequired vs a regular error).
+- `global.timestamp.connect` is set once the socket successfully connects.
+- Reused by `plugins/subbot/connect.js` for multi-session (subbot) support, see §5.6.
 
 ### 5.2. `lib/database.js` — Multi-adapter Database
-Default: **JSON lokal** (`data/*.json`, di-load lewat `database.read()/write()`, di-wrap `lodash`
-via `database.chain`). Bisa diganti lewat env `DATABASE` ke salah satu:
-- `MongoDBV2` / `mongoDB` — MongoDB (butuh package `mongoose`, di-lazy-install otomatis kalau
-  belum ada di `node_modules`).
-- `MySqlAdapter` — MySQL, format URL: `jdbc:mysql://user:pass@host:port/database`.
-- `SQLiteAdapter` — pakai `node:sqlite` built-in Node.js.
-- `CloudDBAdapter` — adapter cloud custom.
+Default: **local JSON** (`data/*.json`, loaded via `database.read()/write()`, wrapped
+with `lodash` via `database.chain`). Can be swapped via the `DATABASE` env var to one of:
+- `MongoDBV2` / `mongoDB` — MongoDB (requires the `mongoose` package, lazily
+  auto-installed if missing from `node_modules`).
+- `MySqlAdapter` — MySQL, URL format: `jdbc:mysql://user:pass@host:port/database`.
+- `SQLiteAdapter` — uses Node.js's built-in `node:sqlite`.
+- `CloudDBAdapter` — a custom cloud adapter.
 
-Semua adapter diakses lewat interface yang sama (`database.data`, `database.read()`,
-`database.write()`), jadi kode lain (plugin/tool AI) **tidak perlu tahu** adapter mana yang
-aktif — selalu akses lewat `global.db` / `db.data.{users,chats,stats,msgs,settings}`.
+All adapters are accessed through the same interface (`database.data`,
+`database.read()`, `database.write()`), so other code (plugins/AI tools) **doesn't need
+to know** which adapter is active — always access it via `global.db` /
+`db.data.{users,chats,stats,msgs,settings}`.
 
-**Struktur `db.data` (skema utama):**
+**`db.data` structure (main schema):**
 ```
 db.data.users  = { [jid]: { name, exp, limit, premium, premiumTime, level, registered, ... } }
 db.data.chats  = { [jid]: { welcome, isBanned, aiEnabled?, ... } }
 db.data.stats  = { [key]: number }   // command usage stats
-db.data.msgs   = { [key]: object }   // pesan tersimpan (dbmsg tools: get/add/del/list vn/msg/img/dst)
-db.data.settings = { ... }           // pengaturan global tambahan
+db.data.msgs   = { [key]: object }   // saved messages (dbmsg tools: get/add/del/list vn/msg/img/etc.)
+db.data.settings = { ... }           // additional global settings
 ```
-Website (`lib/server.js`) juga baca/tulis ke `db.data.users` untuk sistem **register/login/OTP,
-tier, EXP, gems, gift code, premium** — lihat §5.3.
+The website (`lib/server.js`) also reads/writes `db.data.users` for the
+**register/login/OTP, tier, EXP, gems, gift code, premium** system — see §5.3.
 
 ### 5.3. `lib/server.js` — Website & REST API
-Selain serve static file dari `lib/views/*.html`, `server.js` juga mengekspos **REST API** (di
-bawah `/api/*`) yang menjalankan dashboard web bot (login/register user, profil, tier system,
-gift code, dsb). Route dibuat lewat helper `get(path, handler)` / `post(path, handler)` di
-`buildRoutes(conn)`. Endpoint yang ada saat ini:
+Besides serving static files from `lib/views/*.html`, `server.js` also exposes a **REST
+API** (under `/api/*`) that powers the bot's web dashboard (user login/register,
+profile, tier system, gift codes, etc.). Routes are built via the `get(path, handler)` /
+`post(path, handler)` helpers inside `buildRoutes(conn)`. Current endpoints:
 
-| Method | Path | Fungsi |
+| Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/health` | health check |
-| GET | `/api/tierAsset` | asset/label tier |
-| GET | `/api/botInfo` | info umum bot (nama, icon, dst) |
-| GET | `/api/commandList` | daftar command (sumber sama dengan `.menu`) |
-| GET | `/api/envExample` | isi `.env.example` (bukan `.env` asli!) |
-| POST | `/api/register` | registrasi akun website |
+| GET | `/api/tierAsset` | tier asset/label |
+| GET | `/api/botInfo` | general bot info (name, icon, etc.) |
+| GET | `/api/commandList` | command list (same source as `.menu`) |
+| GET | `/api/envExample` | contents of `.env.example` (NOT the real `.env`!) |
+| POST | `/api/register` | website account registration |
 | POST | `/api/login` | login |
-| POST | `/api/verify-otp` / `/api/resend-otp` | verifikasi OTP |
-| GET | `/api/profile` | data profil user (exp, tier, limit, dst) |
-| POST | `/api/daily` | klaim reward harian |
-| POST | `/api/tierup` | naik tier |
-| POST | `/api/change-password` / `/api/rename` | update akun |
-| POST | `/api/redeem` | redeem gift code |
-| POST | `/api/buy-limit` / `/api/buy-premium` | beli limit/premium pakai gems |
-| POST | `/api/slot` | fitur slot/gacha (gems) |
-| GET | `/api/gems` | saldo gems |
+| POST | `/api/verify-otp` / `/api/resend-otp` | OTP verification |
+| GET | `/api/profile` | user profile data (exp, tier, limit, etc.) |
+| POST | `/api/daily` | claim daily reward |
+| POST | `/api/tierup` | tier upgrade |
+| POST | `/api/change-password` / `/api/rename` | account updates |
+| POST | `/api/redeem` | redeem a gift code |
+| POST | `/api/buy-limit` / `/api/buy-premium` | buy limit/premium with gems |
+| POST | `/api/slot` | slot/gacha feature (gems) |
+| GET | `/api/gems` | gems balance |
 | POST | `/api/logout` | logout |
-| GET | `/api/check-owner` | cek apakah request dari owner |
-| GET/POST | `/api/admin/giftcodes*` | CRUD gift code (admin only) |
-| GET | `/api/premium-notice` | notifikasi status premium |
-| GET | `/api/user-search` / `/api/admin/users` | cari/list user (admin) |
-| POST | `/api/admin/update-user` / `/api/admin/delete-user` | kelola user (admin) |
-| POST | `/api/check-number` | cek nomor WA terdaftar/tidak |
+| GET | `/api/check-owner` | check whether the request is from the owner |
+| GET/POST | `/api/admin/giftcodes*` | gift code CRUD (admin only) |
+| GET | `/api/premium-notice` | premium status notification |
+| GET | `/api/user-search` / `/api/admin/users` | search/list users (admin) |
+| POST | `/api/admin/update-user` / `/api/admin/delete-user` | manage users (admin) |
+| POST | `/api/check-number` | check whether a WA number is registered |
 
-- Route non-`/api/` (`GET`) di-serve sebagai **static file** dari `lib/views/` (`index.html`,
-  `profile.html`).
-- Ada **WebSocket server** (`WebSocketServer`) yang nge-pipe semua event dari `conn` (koneksi
-  Baileys) ke client browser secara real-time (prefix `conn-`), dipakai buat live status di
-  website (mis. tampilkan QR/pairing code tanpa refresh).
-- Ada rate-limit sederhana in-memory (`checkMemoryRateLimit`) khusus untuk semua path `/api/*`.
-- **Jangan** expose data sensitif (password hash, token) lewat endpoint manapun — ikuti pola
-  yang sudah ada (password selalu di-hash, OTP punya expiry).
+- Non-`/api/` `GET` routes are served as **static files** from `lib/views/`
+  (`index.html`, `profile.html`).
+- There's a **WebSocket server** (`WebSocketServer`) that pipes all events from `conn`
+  (the Baileys connection) to browser clients in real time (prefix `conn-`), used for
+  live status on the website (e.g. showing the QR/pairing code without a refresh).
+- There's a simple in-memory rate limit (`checkMemoryRateLimit`) specifically for all
+  `/api/*` paths.
+- **Don't** expose sensitive data (password hashes, tokens) through any endpoint —
+  follow the existing pattern (passwords are always hashed, OTPs have an expiry).
 
 ### 5.4. `lib/sticker.js`
-Export: `sticker(...)` (bikin file `.webp` dari image/video buffer, dipakai plugin
-`sticker.js`, `brat.js`, dll) dan `addExif(...)` (nulis metadata pack-name/author ke webp sticker,
-dipakai `setwm.js`, dsb).
+Exports: `sticker(...)` (builds a `.webp` file from an image/video buffer, used by the
+`sticker.js`, `brat.js`, etc. plugins) and `addExif(...)` (writes pack-name/author
+metadata to a webp sticker, used by `setwm.js`, etc.).
 
 ### 5.5. `lib/converter.js`
-Export: `toAudio`, `toPTT`, `toVideo`, `ffmpeg` (dan util terkait) — semua konversi media
-berbasis `fluent-ffmpeg`, dipakai plugin `tools/convert.js` dan berbagai downloader.
+Exports: `toAudio`, `toPTT`, `toVideo`, `ffmpeg` (and related utils) — all
+`fluent-ffmpeg`-based media conversion, used by the `tools/convert.js` plugin and
+various downloaders.
 
-### 5.6. Sistem Subbot (`plugins/subbot/*`)
-Bot ini support **multi-session** — user bisa hubungkan nomor WA mereka sendiri sebagai
-"subbot" yang ikut nempel ke instance bot utama:
-- `.pairing` / `.connect` / `.reconnect` / `.disconnect` (`plugins/subbot/connect.js`) — bikin
-  session baru pakai `makeWASocket` terpisah, disimpan di
-  `data/sessions/subbot/<id>` (`settings.subbot.path`), dibatasi
-  `settings.subbot.maxConnect` (default 3) session aktif bersamaan, dan
-  `settings.subbot.autoConnect` untuk auto-reconnect subbot yang sudah pernah connect saat bot
-  utama restart.
-- `.listsubbot` (`plugins/subbot/list.js`) — lihat subbot yang aktif.
+### 5.6. Subbot System (`plugins/subbot/*`)
+This bot supports **multi-session** — users can link their own WA number as a "subbot"
+attached to the main bot instance:
+- `.pairing` / `.connect` / `.reconnect` / `.disconnect` (`plugins/subbot/connect.js`) —
+  creates a new session using a separate `makeWASocket`, stored under
+  `data/sessions/subbot/<id>` (`settings.subbot.path`), capped by
+  `settings.subbot.maxConnect` (default 3) concurrent active sessions, and
+  `settings.subbot.autoConnect` for auto-reconnecting previously-connected subbots when
+  the main bot restarts.
+- `.listsubbot` (`plugins/subbot/list.js`) — view active subbots.
 
-### 5.7. Sistem AI lanjutan (di `lib/ai/mcp.js`)
-- **Model routing**: command `.ai`, `.ai:flash`, `.ai:pro`, `.ai:gemma`, `.ai:gemma-moe`
-  (regex `/^ai(:[a-z-]+)?$/i` di `plugins/ai/ai.js`) — suffix setelah `:` dipetakan ke
-  `MODELS` (§4.6). Model **Gemma** (`gemma-4-31b-it`, `gemma-4-26b-a4b-it`) **tidak** punya
-  akses tool-calling/search sama sekali (murni reasoning/coding text), beda dari Gemini
-  (`default`, `flash`, `pro`) yang full tool-calling.
-- **Thinking mode**: dikontrol `global.settings.ai.thinking` (di `lib/config.js`). Kalau
-  `true`, request ke Gemini pakai `thinkingConfig: { thinkingBudget: -1 }` (dynamic thinking)
-  dan progress step ("Sedang berpikir...") dikirim live ke chat lewat `opts.onStep`. Tidak
-  berlaku untuk model Gemma (tidak support thinkingConfig).
-- **Auto-heal**: dikontrol `global.settings.ai.autoheal` (default `false`) + bisa dimatikan
-  paksa lewat env `DISABLE_AUTO_HEAL=true`. Alur (`handleError` di `mcp.js`, dipanggil dari
-  `lib/handler.js` tiap ada error di plugin):
-  1. Kalau error itu **disengaja** (plugin memang `throw new Error("pesan validasi")`) atau
-     **transient/downstream API error** (rate limit, API pihak ketiga down) → auto-heal
-     **di-skip**, cuma kirim pesan biasa ke user (tidak dianggap bug).
-  2. Kalau bug beneran & auto-heal aktif → bot kirim status "Auto-fix in progress..." ke
-     chat, lalu model **Gemma** dipanggil untuk coba analisa & perbaiki source file yang
-     error (`findSourceFiles(err)`), dengan **cooldown 5 menit** per error-key supaya tidak
-     spam retry pada error yang sama berulang-ulang.
-  3. Kalau auto-heal mati/disabled → cuma laporkan error ke owner (dengan detail) atau ke user
-     biasa (pesan generik "Something went wrong").
-- **Rate limit & API key pool**: `AI_KEYS` di `.env` bisa berupa 1 key (string) atau banyak key
-  (JSON array) untuk fallback — `getNextKey()/rotateKey()` otomatis pindah key kalau kena limit,
-  `resetRateLimit(jid)` reset limit per-chat.
+### 5.7. Advanced AI System (in `lib/ai/mcp.js`)
+- **Model routing**: commands `.ai`, `.ai:flash`, `.ai:pro`, `.ai:gemma`,
+  `.ai:gemma-moe` (regex `/^ai(:[a-z-]+)?$/i` in `plugins/ai/ai.js`) — the suffix after
+  `:` is mapped to `MODELS` (§4.6). The **Gemma** models (`gemma-4-31b-it`,
+  `gemma-4-26b-a4b-it`) have **no** tool-calling/search access at all (pure
+  reasoning/coding text), unlike Gemini (`default`, `flash`, `pro`), which has full
+  tool-calling.
+- **Thinking mode**: controlled by `global.settings.ai.thinking` (in `lib/config.js`).
+  When `true`, requests to Gemini include `thinkingConfig: { thinkingBudget: -1 }`
+  (dynamic thinking), and a progress step ("Thinking...") is sent live to chat via
+  `opts.onStep`. Doesn't apply to the Gemma model (no thinkingConfig support).
+- **Auto-heal**: controlled by `global.settings.ai.autoheal` (default `false`), and can
+  be force-disabled via the `DISABLE_AUTO_HEAL=true` env var. Flow (`handleError` in
+  `mcp.js`, called from `lib/handler.js` whenever a plugin errors):
+  1. If the error is **intentional** (a plugin deliberately did `throw new
+     Error("validation message")`) or a **transient/downstream API error** (rate limit,
+     a third-party API being down) → auto-heal is **skipped**, only a plain message is
+     sent to the user (not treated as a bug).
+  2. If it's a real bug and auto-heal is on → the bot sends an "Auto-fix in
+     progress..." status to the chat, then the **Gemma** model is called to try to
+     analyze & fix the source file that errored (`findSourceFiles(err)`), with a
+     **5-minute cooldown** per error-key to avoid spamming retries on the same
+     recurring error.
+  3. If auto-heal is off/disabled → the error is only reported to the owner (with
+     details) or to a regular user (a generic "Something went wrong" message).
+- **Rate limit & API key pool**: `AI_KEYS` in `.env` can be a single key (string) or
+  many keys (JSON array) for fallback — `getNextKey()/rotateKey()` automatically switch
+  keys when one hits a rate limit, `resetRateLimit(jid)` resets the limit per-chat.
 
 ---
 
-## 6. Daftar Plugin per Kategori (command trigger)
-Sumber kebenaran tetap `list_plugins`/`.menu` saat runtime (bisa berubah kalau ada plugin baru),
-tapi berikut snapshot command yang ada di repo ini per kategori folder:
+## 6. Plugin List by Category (command triggers)
+The runtime source of truth is still `list_plugins`/`.menu` (it can change as new
+plugins are added), but here's a snapshot of the commands present in this repo by
+category folder:
 
-| Kategori (`plugins/<folder>/`) | Command |
+| Category (`plugins/<folder>/`) | Commands |
 |---|---|
 | `main/` | `menu`/`help`/`?`, `ping`/`speed`, `profile`, `daftar`/`register`, `owner`/`creator`, `speedtest`, `enable`/`disable`/`on`/`off` |
 | `ai/` | `ai`/`ai:<model>`, `aicheck`, `gpt`, `mistral`, `pollination` |
@@ -504,37 +525,40 @@ tapi berikut snapshot command yang ada di repo ini per kategori folder:
 | `owner/` | `backup`, `gitpush`/`gitstats`, `restart`, `setbotpp`, `grep <keyword>`, `save*`/`getplugin`/`gp` (file.js), eval prefix `<`/`<<`/`$ ` (exec.js, **rowner only**) |
 | `tools/` | `toimg`/`tovideo`/`tovn`/`toptt`/`tomp3`/`toaudio`, `resize`, `hd`/`upscale`, `imgmotion`, `ssweb`, `tourl`/`upload`, `getexif`, `fetch`/`get`, `delete`, `readviewonce`/`rvo`, `get/add/del/list` + `vn/msg/video/audio/img/sticker/gif` (dbmsg.js) |
 | `subbot/` | `pairing`/`connect`/`reconnect`/`disconnect`, `listsubbot`/`listbot` |
-| `_event/` | Bukan command biasa — event hook internal: `system.js` (welcome/leave, dsb), `getmsg.js`, `buttonResponse.js` (handle klik native-flow button) |
+| `_event/` | Not a regular command — internal event hooks: `system.js` (welcome/leave, etc.), `getmsg.js`, `buttonResponse.js` (handles native-flow button clicks) |
 
-## 7. Referensi Lengkap Environment Variables (`.env.example`)
-| Var | Wajib? | Keterangan |
+## 7. Full Environment Variable Reference (`.env.example`)
+| Var | Required? | Notes |
 |---|---|---|
-| `BOT_NAME` | **Wajib** | Nama bot, dipakai di system prompt AI & UI |
-| `OWNER` / `MODERATOR` | Opsional (default kosong) | JSON array `[["628xxx","Nama",true], ...]` |
-| `CUSTOM_PAIRING` | Opsional | Kode pairing custom, maks 8 karakter |
-| `GROUP_ID` | Opsional | Untuk LID solver, isi invite link atau group JID |
-| `DISCORD_WEBHOOK` | Opsional | Dipakai `plugins/tools/upload.js` |
-| `SPOTIFY_TOKEN` | Opsional | Fallback `client_id:client_secret` kalau anonymous Spotify kena 429 |
-| `AI_PERSONALITY` | Opsional | Override `DEFAULT_PERSONALITY` di `mcp.js` |
-| `AI_KEYS` | **Wajib untuk fitur AI** | 1 key (string) atau banyak (JSON array), dari aistudio.google.com |
-| `GIT_CLASSIC_KEY` / `GIT_TOKEN` / `GIT_USER` / `GIT_EMAIL` / `GIT_REPO` | Opsional (dev/fork saja) | Kredensial untuk `.gitpush` |
-| `DATABASE` | Opsional | Kosong = JSON lokal; isi untuk pakai MySQL/MongoDB/SQLite/Cloud adapter |
-| `CLOUDFLARE_TUNNEL_TOKEN` / `CLOUDFLARE_TUNNEL_HOSTNAME` | Opsional | Custom domain lewat Cloudflare Tunnel |
-| `HOSTNAME_PUBLIC` | Opsional | Hostname publik kalau tidak pakai tunnel |
-| `DISABLE_AUTO_HEAL` | Opsional (tidak ada di `.env.example`, tapi dibaca kode) | `"true"` untuk matikan auto-heal paksa |
+| `BOT_NAME` | **Required** | Bot's name, used in the AI system prompt & UI |
+| `OWNER` / `MODERATOR` | Optional (empty by default) | JSON array `[["628xxx","Name",true], ...]` |
+| `CUSTOM_PAIRING` | Optional | Custom pairing code, max 8 characters |
+| `GROUP_ID` | Optional | For LID solver, set an invite link or group JID |
+| `DISCORD_WEBHOOK` | Optional | Used by `plugins/tools/upload.js` |
+| `SPOTIFY_TOKEN` | Optional | Fallback `client_id:client_secret` when anonymous Spotify hits a 429 |
+| `AI_PERSONALITY` | Optional | Overrides `DEFAULT_PERSONALITY` in `mcp.js` |
+| `AI_KEYS` | **Required for AI features** | 1 key (string) or several (JSON array), from aistudio.google.com |
+| `GIT_CLASSIC_KEY` / `GIT_TOKEN` / `GIT_USER` / `GIT_EMAIL` / `GIT_REPO` | Optional (dev/fork only) | Credentials for `.gitpush` |
+| `DATABASE` | Optional | Empty = local JSON; set this to use MySQL/MongoDB/SQLite/Cloud adapter |
+| `CLOUDFLARE_TUNNEL_TOKEN` / `CLOUDFLARE_TUNNEL_HOSTNAME` | Optional | Custom domain via Cloudflare Tunnel |
+| `HOSTNAME_PUBLIC` | Optional | Public hostname if not using a tunnel |
+| `DISABLE_AUTO_HEAL` | Optional (not in `.env.example`, but read by the code) | `"true"` to force-disable auto-heal |
 
-**Aturan tambahan**: kalau ada kebutuhan var baru, tambahkan ke `.env.example` dengan value
-kosong/placeholder + komentar penjelasan (ikuti gaya yang sudah ada), **jangan pernah** isi
-`.env.example` dengan value asli/rahasia.
+**Additional rule**: if a new env var is needed, add it to `.env.example` with an
+empty/placeholder value + an explanatory comment (follow the existing style), **never**
+put a real/secret value into `.env.example`.
 
 ---
 
-## 8. Ringkasan Cepat (TL;DR)
-- Jangan sentuh `.env`, hanya `.env.example`.
-- Sebelum `gitpush`: cek `.git` → cek file berubah → cek isi perubahan → update
-  `CHANGELOG.md` → baru commit & push.
-- Jangan ubah system prompt AI Agent (`lib/ai/mcp.js`) atau gating risk tool tanpa diminta.
-- Plugin baru ikuti 4 format standar di §3.3, taruh di folder `plugins/<kategori>/`.
-- Tool AI baru taruh di `lib/ai/tools/`, ikuti pola `{ name, description, parameters, execute }`.
-- Semua global tersedia tanpa import (lihat §4.1) — cek dulu sebelum re-implement hal yang
-  sudah ada.
+## 8. Quick Summary (TL;DR)
+- Don't touch `.env`, only `.env.example`.
+- Before `gitpush`: check `.git` → check changed files → check what changed → update
+  `CHANGELOG.md` → then commit & push.
+- Don't change the AI Agent's system prompt (`lib/ai/mcp.js`) or tool risk gating
+  without being asked.
+- New plugins follow one of the 4 standard formats in §3.3, placed in
+  `plugins/<category>/`.
+- New AI tools go in `lib/ai/tools/`, following the `{ name, description, parameters,
+  execute }` pattern.
+- All globals are available without importing (see §4.1) — check first before
+  reimplementing something that already exists.
