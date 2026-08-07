@@ -1,4 +1,8 @@
 07/Aug/2026
+- Improve context info extraction for messages in lib/ai/mcp.js
+- Minor updates in lib/ai/tools/messaging.js
+- Refine system prompt rule 0.5 for reply handling in lib/ai/mcp.js
+- Update plugins/ai/ai.js
 - Update AI Agent documentation (plugin risk levels) in lib/ai/mcp.js
 - Refactor plugin handling in lib/ai/tools/plugin.js
 - Improve viewonce tool in plugins/tools/viewonce.js
@@ -6,6 +10,8 @@
 
 Modified files:
 - lib/ai/mcp.js
+- lib/ai/tools/messaging.js
+- plugins/ai/ai.js
 - lib/ai/tools/plugin.js
 - plugins/tools/viewonce.js
 - lib/scraper/ytdl.js

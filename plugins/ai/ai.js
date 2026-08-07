@@ -10,6 +10,7 @@ const {
     getUserIdentity,
     getApiKeys,
     MODELS,
+    getContextInfo,
 } = (await import("../../lib/ai/mcp.js"))
 import crypto from 'crypto'
 
@@ -22,7 +23,7 @@ const toNum  = (jid)  => (jid || '').split(':')[0].split('@')[0]
 function isBotMentioned(m, conn) {
     const bn = botNum(conn)
     const bl = botLid(conn)
-    const mentions = m.message?.extendedTextMessage?.contextInfo?.mentionedJid || []
+    const mentions = getContextInfo(m)?.mentionedJid || []
     return mentions.some(jid => {
         const n = toNum(jid)
         return n === bn || n === bl
@@ -32,7 +33,7 @@ function isBotMentioned(m, conn) {
 function isReplyToBot(m, conn) {
     const bn = botNum(conn)
     const bl = botLid(conn)
-    const ctx = m.message?.extendedTextMessage?.contextInfo
+    const ctx = getContextInfo(m)
     if (!ctx) return false
     const quotedNum = toNum(ctx.participant)
     return quotedNum === bn || quotedNum === bl
@@ -60,25 +61,49 @@ function hasMedia(m) {
 }
 
 function hasQuotedMedia(m) {
-    const quoted = m.message?.extendedTextMessage?.contextInfo?.quotedMessage
+    const quoted = getContextInfo(m)?.quotedMessage
     if (!quoted) return false
     return !!(quoted.imageMessage || quoted.audioMessage || quoted.videoMessage || quoted.documentMessage || quoted.stickerMessage)
 }
 
 function mediaDefaultText(m) {
     const msg = m.message || {}
-    const qmsg = m.message?.extendedTextMessage?.contextInfo?.quotedMessage || {}
-    if (msg.stickerMessage || qmsg.stickerMessage) return 'React and respond simply and naturally to this sticker as if it were a real reply in our conversation'
-    if (msg.imageMessage || qmsg.imageMessage)             return 'Analyze or describe this image if it needed or if there problem, if no react and respond simply and naturally to this image as if it were a real reply in our conversation'
-    if (msg.audioMessage || qmsg.audioMessage)             return 'Transcribe and understand this voice note/audio'
-    if (msg.videoMessage || qmsg.videoMessage)             return 'Describe this video'
-    if (msg.documentMessage || qmsg.documentMessage)       return 'Read and summarize this document'
+    const qmsg = getContextInfo(m)?.quotedMessage || {}
+    // PRIORITASKAN media yang BARU dikirim (msg) di atas media dari quoted (qmsg).
+    // Kalau msg punya media apapun, pakai itu — jangan campur logic per-tipe dulu,
+    // karena kalau urut per-tipe (sticker>image>audio>...) bisa salah pilih pesan
+    // quoted duluan walau ada media baru dari tipe lain yang harusnya lebih relevan.
+    if (msg.stickerMessage) return 'React and respond simply and naturally to this sticker as if it were a real reply in our conversation'
+    if (msg.imageMessage)   return 'Analyze or describe this image if it needed or if there problem, if no react and respond simply and naturally to this image as if it were a real reply in our conversation'
+    if (msg.audioMessage)   return 'Transcribe and understand this voice note/audio'
+    if (msg.videoMessage)   return 'Describe this video'
+    if (msg.documentMessage) return 'Read and summarize this document'
+    // Baru fallback ke media dari pesan yang di-quote/reply kalau tidak ada media baru sama sekali.
+    if (qmsg.stickerMessage) return 'React and respond simply and naturally to this sticker as if it were a real reply in our conversation'
+    if (qmsg.imageMessage)   return 'Analyze or describe this image if it needed or if there problem, if no react and respond simply and naturally to this image as if it were a real reply in our conversation'
+    if (qmsg.audioMessage)   return 'Transcribe and understand this voice note/audio'
+    if (qmsg.videoMessage)   return 'Describe this video'
+    if (qmsg.documentMessage) return 'Read and summarize this document'
     return ''
 }
 
 async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false) {
     const senderJid = m.sender || m.key?.remoteJid
     const chat      = m.key?.remoteJid || m.chat
+
+    // Ambil contextInfo pakai m.msg (getter bawaan lib/simple.js, terbukti reliable dari
+    // pengetesan m.quoted) sebagai sumber utama, fallback ke scan manual kalau tidak ada.
+    let explicitContextInfo = m.msg?.contextInfo || null
+    if (!explicitContextInfo) {
+        const commonKeys = ['extendedTextMessage', 'imageMessage', 'videoMessage', 'documentMessage', 'stickerMessage', 'audioMessage']
+        for (const k of commonKeys) {
+            const v = m.message?.[k]
+            if (v && typeof v === 'object' && v.contextInfo) {
+                explicitContextInfo = v.contextInfo
+                break
+            }
+        }
+    }
 
     if (hasPending(senderJid)) {
         const reply = (text) => conn.sendMessage(chat, { text }, { quoted: m })
@@ -216,6 +241,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
             isOwner,
             senderJid,
             onStep,
+            contextInfo: explicitContextInfo,
         })
     } catch (err) {
 
@@ -269,7 +295,7 @@ ${d.code || ''}
                 })
                 const msg = { text: d.body || '', nativeFlow: btns }
                 if (d.footer) msg.footer = d.footer
-                return await conn.sendMessage(chat, msg, { quoted: m })
+                return await conn.sendButton(chat, msg, m )
             } catch (e) {
                 const lines = [d.body || '']
                 if (d.footer) lines.push(`_${d.footer}_`)
@@ -318,7 +344,7 @@ ${d.code || ''}
                             })
                             const msg = { text: d.body || '', nativeFlow: btns }
                             if (d.footer) msg.footer = d.footer
-                            return await conn.sendMessage(chat, msg, { quoted: m })
+                            return await conn.sendButton(chat, msg, m)
                         } catch (_) {
                             const lines = [d.body || '']
                             if (d.footer) lines.push('_' + d.footer + '_')
