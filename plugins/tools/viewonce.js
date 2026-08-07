@@ -32,5 +32,10 @@ let handler = async (m, { conn }) => {
 handler.help = ['readviewonce', 'rvo']
 handler.tags = ['tools']
 handler.command = /^(readviewonce|rvo)/i
+handler.ai = {
+    risk: 'low',
+    description: 'To read/download viewonce message, and send it to user'
+}
+
 
 export default handler
