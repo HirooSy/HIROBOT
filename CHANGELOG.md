@@ -2,11 +2,14 @@
 - Update AI Agent documentation (plugin risk levels) in lib/ai/mcp.js
 - Refactor plugin handling in lib/ai/tools/plugin.js
 - Improve viewonce tool in plugins/tools/viewonce.js
+- Refactor YouTube scraper to use https/dns with custom lookup and axios for improved stability in lib/scraper/ytdl.js, and update yt plugin
 
 Modified files:
 - lib/ai/mcp.js
 - lib/ai/tools/plugin.js
 - plugins/tools/viewonce.js
+- lib/scraper/ytdl.js
+- plugins/dl/yt.js
 
 ____________________
 
