@@ -1,8 +1,12 @@
 import path from 'path'
 import fs from 'fs'
-import loadVoip from '../../lib/voip/voip.js'
 import axios from 'axios'
+import { fork } from 'child_process'
 import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const WORKER_PATH = path.join(__dirname, '..', '..', 'lib', 'voip', 'call-worker.js')
+const AUTH_DIR = 'data/sessions/caller'
 
 let _ffmpeg = null
 let _ffmpegError = null
@@ -18,10 +22,6 @@ async function getFfmpeg() {
   }
 }
 
-/**
- * Get audio duration in milliseconds using ffprobe.
- * Returns null if duration cannot be determined (falls back to no auto-hangup).
- */
 async function getAudioDurationMs(filePath) {
   try {
     const ffmpeg = await getFfmpeg()
@@ -40,133 +40,125 @@ async function getAudioDurationMs(filePath) {
   }
 }
 
-const TMP_DIR = path.join(process.cwd(), process.env.TMP || "data/tmp")
+const TMP_DIR = path.join(process.cwd(), process.env.TMP || 'data/tmp')
 
-const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024 
+const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024
 const DOWNLOAD_TIMEOUT_MS = 30_000
 
-let sharedClient = null
-let connecting = null
-let activeCalls = new Map() // Track active calls
-
-async function getClient(conn) {
-  if (sharedClient) return sharedClient
-  if (connecting) return connecting
-
-  connecting = (async () => {
-    const { VoipClient } = await loadVoip()
-    const client = new VoipClient({ existingSocket: conn })
-    await client.connect()
-    console.log('[ VOIP ] Connected (existingSocket, cached client)')
-    sharedClient = client
-    return client
-  })()
-
-  try {
-    return await connecting
-  } finally {
-    connecting = null
-  }
-}
-
-/**
- * The underlying SDK never clears its private #activeCall after a call ends,
- * so a cached VoipClient permanently refuses subsequent calls with
- * "A call is already active." Force a full disconnect/reset after every call
- * so the next .voipcall gets a fresh client with clean internal state.
- */
-function resetClient() {
-  if (sharedClient) {
-    try {
-      sharedClient.disconnect()
-    } catch (e) {
-      console.error('[ VOIP ] Error disconnecting stale client:', e?.message || e)
-    }
-  }
-  sharedClient = null
-
-  const before = process.memoryUsage()
-  console.log(`[ VOIP ] Memory before GC: rss=${(before.rss / 1024 / 1024).toFixed(1)}MB heapUsed=${(before.heapUsed / 1024 / 1024).toFixed(1)}MB`)
-
-  if (global.gc) {
-    global.gc()
-    const after = process.memoryUsage()
-    console.log(`[ VOIP ] Memory after forced GC: rss=${(after.rss / 1024 / 1024).toFixed(1)}MB heapUsed=${(after.heapUsed / 1024 / 1024).toFixed(1)}MB`)
-  } else {
-    console.log('[ VOIP ] global.gc not available — start Node with --expose-gc to enable forced GC diagnostics.')
-  }
-}
-
 function extFromMime(mime = '') {
-    if (/mpeg|mp3/i.test(mime)) return '.mp3'
-    if (/wav|x-wav/i.test(mime)) return '.wav'
-    if (/ogg|opus/i.test(mime)) return '.ogg'
-    if (/aac/i.test(mime)) return '.aac'
-    if (/mp4|m4a/i.test(mime)) return '.m4a'
-    return '.audio' 
+  if (/mpeg|mp3/i.test(mime)) return '.mp3'
+  if (/wav|x-wav/i.test(mime)) return '.wav'
+  if (/ogg|opus/i.test(mime)) return '.ogg'
+  if (/aac/i.test(mime)) return '.aac'
+  if (/mp4|m4a/i.test(mime)) return '.m4a'
+  return '.audio'
 }
 
 async function downloadAudioFromUrl(url) {
   if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true })
-  
   const response = await axios({
     method: 'get',
-    url: url,
+    url,
     responseType: 'arraybuffer',
     timeout: DOWNLOAD_TIMEOUT_MS,
     maxContentLength: MAX_DOWNLOAD_BYTES,
     headers: { 'User-Agent': 'Mozilla/5.0' }
   })
-
   const contentType = response.headers['content-type'] || ''
   const ext = extFromMime(contentType) || '.mp3'
   const filePath = path.join(TMP_DIR, `voip_${Date.now()}${ext}`)
-  
   fs.writeFileSync(filePath, Buffer.from(response.data))
   return filePath
 }
 
 function isValidUrl(string) {
-  try {
-    new URL(string)
-    return true
-  } catch (_) {
-    return false
-  }
+  try { new URL(string); return true } catch { return false }
 }
 
-let busy = false
+// Tracks the single in-flight call: child process handle + chat context.
+let active = null // { proc, chatId, key, phoneNumber, isTempFile, audioSource, cleaned }
+
+function cleanup() {
+  if (!active || active.cleaned) return
+  active.cleaned = true
+  if (active.isTempFile && active.audioSource !== 'silence' && fs.existsSync(active.audioSource)) {
+    fs.unlink(active.audioSource, () => {})
+  }
+  if (active.proc && !active.proc.killed) {
+    try { active.proc.kill() } catch {}
+  }
+  active = null
+}
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
-  // Handle voipend (hangup)
-  if (command === 'voipend') {
-    if (args[0] === 'force') {
-      busy = false
-      resetClient()
-      activeCalls.clear()
-      return void (await m.reply('✦ VOIP state force-reset.'))
+  if (command === 'voippair') {
+    if (fs.existsSync(path.join(AUTH_DIR, 'creds.json'))) {
+      return void (await m.reply('✦ VOIP device is already linked. Delete the `data/sessions/caller` folder first if you want to re-pair.'))
     }
-    const chatId = m.chat
-    if (!activeCalls.has(chatId)) {
-      throw `❌ No active call in this chat.${busy ? '\n\nBusy flag is stuck on — try `.voipend force` to reset it.' : ''}`
-    }
-    const { call, key, phoneNumber, cleanup } = activeCalls.get(chatId)
-    try {
-      await call.end()
-    } catch (e) {
-      console.error('[ VOIP ] call.end() threw:', e?.message || e)
-    } finally {
-      call.removeAllListeners?.()
-      activeCalls.delete(chatId)
+    if (active) throw 'A VOIP operation is already in progress, wait for it to finish.'
+
+    const pairingNumber = (conn.user?.id || '').split(':')[0].split('@')[0]
+    const customPairingCode = process.env.CUSTOM_PAIRING || undefined
+
+    const { key } = await m.reply('✦ Starting VOIP device pairing...')
+
+    const proc = fork(WORKER_PATH, [], {
+      env: {
+        ...process.env,
+        VOIP_AUTH_DIR: AUTH_DIR,
+        VOIP_CALL_PARAMS: JSON.stringify({ mode: 'pair', pairingNumber, customPairingCode })
+      }
+    })
+
+    active = { proc, chatId: m.chat, key, phoneNumber: null, isTempFile: false, audioSource: 'silence', cleaned: false }
+
+    proc.on('message', (msg) => {
+      switch (msg.type) {
+        case 'pairing_needed': {
+          const codeNote = msg.customPairingCode ? `custom code *${msg.customPairingCode.toUpperCase()}*` : 'an 8-digit pairing code'
+          conn.sendMessage(m.chat, { text: `✦ Check the server console for ${codeNote}, then enter it in WhatsApp > Linked Devices > Link with phone number. You have about 2 minutes.`, edit: key })
+          break
+        }
+        case 'already_linked':
+          conn.sendMessage(m.chat, { text: '✦ VOIP device was already linked.', edit: key })
+          cleanup()
+          break
+        case 'paired':
+          conn.sendMessage(m.chat, { text: '✦ VOIP device linked successfully! You can now use .voipcall.', edit: key })
+          cleanup()
+          break
+        case 'error':
+          console.error('[ VOIP ] pairing error:', msg.message)
+          conn.sendMessage(m.chat, { text: `❌ Pairing failed: ${msg.message}`, edit: key })
+          cleanup()
+          break
+      }
+    })
+
+    proc.on('exit', () => { if (active?.proc === proc) cleanup() })
+    proc.on('error', (err) => {
+      console.error('[ VOIP ] pairing worker spawn error:', err)
+      conn.reply(m.chat, `Failed to start VOIP pairing: ${err.message}`, m)
       cleanup()
-    }
-    conn.sendMessage(m.chat, { text: `✦ Call ended for ${phoneNumber}`, edit: key })
+    })
     return
   }
 
-  // Handle voipcall
+  if (command === 'voipend') {
+    if (args[0] === 'force' || !active) {
+      cleanup()
+      return void (await m.reply(active === null ? '✦ VOIP state force-reset.' : '❌ No active call.'))
+    }
+    active.proc.send({ type: 'hangup' })
+    return void (await m.reply(`✦ Hangup requested for ${active.phoneNumber}...`))
+  }
+
   if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [audio_url] (reply to an audio file or provide URL)`
-  if (busy) throw 'A call is already in progress, wait for it to finish.'
+  if (active) throw 'A call is already in progress, wait for it to finish (or `.voipend`).'
+
+  if (!fs.existsSync(path.join(AUTH_DIR, 'creds.json'))) {
+    throw 'VOIP device not linked yet. Run `.voippair` first (one-time setup).'
+  }
 
   const phoneNumber = args[0].replace(/\D/g, '')
   if (!phoneNumber) throw 'Invalid phone number.'
@@ -174,16 +166,11 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   let audioSource = 'silence'
   let audioUrl = args[1]
   let isTempFile = false
-  
+
   if (audioUrl && isValidUrl(audioUrl)) {
-    try {
-      await m.reply('✦ Downloading audio from URL...')
-      audioSource = await downloadAudioFromUrl(audioUrl)
-      isTempFile = true
-      console.log('[ VOIP ] Audio downloaded from URL:', audioUrl)
-    } catch (e) {
-      throw `Failed to download audio from URL: ${e.message}`
-    }
+    await m.reply('✦ Downloading audio from URL...')
+    audioSource = await downloadAudioFromUrl(audioUrl)
+    isTempFile = true
   } else if (m.quoted) {
     const mime = m.quoted.mimetype || ''
     if (/audio/.test(mime)) {
@@ -197,91 +184,61 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
   }
 
-  busy = true
-  let cleaned = false
-  const cleanup = () => {
-    if (cleaned) return
-    cleaned = true
-    busy = false
-    if (safetyTimer) clearTimeout(safetyTimer)
-    resetClient()
-    if (isTempFile && audioSource !== 'silence' && fs.existsSync(audioSource)) {
-      fs.unlink(audioSource, () => {})
-    }
+  let durationMs
+  if (audioSource !== 'silence') {
+    durationMs = await getAudioDurationMs(audioSource)
   }
 
-  // Safety-net: if for any reason 'ended'/'error' never fires (signaling
-  // hangs silently, WASM never emits a final state, etc.), force-reset busy
-  // after a hard cap so the command doesn't stay stuck forever. WhatsApp's
-  // own ringing timeout is usually well under a minute, so 90s is generous
-  // enough to not cut a legitimately-connecting call short.
-  const safetyTimer = setTimeout(() => {
-    if (!cleaned) {
-      console.warn('[ VOIP ] Safety timeout hit — forcing cleanup, call never reached ended/error.')
-      cleanup()
+  const { key } = await m.reply(`✦ Calling ${phoneNumber}... (Use .voipend to end call)`)
+
+  const proc = fork(WORKER_PATH, [], {
+    env: {
+      ...process.env,
+      VOIP_AUTH_DIR: AUTH_DIR,
+      VOIP_CALL_PARAMS: JSON.stringify({ mode: 'call', phoneNumber, audioSource, durationMs })
     }
-  }, 90_000)
+  })
 
-  try {
-    const client = await getClient(conn)
-    console.log('[ VOIP ] dialing', phoneNumber)
+  active = { proc, chatId: m.chat, key, phoneNumber, isTempFile, audioSource, cleaned: false }
 
-    if (audioSource !== 'silence' && !fs.existsSync(audioSource)) {
-      throw new Error(`Audio file not found: ${audioSource}`)
+  proc.on('message', (msg) => {
+    switch (msg.type) {
+      case 'connected':
+        console.log('[ VOIP ] worker connected')
+        break
+      case 'ringing':
+        conn.sendMessage(m.chat, { text: `✦ Ringing ${phoneNumber}...`, edit: key })
+        break
+      case 'call_connected':
+        conn.sendMessage(m.chat, { text: `✦ Call connected! Use .voipend to end.`, edit: key })
+        break
+      case 'ended':
+        conn.sendMessage(m.chat, { text: `✦ Call ended: ${msg.reason}`, edit: key })
+        cleanup()
+        break
+      case 'error':
+        console.error('[ VOIP ] worker error:', msg.message)
+        conn.reply(m.chat, `Call error: ${msg.message}`, m)
+        cleanup()
+        break
     }
+  })
 
-    const { key } = await m.reply(`✦ Calling ${phoneNumber}... (Use .voipend to end call)`)
+  proc.on('exit', (code) => {
+    console.log('[ VOIP ] worker process exited, code=', code)
+    if (active?.proc === proc) cleanup()
+  })
 
-    console.log('[ VOIP ] Audio source:', audioSource)
-
-    let durationMs
-    if (audioSource !== 'silence') {
-      durationMs = await getAudioDurationMs(audioSource)
-      if (durationMs) {
-        console.log('[ VOIP ] Detected audio duration (ms):', durationMs)
-      } else {
-        console.log('[ VOIP ] Could not detect audio duration, call will not auto-hangup')
-      }
-    }
-
-    const call = await client.call(phoneNumber, { audioSource, ...(durationMs ? { durationMs } : {}) })
-
-    // Store active call
-    activeCalls.set(m.chat, { call, key, phoneNumber, cleanup })
-
-    call.on('ringing', () => {
-      console.log('[ VOIP ] event: ringing')
-      conn.sendMessage(m.chat, { text: `✦ Ringing ${phoneNumber}...`, edit: key })
-    })
-    call.on('connected', () => {
-      console.log('[ VOIP ] event: connected')
-      conn.sendMessage(m.chat, { text: `✦ Call connected! Use .voipend to end.`, edit: key })
-    })
-    call.on('ended', (reason) => {
-      console.log('[ VOIP ] event: ended, reason=', reason)
-      conn.sendMessage(m.chat, { text: `✦ Call ended: ${reason}`, edit: key })
-      call.removeAllListeners?.()
-      activeCalls.delete(m.chat)
-      cleanup()
-    })
-    call.on('error', (err) => {
-      console.error('[ VOIP ] event: error', err)
-      conn.reply(m.chat, `Call error: ${err?.message || err}`, m)
-      call.removeAllListeners?.()
-      activeCalls.delete(m.chat)
-      cleanup()
-    })
-  } catch (e) {
-    console.error('[ VOIP ] call() threw before/during setup:', e)
-    activeCalls.delete(m.chat)
+  proc.on('error', (err) => {
+    console.error('[ VOIP ] worker spawn error:', err)
+    conn.reply(m.chat, `Failed to start VOIP worker: ${err.message}`, m)
     cleanup()
-    throw e
-  }
+  })
 }
 
-handler.help = ['voipcall <number> [audio_url] (reply to audio or provide URL)', 'voipend']
+handler.help = ['voippair (one-time device setup)', 'voipcall <number> [audio_url] (reply to audio or provide URL)', 'voipend']
 handler.tags = ['owner']
-handler.command = /^(voipcall|voipend)$/i
+handler.command = /^(voippair|voipcall|voipend)$/i
 handler.rowner = true
 
 export default handler
