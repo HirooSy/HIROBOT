@@ -84,6 +84,17 @@ function resetClient() {
     }
   }
   sharedClient = null
+
+  const before = process.memoryUsage()
+  console.log(`[ VOIP ] Memory before GC: rss=${(before.rss / 1024 / 1024).toFixed(1)}MB heapUsed=${(before.heapUsed / 1024 / 1024).toFixed(1)}MB`)
+
+  if (global.gc) {
+    global.gc()
+    const after = process.memoryUsage()
+    console.log(`[ VOIP ] Memory after forced GC: rss=${(after.rss / 1024 / 1024).toFixed(1)}MB heapUsed=${(after.heapUsed / 1024 / 1024).toFixed(1)}MB`)
+  } else {
+    console.log('[ VOIP ] global.gc not available — start Node with --expose-gc to enable forced GC diagnostics.')
+  }
 }
 
 function extFromMime(mime = '') {
@@ -129,9 +140,15 @@ let busy = false
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   // Handle voipend (hangup)
   if (command === 'voipend') {
+    if (args[0] === 'force') {
+      busy = false
+      resetClient()
+      activeCalls.clear()
+      return void (await m.reply('✦ VOIP state force-reset.'))
+    }
     const chatId = m.chat
     if (!activeCalls.has(chatId)) {
-      throw '❌ No active call in this chat.'
+      throw `❌ No active call in this chat.${busy ? '\n\nBusy flag is stuck on — try `.voipend force` to reset it.' : ''}`
     }
     const { call, key, phoneNumber, cleanup } = activeCalls.get(chatId)
     try {
@@ -181,13 +198,29 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   }
 
   busy = true
+  let cleaned = false
   const cleanup = () => {
+    if (cleaned) return
+    cleaned = true
     busy = false
+    if (safetyTimer) clearTimeout(safetyTimer)
     resetClient()
     if (isTempFile && audioSource !== 'silence' && fs.existsSync(audioSource)) {
       fs.unlink(audioSource, () => {})
     }
   }
+
+  // Safety-net: if for any reason 'ended'/'error' never fires (signaling
+  // hangs silently, WASM never emits a final state, etc.), force-reset busy
+  // after a hard cap so the command doesn't stay stuck forever. WhatsApp's
+  // own ringing timeout is usually well under a minute, so 90s is generous
+  // enough to not cut a legitimately-connecting call short.
+  const safetyTimer = setTimeout(() => {
+    if (!cleaned) {
+      console.warn('[ VOIP ] Safety timeout hit — forcing cleanup, call never reached ended/error.')
+      cleanup()
+    }
+  }, 90_000)
 
   try {
     const client = await getClient(conn)

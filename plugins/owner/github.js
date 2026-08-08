@@ -69,6 +69,8 @@ async function pushToGitHub(conn, m, args) {
             'pnpm-lock.json',
             '.npmrc',
             '.npm',
+            'replit.nix',
+            '.replit'
         ]
 
         if (!fs.existsSync(gitignorePath)) {
@@ -236,4 +238,3 @@ handler.rowner = true
 handler.ai = { risk: 'low', summarize: true, description: "Push project to github repository" }
 
 export default handler
-
