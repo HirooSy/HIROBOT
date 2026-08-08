@@ -4,6 +4,42 @@ import loadVoip from '../../lib/voip/voip.js'
 import axios from 'axios'
 import { fileURLToPath } from 'url'
 
+let _ffmpeg = null
+let _ffmpegError = null
+async function getFfmpeg() {
+  if (_ffmpeg) return _ffmpeg
+  if (_ffmpegError) throw _ffmpegError
+  try {
+    _ffmpeg = (await import('fluent-ffmpeg')).default
+    return _ffmpeg
+  } catch (err) {
+    _ffmpegError = new Error(`Modul "fluent-ffmpeg" gagal dimuat (durasi audio tidak dapat dideteksi): ${err.message}`)
+    throw _ffmpegError
+  }
+}
+
+/**
+ * Get audio duration in milliseconds using ffprobe.
+ * Returns null if duration cannot be determined (falls back to no auto-hangup).
+ */
+async function getAudioDurationMs(filePath) {
+  try {
+    const ffmpeg = await getFfmpeg()
+    const durationSec = await new Promise((resolve, reject) => {
+      ffmpeg.ffprobe(filePath, (err, metadata) => {
+        if (err) return reject(err)
+        const duration = metadata?.format?.duration
+        if (!duration || isNaN(duration)) return reject(new Error('Duration not found in ffprobe metadata'))
+        resolve(duration)
+      })
+    })
+    return Math.ceil(durationSec * 1000)
+  } catch (e) {
+    console.error('[ VOIP ] ffprobe failed to read duration:', e.message)
+    return null
+  }
+}
+
 const TMP_DIR = path.join(process.cwd(), process.env.TMP || "data/tmp")
 
 const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024 
@@ -11,6 +47,7 @@ const DOWNLOAD_TIMEOUT_MS = 30_000
 
 let sharedClient = null
 let connecting = null
+let activeCalls = new Map() // Track active calls
 
 async function getClient(conn) {
   if (sharedClient) return sharedClient
@@ -32,7 +69,23 @@ async function getClient(conn) {
   }
 }
 
-// Fungsi untuk menentukan ekstensi dari mime type
+/**
+ * The underlying SDK never clears its private #activeCall after a call ends,
+ * so a cached VoipClient permanently refuses subsequent calls with
+ * "A call is already active." Force a full disconnect/reset after every call
+ * so the next .voipcall gets a fresh client with clean internal state.
+ */
+function resetClient() {
+  if (sharedClient) {
+    try {
+      sharedClient.disconnect()
+    } catch (e) {
+      console.error('[ VOIP ] Error disconnecting stale client:', e?.message || e)
+    }
+  }
+  sharedClient = null
+}
+
 function extFromMime(mime = '') {
     if (/mpeg|mp3/i.test(mime)) return '.mp3'
     if (/wav|x-wav/i.test(mime)) return '.wav'
@@ -42,21 +95,20 @@ function extFromMime(mime = '') {
     return '.audio' 
 }
 
-// Download audio dari URL dengan arraybuffer
 async function downloadAudioFromUrl(url) {
   if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true })
   
   const response = await axios({
     method: 'get',
     url: url,
-    responseType: 'arraybuffer', // Gunakan arraybuffer, bukan stream
+    responseType: 'arraybuffer',
     timeout: DOWNLOAD_TIMEOUT_MS,
     maxContentLength: MAX_DOWNLOAD_BYTES,
     headers: { 'User-Agent': 'Mozilla/5.0' }
   })
 
   const contentType = response.headers['content-type'] || ''
-  const ext = extFromMime(contentType) || '.mp3' // Default ke .mp3
+  const ext = extFromMime(contentType) || '.mp3'
   const filePath = path.join(TMP_DIR, `voip_${Date.now()}${ext}`)
   
   fs.writeFileSync(filePath, Buffer.from(response.data))
@@ -75,6 +127,27 @@ function isValidUrl(string) {
 let busy = false
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
+  // Handle voipend (hangup)
+  if (command === 'voipend') {
+    const chatId = m.chat
+    if (!activeCalls.has(chatId)) {
+      throw '❌ No active call in this chat.'
+    }
+    const { call, key, phoneNumber, cleanup } = activeCalls.get(chatId)
+    try {
+      await call.end()
+    } catch (e) {
+      console.error('[ VOIP ] call.end() threw:', e?.message || e)
+    } finally {
+      call.removeAllListeners?.()
+      activeCalls.delete(chatId)
+      cleanup()
+    }
+    conn.sendMessage(m.chat, { text: `✦ Call ended for ${phoneNumber}`, edit: key })
+    return
+  }
+
+  // Handle voipcall
   if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [audio_url] (reply to an audio file or provide URL)`
   if (busy) throw 'A call is already in progress, wait for it to finish.'
 
@@ -85,7 +158,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   let audioUrl = args[1]
   let isTempFile = false
   
-  // Cek audio dari URL 
   if (audioUrl && isValidUrl(audioUrl)) {
     try {
       await m.reply('✦ Downloading audio from URL...')
@@ -95,9 +167,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     } catch (e) {
       throw `Failed to download audio from URL: ${e.message}`
     }
-  } 
-  // Cek audio dari reply
-  else if (m.quoted) {
+  } else if (m.quoted) {
     const mime = m.quoted.mimetype || ''
     if (/audio/.test(mime)) {
       if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true })
@@ -110,11 +180,10 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
   }
 
-  const durationMs = 60_000
-
   busy = true
   const cleanup = () => {
     busy = false
+    resetClient()
     if (isTempFile && audioSource !== 'silence' && fs.existsSync(audioSource)) {
       fs.unlink(audioSource, () => {})
     }
@@ -124,16 +193,28 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     const client = await getClient(conn)
     console.log('[ VOIP ] dialing', phoneNumber)
 
-    const { key } = await m.reply(`✦ Calling ${phoneNumber}...`)
-
-    // Pastikan audio file benar-benar ada sebelum call
     if (audioSource !== 'silence' && !fs.existsSync(audioSource)) {
       throw new Error(`Audio file not found: ${audioSource}`)
     }
 
+    const { key } = await m.reply(`✦ Calling ${phoneNumber}... (Use .voipend to end call)`)
+
     console.log('[ VOIP ] Audio source:', audioSource)
-    const call = await client.call(phoneNumber, { audioSource, durationMs })
-    console.log('[ VOIP ] call() resolved, callId=', call.callId)
+
+    let durationMs
+    if (audioSource !== 'silence') {
+      durationMs = await getAudioDurationMs(audioSource)
+      if (durationMs) {
+        console.log('[ VOIP ] Detected audio duration (ms):', durationMs)
+      } else {
+        console.log('[ VOIP ] Could not detect audio duration, call will not auto-hangup')
+      }
+    }
+
+    const call = await client.call(phoneNumber, { audioSource, ...(durationMs ? { durationMs } : {}) })
+
+    // Store active call
+    activeCalls.set(m.chat, { call, key, phoneNumber, cleanup })
 
     call.on('ringing', () => {
       console.log('[ VOIP ] event: ringing')
@@ -141,28 +222,33 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     })
     call.on('connected', () => {
       console.log('[ VOIP ] event: connected')
-      conn.sendMessage(m.chat, { text: `✦ Call connected. Auto-hangup in ${durationMs / 1000}s.`, edit: key })
+      conn.sendMessage(m.chat, { text: `✦ Call connected! Use .voipend to end.`, edit: key })
     })
     call.on('ended', (reason) => {
       console.log('[ VOIP ] event: ended, reason=', reason)
       conn.sendMessage(m.chat, { text: `✦ Call ended: ${reason}`, edit: key })
+      call.removeAllListeners?.()
+      activeCalls.delete(m.chat)
       cleanup()
     })
     call.on('error', (err) => {
       console.error('[ VOIP ] event: error', err)
       conn.reply(m.chat, `Call error: ${err?.message || err}`, m)
+      call.removeAllListeners?.()
+      activeCalls.delete(m.chat)
       cleanup()
     })
   } catch (e) {
     console.error('[ VOIP ] call() threw before/during setup:', e)
+    activeCalls.delete(m.chat)
     cleanup()
     throw e
   }
 }
 
-handler.help = ['call <number> [audio_url] (reply to audio or provide URL)']
+handler.help = ['voipcall <number> [audio_url] (reply to audio or provide URL)', 'voipend']
 handler.tags = ['owner']
-handler.command = /^(call|voipcall)$/i
+handler.command = /^(voipcall|voipend)$/i
 handler.rowner = true
 
 export default handler
