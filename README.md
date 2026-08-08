@@ -465,6 +465,6 @@ $ node .
 <div align=center>
   <a href="https://optiklink.com"><img height="25" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=git"/></a>
     
-  <a href="#"><img height="25" align=right src="https://img.shields.io/badge/Size-100_MB-000000?style=for-the-badge"/> </a>
+  <a href="#"><img height="25" align=right src="https://img.shields.io/badge/Size-120_MB-000000?style=for-the-badge"/> </a>
 
 </div>
