@@ -1,3 +1,17 @@
+08/Aug/2026
+- Improve README.md badge layout and add license notice
+- Update run_python description in lib/ai/tools/system.js
+- Remove unused dependencies (human-readable, requests) in package.json
+- Replace human-readable dependency with custom format function in plugins/main/ping.js
+
+Modified files:
+- README.md
+- lib/ai/tools/system.js
+- package.json
+- plugins/main/ping.js
+
+____________________
+
 07/Aug/2026
 - Improve context info extraction for messages in lib/ai/mcp.js
 - Minor updates in lib/ai/tools/messaging.js

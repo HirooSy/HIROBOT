@@ -1,18 +1,19 @@
 import { cpus, platform, totalmem, freemem } from 'os'
 import { readFileSync } from 'fs'
 import { performance } from 'perf_hooks'
-import { sizeFormatter } from 'human-readable'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
-const format = sizeFormatter({
-  std: 'JEDEC',
-  decimalPlaces: 2,
-  keepTrailingZeroes: false,
-  render: (literal, symbol) => `${literal} ${symbol}B`,
-})
+function format(bytes) {
+  if (bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1000)), units.length - 1)
+  const value = bytes / Math.pow(1000, i)
+  const str = i === 0 ? value.toFixed(0) : value.toFixed(2).replace(/\.?0+$/, '')
+  return `${str} ${units[i]}`
+}
 
 function clockString(ms) {
   const d = Math.floor(ms / 86400000)

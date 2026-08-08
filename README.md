@@ -16,7 +16,7 @@
 > [!TIP]
 > <div align=center><sub>`+. Hirobot is a Lightweight Whatsapp bot using Baileys with AI Agent using Gemini that can help you maintain your project. </sub><br><br>
 > ──────────────</div>
-> <div align=left><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img width="30%" src="https://img.shields.io/badge/CHANGE_LOG-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a></div>
+> <div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="20" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a><a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="20" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div>
 >
 > - [x] <sub>AI Agent Tools Using Gemini</sub>
 > - [x] <sub> Multi Sessions. </sub> 
@@ -426,6 +426,8 @@ export default {
 ---
 
 > [!IMPORTANT]
+> <div align=center><sub>CC BY-NC 4.0 — DO NOT SELL THIS SCRIPT</sub></div>
+> <table height=100><td>
 > <sub>CC BY-NC 4.0</sub>
 > 
 > <sub>Copyright (c) 2026 HirooSy</sub>
@@ -443,12 +445,12 @@ export default {
 > <sub>Under the following terms:</sub><br>
 > <sub> 1. Attribution - You must give appropriate credit, provide a link to</sub><br>
 >    <sub>the license, and indicate if changes were made.</sub><br>
-> <sub> 2. NonCommercial - You may not use the material for commercial purposes.</sub>
+> <sub> 2. NonCommercial - You may not use the material for commercial purposes.</sub> </td></table>
 
 <sub align=left>
   
 ```diff
-- REQUIRE : NODEJS V22+, RAM 500MB+, SERVER WITH IP AND PORT
+- REQUIRE : NODEJS V22+, RAM 500MB+, SERVER WITH IP+PORT
 
 $ git clone https://github.com/HirooSy/HIROBOT.git
 $ cp .env.example .env
@@ -458,8 +460,8 @@ $ node .
 </sub>
 
 <div align=center>
-  <a href="https://optiklink.com"><img width="20%" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=git"/></a>
+  <a href="https://optiklink.com"><img height="25" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=git"/></a>
     
-  <a href="#"><img width="25%" align=right src="https://img.shields.io/badge/Size-120_MB-000000?style=for-the-badge"/> </a>
+  <a href="#"><img height="25" align=right src="https://img.shields.io/badge/Size-120_MB-000000?style=for-the-badge"/> </a>
 
 </div>
