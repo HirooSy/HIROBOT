@@ -1,8 +1,13 @@
 09/Aug/2026
 - Add port configurations for 3000 and 8080 in .replit
+- Improve Caller
 
 Modified files:
 - .replit
+- plugins/owner/call.js
+- lib/voip/call-worker.js
+- lib/voip/dist/wasm-engine.mjs
+- lib/voip/dist/index.mjs
 
 ____________________
 
