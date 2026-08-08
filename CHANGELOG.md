@@ -3,12 +3,23 @@
 - Update run_python description in lib/ai/tools/system.js
 - Remove unused dependencies (human-readable, requests) in package.json
 - Replace human-readable dependency with custom format function in plugins/main/ping.js
+- Replace chalk dependency with custom local lib/color.js module
 
 Modified files:
 - README.md
 - lib/ai/tools/system.js
 - package.json
 - plugins/main/ping.js
+- lib/color.js
+- lib/config.js
+- lib/connection.js
+- lib/database.js
+- lib/handler.js
+- lib/main.js
+- lib/plugins.js
+- lib/server.js
+- lib/start.js
+- plugins/_event/system.js
 
 ____________________
 

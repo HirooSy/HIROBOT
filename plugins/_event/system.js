@@ -1,6 +1,6 @@
 import { plugins } from "../../lib/plugins.js"
 import { performance } from 'perf_hooks';
-import chalk from 'chalk';
+import chalk from '../../lib/color.js';
 
 const linkRegex = /chat.whatsapp.com\/(?:invite\/)?([0-9A-Za-z]{20,24})/i
 const SPAM_LIMIT       = 3;

@@ -35,6 +35,7 @@
 HIROBOT
 ├── lib
 │   ├── ai               # Ai system
+│   ├── color.js         # Chalk tool
 │   ├── config.js        # Set your bot's preference here
 │   ├── connection.js    # connection manager
 │   ├── converter.js     # Converter tool
