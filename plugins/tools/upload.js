@@ -32,6 +32,7 @@ let handler = async (m, { conn, command, usedPrefix }) => {
 handler.help = ['upload', 'tourl'].map(v => v + ' (reply media)');
 handler.tags = ['tools'];
 handler.command = /^(tourl|upload)$/i;
+handler.ai = { risk: "low", description: "upload a media into url" }
 
 export default handler;
 
