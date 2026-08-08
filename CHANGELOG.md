@@ -10,6 +10,10 @@
 - Remove unused dependencies (human-readable, requests) in package.json
 - Replace human-readable dependency with custom format function in plugins/main/ping.js
 - Replace chalk dependency with custom local lib/color.js module
+- Add Call feature to README
+- Refactor youtube downloader scraper
+- Update youtube downloader command
+- Add Call feature (beta)
 
 Modified files:
 - README.md
@@ -34,6 +38,9 @@ Modified files:
 - plugins/owner/backup.js
 - plugins/owner/exec.js
 - lib/scraper/ytsearch.js
+- lib/scraper/ytdl.js
+- lib/voip/
+- plugins/owner/call.js
 
 ____________________
 

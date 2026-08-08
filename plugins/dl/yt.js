@@ -7,7 +7,7 @@ let handler = async(m, { conn, usedPrefix, text, args, command }) => {
 let chat = db.data.chats[m.chat]
 let fkon = { key: { fromMe: false, participant: m.sender, ...(m.chat ? { remoteJid: '16504228206@s.whatsapp.net' } : {}) }, message: { contactMessage: { displayName: `${await conn.getName(m.sender)}`, vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${await conn.getName(m.sender)}\nitem1.TEL;waid=6283143393763:6283143393763\nitem1.X-ABLabel:Ponsel\nEND:VCARD`}}}
 
-//--------------------- PLAY --------------
+/*Play*/
 if (command == "play") {
        let txt = isLink(text), input = '';
        if (!text && txt === null) throw `- [PlayAudio] ${usedPrefix + command} music\n- [PlayVideo] ${usedPrefix + command} video_name --video`
@@ -18,14 +18,16 @@ if (command == "play") {
                input = txt[0];
          };
        let isVideo = /--video/.test(text)
-       let playQuality = isVideo ? 360 : 320
             m.react('🎶')
 
            try {
-                  var data = await ytdl((isVideo ? "video" : "audio"), input, playQuality);
+                  var data = await ytdl((isVideo ? "video" : "audio"), input);
                    var description = `\`${data.title}\`\n\n- *Duration:* ${data.duration}\n- *Views:* ${(data.views).toSimpleNumber ? data.views.toSimpleNumber() : data.views}\n- *Url:* ${(input).replace("https://", "")}`
                    var filename = !isVideo ? "YouTube.mp3" : "YouTube.mp4";
-
+                       // data.thumbnail can be null (yts metadata lookup failed
+                       // or this video simply has none) — guard it so a missing
+                       // thumbnail doesn't crash a command whose actual download
+                       // already succeeded.
                        var thumbBuffer = null
                        if (data.thumbnail) {
                            try { thumbBuffer = await conn.resize(await (await fetch(data.thumbnail)).buffer(), 150, 150) } catch (_) {}
@@ -39,41 +41,19 @@ if (command == "play") {
                  } catch(e) { throw e }
 }
 
-//--------------------- YTV --------------
-if (/^yt(v|video)$/i.test(command)) {
+//--------------------- AUDIO AND VIDEO --------------
+if (/^yt(a|v|audio|video)$/i.test(command)) {
        let links = isLink(text);
-       if (!text || !links) return m.reply(`*How To Use:* \`${usedPrefix + command} <your_link>\` [--1080|--720|--480|--360|--240|--144]\n\nContoh:\n\`${usedPrefix + command} https://youtube.com/watch?v=xxxx\`\n\`${usedPrefix + command} https://youtube.com/watch?v=xxxx --720\``)
-
-       var qMatch = text.match(/--(\d{3,4})/)
-       var requestedQuality = qMatch ? parseInt(qMatch[1], 10) : 480
-
+       if (!text || !links) return m.reply(`*How To Use:* \`${usedPrefix + command} <your_link>\`\n\nContoh: \`${usedPrefix + command} https://youtube.com/watch?v=xxxx\``)
+       var isAudio = /yt(a|audio)/.test(command)
        try {
-         var data = await ytdl("video", links[0], requestedQuality);
-         var filename = "YouTube.mp4";
+         var data = await ytdl((isAudio ? "audio" : "video"), links[0]);
+         var filename = isAudio ? "YouTube.mp3" : "YouTube.mp4";
                         await conn.sendMessage(m.chat, {
-                                    video: data.buffer,
+                                    [(!isAudio ? 'video': 'audio')]: data.buffer,
 						            mimetype: data.mime,
 						            asDocument: db.data.chats[m.chat].useDocument,
-						            fileName: filename }, {quoted:m})
-       } catch(e) { console.log(e); return m.reply("Failed to download, Scrape trouble") }
-  }
-
-//--------------------- YTA --------------
-if (/^yt(a|audio)$/i.test(command)) {
-       let links = isLink(text);
-       if (!text || !links) return m.reply(`*How To Use:* \`${usedPrefix + command} <your_link>\` [--320|--256|--128]\n\nContoh:\n\`${usedPrefix + command} https://youtube.com/watch?v=xxxx\``)
-
-       var qMatch = text.match(/--(\d{3})/)
-       var requestedQuality = qMatch ? parseInt(qMatch[1], 10) : 320
-
-       try {
-         var data = await ytdl("audio", links[0], requestedQuality);
-         var filename = "YouTube.mp3";
-                        await conn.sendMessage(m.chat, {
-                                    audio: data.buffer,
-						            mimetype: data.mime,
-						            asDocument: db.data.chats[m.chat].useDocument,
-						            fileName: filename }, {quoted:m})
+						            fileName: filename }, {})
        } catch(e) { console.log(e); return m.reply("Failed to download, Scrape trouble") }
   }
 
@@ -88,7 +68,7 @@ if (/^yt(s|search)$/i.test(command)) {
     }
 
 }
-handler.help = ['ytv <link> [--1080|--720|--480|--360|--240|--144]', 'yta <link> [--320|--256|--128]', 'yts <query>', 'play <query> [--video]']
+handler.help = ['ytv <link>', 'yta <link>', 'yts <query>', 'play <query>']
 handler.tags = ['downloader']
 handler.command = /^(play|yt(v|video|a|audio|s|search))$/i
 handler.limit = true
