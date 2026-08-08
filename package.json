@@ -5,6 +5,9 @@
     "main": "lib/start.js",
     "type": "module",
     "license": "CC-BY-NC-4.0",
+    "scripts": {
+        "start": "node lib/main.js"
+    },
     "engines": {
         "node": ">=22.x"
     },
