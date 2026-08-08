@@ -1,4 +1,4 @@
-import yts from 'yt-search'
+import { search as yts } from '../../lib/scraper/ytsearch.js'
 import axios from 'axios'
 import crypto from 'crypto';
 import { ytdl } from "../../lib/scraper/ytdl.js"

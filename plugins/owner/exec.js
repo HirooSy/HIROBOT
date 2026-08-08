@@ -1,4 +1,3 @@
-import syntaxerror from 'syntax-error'
 import { format } from 'util'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -6,6 +5,7 @@ import { createRequire } from 'module'
 import connection from '../../lib/connection.js'
 import cp, { exec as _exec } from 'child_process'
 import { promisify } from 'util'
+import Helper from '../../lib/helper.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
@@ -45,7 +45,7 @@ let handler = async (m, _2) => {
       return conn.reply(m.chat, format(...args), m)
     }, m, handler, require, conn, db, connection.store, connection, CustomArray, process, args, groupMetadata, f, f.exports, [conn, _2])
   } catch (e) {
-    let err = syntaxerror(_text, 'Execution Function', {
+    let err = Helper.checkSyntax(_text, 'Execution Function', {
       allowReturnOutsideFunction: true,
       allowAwaitOutsideFunction: true,
       sourceType: 'module'

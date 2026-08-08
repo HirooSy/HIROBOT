@@ -1,4 +1,10 @@
 08/Aug/2026
+- Remove AGENT.md
+- Update README.md badge layout
+- Clean up package.json dependencies (add cheerio, remove unused)
+- Refactor plugins.js to use Helper.checkSyntax
+- Major refactor of lib/database.js, lib/converter.js, lib/helper.js
+- Add lib/scraper/ytsearch.js
 - Improve README.md badge layout and add license notice
 - Update run_python description in lib/ai/tools/system.js
 - Remove unused dependencies (human-readable, requests) in package.json
@@ -20,6 +26,14 @@ Modified files:
 - lib/server.js
 - lib/start.js
 - plugins/_event/system.js
+- AGENT.md
+- lib/converter.js
+- lib/helper.js
+- lib/simple.js
+- plugins/dl/yt.js
+- plugins/owner/backup.js
+- plugins/owner/exec.js
+- lib/scraper/ytsearch.js
 
 ____________________
 
