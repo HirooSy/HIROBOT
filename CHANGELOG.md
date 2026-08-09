@@ -1,6 +1,7 @@
 09/Aug/2026
 - Add port configurations for 3000 and 8080 in .replit
 - Improve Caller
+- Add git author name and email environment variables to pushToGitHub commit
 
 Modified files:
 - .replit
@@ -8,6 +9,7 @@ Modified files:
 - lib/voip/call-worker.js
 - lib/voip/dist/wasm-engine.mjs
 - lib/voip/dist/index.mjs
+- plugins/owner/github.js
 
 ____________________
 
