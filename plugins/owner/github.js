@@ -38,6 +38,9 @@ async function pushToGitHub(conn, m, args) {
             )
         }
 
+        const agentName  = 'Hirobot-Agent'
+        const agentEmail = 'hirobotmsg@gmail.com'
+
         const cacheDir = path.join(ROOT, '.cache')
 
         if (fs.existsSync(cacheDir)) {
@@ -112,6 +115,12 @@ async function pushToGitHub(conn, m, args) {
             { cwd: ROOT }
         )
 
+        const commitEnv = {
+            ...process.env,
+            GIT_AUTHOR_NAME: agentName,
+            GIT_AUTHOR_EMAIL: agentEmail
+        }
+
         try {
             await execAsync(
                 'git remote remove origin',
@@ -158,7 +167,7 @@ async function pushToGitHub(conn, m, args) {
         try {
             await execAsync(
                 `git commit -m "${commitMessage.replace(/"/g, '\\"')}"`,
-                { cwd: ROOT }
+                { cwd: ROOT, env: commitEnv }
             )
         } catch {}
 
