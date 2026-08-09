@@ -73,7 +73,11 @@ async function pushToGitHub(conn, m, args) {
             '.npmrc',
             '.npm',
             'replit.nix',
-            '.replit'
+            '.replit',
+            '.github/*',
+            '!.github/workflows',
+            '.github/workflows/*',
+            '!.github/workflows/uptimer.yml'
         ]
 
         if (!fs.existsSync(gitignorePath)) {
@@ -148,9 +152,30 @@ async function pushToGitHub(conn, m, args) {
             )
         } catch {}
 
+        // Untrack everything under .github/ first, so old/unwanted files
+        // (e.g. leftover workflows) don't linger from a previous push.
+        try {
+            await execAsync(
+                'git rm -r --cached .github',
+                { cwd: ROOT }
+            )
+        } catch {}
+
         await execAsync('git add .', {
             cwd: ROOT
         })
+
+        // Re-stage only the whitelisted workflow file, bypassing .gitignore,
+        // in case it hasn't been added yet.
+        const uptimerWorkflow = path.join(ROOT, '.github/workflows/uptimer.yml')
+        if (fs.existsSync(uptimerWorkflow)) {
+            try {
+                await execAsync(
+                    'git add -f .github/workflows/uptimer.yml',
+                    { cwd: ROOT }
+                )
+            } catch {}
+        }
 
         const { stdout: status } =
             await execAsync(
