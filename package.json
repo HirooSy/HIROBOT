@@ -6,7 +6,7 @@
     "type": "module",
     "license": "CC-BY-NC-4.0",
     "scripts": {
-        "start": "node lib/main.js"
+        "start": "node lib/start.js"
     },
     "engines": {
         "node": ">=22.x"
