@@ -7,7 +7,7 @@ var handler = async (m, { conn, args }) => {
 		if (!stickers || stickers.length === 0) return "Can\'t get sticker data, try another link"
 		if (stickers.length > 300) return m.reply(`[ *${stickers.length}* Stickers ] Request cancelled, too risk for bot.`)
 
-		const maxStickersPerPack = 10
+		const maxStickersPerPack = 60
 		if (stickers.length <= 60) {
 			let stickerPack = []
 			for (let i = 0; i < stickers.length; i++) {
