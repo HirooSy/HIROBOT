@@ -3,6 +3,7 @@
 - Major refactoring of VOIP module (delete old dist/, move source files, cleanup dependencies)
 - Update VOIP loader/installer logic
 - Update call plugin to use new VOIP worker pattern
+- Cleanup VOIP module (remove unused wasm/dist files)
 
 Modified files:
 - lib/database.js
