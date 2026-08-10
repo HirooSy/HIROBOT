@@ -453,7 +453,7 @@ export default {
 <sub align=left>
   
 ```diff
-- REQUIRE : NODEJS V22+, RAM 500MB+, SERVER WITH IP+PORT
+- REQUIRE : NODEJS V22+, RAM 1GB+, SERVER WITH IP+PORT
 
 $ git clone https://github.com/HirooSy/HIROBOT.git
 $ cp .env.example .env
@@ -463,8 +463,11 @@ $ node .
 </sub>
 
 <div align=center>
-  <a href="https://replit.com"><img height="25" align=left src="https://img.shields.io/badge/Deploy_on_Replit-black?style=for-the-badge&logo=replit"/></a>
+  
+  <a href="https://replit.com"><img height="22" align=left src="https://img.shields.io/badge/Deploy_on_Replit-black?style=for-the-badge&logo=replit"/></a>
     
-  <a href="#"><img height="25" align=right src="https://img.shields.io/badge/Size-120_MB-000000?style=for-the-badge"/> </a>
+  <a href="#"><img height="22" align=right src="https://img.shields.io/badge/Size-130_MB-black?style=for-the-badge"/> </a>
 
 </div>
+
+  <div align=left><a href="https://my.zone.id/"><img height="22" align=left src="https://img.shields.io/badge/Free_Http_Domain-black?style=for-the-badge&logo=zdotai&logoColor=blue"/></a></div>

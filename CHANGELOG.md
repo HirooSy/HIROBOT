@@ -1,21 +1,20 @@
 10/Aug/2026
-- Refactor database adapter structure
-- Major refactoring of VOIP module (delete old dist/, move source files, cleanup dependencies)
-- Update VOIP loader/installer logic
-- Update call plugin to use new VOIP worker pattern
-- Cleanup VOIP module (remove unused wasm/dist files)
+- Add conn.call(jid, audio) functionality.
 - Add decline event to VOIP module
 - Update telegram sticker pack limit from 10 to 60
 
 Modified files:
+- README.md
+- lib/connection.js
+- lib/simple.js
+- lib/voip/index.js
+- lib/voip/signaling.js
 - lib/database.js
 - lib/voip/
 - lib/voip/voip.js
 - plugins/owner/call.js
 - lib/voip/audio-feeder.js
-- lib/voip/index.js
 - lib/voip/relay-transport.js
-- lib/voip/signaling.js
 - package.json
 - plugins/sticker/telegram.js
 
