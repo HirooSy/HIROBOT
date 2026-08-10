@@ -1,3 +1,17 @@
+10/Aug/2026
+- Refactor database adapter structure
+- Major refactoring of VOIP module (delete old dist/, move source files, cleanup dependencies)
+- Update VOIP loader/installer logic
+- Update call plugin to use new VOIP worker pattern
+
+Modified files:
+- lib/database.js
+- lib/voip/
+- lib/voip/voip.js
+- plugins/owner/call.js
+
+____________________
+
 09/Aug/2026
 - Add port configurations for 3000 and 8080 in .replit
 - Improve Caller

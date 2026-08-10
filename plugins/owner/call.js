@@ -5,7 +5,7 @@ import { fork } from 'child_process'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const WORKER_PATH = path.join(__dirname, '..', '..', 'lib', 'voip', 'call-worker.js')
+const WORKER_PATH = path.join(__dirname, '..', '..', 'lib', 'voip', 'worker.js')
 const AUTH_DIR = 'data/sessions/caller'
 
 let _ffmpeg = null
