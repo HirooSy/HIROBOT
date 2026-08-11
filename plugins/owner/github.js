@@ -77,7 +77,8 @@ async function pushToGitHub(conn, m, args) {
             '.github/*',
             '!.github/workflows',
             '.github/workflows/*',
-            '!.github/workflows/uptimer.yml'
+            '!.github/workflows/uptimer.yml',
+            'run.js', 
         ]
 
         if (!fs.existsSync(gitignorePath)) {
