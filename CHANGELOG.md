@@ -1,3 +1,37 @@
+13/Aug/2026
+- Fixes and improvements for VoIP audio handling.
+- Added basic video frame functionality.
+- General improvements and updates.
+
+Modified files:
+- .env.example
+- README.md
+- lib/connection.js
+- lib/scraper/upload.js
+- lib/simple.js
+- lib/views/profile.html
+- lib/voip/audio-feeder.js
+- lib/voip/index.js
+- lib/voip/signaling.js
+- lib/voip/wasm-engine.js
+- lib/voip/worker.js
+- plugins/owner/backup.js
+- plugins/owner/call.js
+- plugins/owner/testvideo.js
+- plugins/tools/upload.js
+
+____________________
+
+12/Aug/2026
+- Uploader Catbox.moe
+
+Modified files:
+- plugins/tools/upload.js
+- lib/scraper/upload.js
+- .env
+  
+____________________
+
 10/Aug/2026
 - Add conn.call(jid, audio) functionality.
 - Add decline event to VOIP module

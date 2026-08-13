@@ -34,6 +34,7 @@ let handler = async (m, { conn }) => {
     join(cwd, 'data/backups'),
     join(cwd, 'data/reminder.json'),
     join(cwd, 'data/tunnel'),
+    join(cwd, 'data/tmp'),
     join(cwd, '.npm'),
     join(cwd, '.agents'),
     join(cwd, '.config'),
