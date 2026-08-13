@@ -13,17 +13,21 @@
 
 ---
 
+> [!IMPORTANT]
+> <sub>**CALL INFO:** Video call is still work in progress, no video frame yet. and im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub>
+> > <sub>Q: Will my account get banned after i use the call feature?</sub><br>
+> > <sub>A: No, it willn't. Source: trust me</sub>
+
 > [!TIP]
-> <div align=center><sub>`+. Hirobot is a Lightweight Whatsapp bot using Baileys with AI Agent using Gemini that can help you maintain your project. </sub><br><br>
+> <div align=center><sub>`+. Hirobot is a Lightweight Whatsapp bot using Baileys with AI Agent using Gemini that can help you maintain your project. With minimal depedencies and advanced baileys protocols.</sub><br><br>
 > ──────────────</div>
 > <div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="20" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a><a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="20" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div>
 >
-> - [x] <sub> AI Agent Tools Using Gemini. </sub>
-> - [x] <sub> Call Feature (Discord like, Beta) </sub>
+> - [x] <sub> AI Agent Using Gemini. </sub>
+> - [x] <sub> Call Feature ( **Beta** ) </sub>
 > - [x] <sub> Multi Sessions. </sub> 
 > - [x] <sub> Database Node:Sqlite / Mongodb / MySQL.</sub>
 > - [x] <sub> Support AI Rich and Button message.</sub>
-> - [x] <sub> Auto-Heal Files.</sub>
 > - [x] <sub> Fast & Free Website.</sub>
 > - [x] <sub> No Encrypted File.</sub>
 
@@ -34,28 +38,28 @@
 ```env
                       ---Project Structure---
 HIROBOT
-├── lib
-│   ├── ai               # Ai system
-│   ├── color.js         # Chalk tool
-│   ├── config.js        # Set your bot's preference here
-│   ├── connection.js    # connection manager
-│   ├── converter.js     # Converter tool
-│   ├── database.js      # database manager
-│   ├── handler.js       # event handler
-│   ├── helper.js        # lib helper
-│   ├── main.js          # Tunnel, all interval
-│   ├── scraper          # Scrapers
-│   ├── server.js        # Website endpoint
-│   ├── simple.js        # Functions conn
-│   ├── start.js         # Start script
-│   ├── sticker.js       # Sticker builder
-│   ├── views            # HTML folder
-│   └── voip             # Caller ( beta )
-├── data                 # Sessions, database, TMP, Tunnel data, All .json
-├── plugins              # commands here
-├── .env                 # Set your tokens here
-├── package.json
-└── README.md
+├── 📁lib
+│   ├── 📁ai               # Ai system
+│   ├── 📄color.js         # Chalk tool
+│   ├── 📄config.js        # Set your bot's preference here
+│   ├── 📄connection.js    # connection manager
+│   ├── 📄converter.js     # Converter tool
+│   ├── 📄database.js      # database manager
+│   ├── 📄handler.js       # event handler
+│   ├── 📄helper.js        # lib helper
+│   ├── 📄main.js          # Tunnel, all interval
+│   ├── 📁scraper          # Scrapers
+│   ├── 📄server.js        # Website endpoint
+│   ├── 📄simple.js        # Functions conn
+│   ├── 📄start.js         # Start script
+│   ├── 📄sticker.js       # Sticker builder
+│   ├── 📁views            # HTML folder
+│   └── 📁voip             # Caller ( beta )
+├── 📁data                 # Sessions, database, TMP, Tunnel data, All .json
+├── 📁plugins              # commands here
+├── 📄.env                 # Set your tokens here
+├── 📄package.json
+└── 📄README.md
 ```
 </sub>
 
@@ -83,8 +87,8 @@ HIROBOT
  |---|---|
  | <sub>Gemini 3.1 Lite-Flash</sub> | <sub>Daily conversation</sub> |
  | <sub>Gemini 3.1 Lite</sub> | <sub>Daily conversation but more complex</sub> |
- | <sub>Gemma-4-31b-it</sub> | <sub>Auto-heal system and coding</sub> |
- | <sub>Gemma-4-26b-a4b-it</sub> | <sub>Auto-heal system and coding</sub> |
+ | <sub>Gemma-4-31b-it</sub> | <sub>AutoHeal system and coding</sub> |
+ | <sub>Gemma-4-26b-a4b-it</sub> | <sub>AutoHeal system and coding</sub> |
 
 <h4 align=center>How to add a new tool</h4>
   
@@ -428,27 +432,7 @@ export default {
   
 ---
 
-> [!IMPORTANT]
-> <div align=center><sub>CC BY-NC 4.0 — DO NOT SELL THIS SCRIPT</sub></div>
-> <table height=100><td>
-> <sub>CC BY-NC 4.0</sub>
-> 
-> <sub>Copyright (c) 2026 HirooSy</sub>
-> <sub>Repository: https://github.com/HirooSy/HIROBOT </sub>
-> 
-> <sub>This work is licensed under the Creative Commons</sub> 
-> <sub>Attribution-NonCommercial 4.0 International License.</sub>
-> <sub>To view a copy of this license, visit</sub>
-> <sub>http://creativecommons.org/licenses/by-nc/4.0/ </sub>
-> 
-> <sub>You are free to:</sub><br>
-> <sub> 1. Share - copy and redistribute the material</sub><br>
-> <sub> 2. Adapt - remix, transform, and build upon the material</sub><br>
-> 
-> <sub>Under the following terms:</sub><br>
-> <sub> 1. Attribution - You must give appropriate credit, provide a link to</sub><br>
->    <sub>the license, and indicate if changes were made.</sub><br>
-> <sub> 2. NonCommercial - You may not use the material for commercial purposes.</sub> </td></table>
+<h3 align=center>Install and Run</h3>
 
 <sub align=left>
   
