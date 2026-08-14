@@ -7,7 +7,8 @@ let handler = async (m, { conn, command, usedPrefix }) => {
     if (!mime) throw "- File type not supported";
 
     const buffer = await q.download();
-    const filename = `file_${Date.now()}`;
+    const ext = (mime.split('/')[1] || 'bin').split(';')[0];
+    const filename = `file_${Date.now()}.${ext}`;
     const url = await upload(buffer, filename);
 
     await conn.sendButton(m.chat, {

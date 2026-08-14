@@ -4,6 +4,7 @@
 - Remove obsolete testvideo plugin.
 - Add video feeder module.
 - Fix call connection state.
+- Replace temporary uploader with local /api/upload endpoint and add caching.
 
 Modified files:
 - lib/simple.js
@@ -14,6 +15,10 @@ Modified files:
 - plugins/owner/call.js
 - plugins/owner/testvideo.js
 - lib/voip/video-feeder.js
+- README.md
+- lib/scraper/upload.js
+- lib/server.js
+- plugins/tools/upload.js
 
 ____________________
 
