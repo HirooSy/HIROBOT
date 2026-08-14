@@ -12,22 +12,13 @@ let handler = async (m, { conn, command, usedPrefix }) => {
     const url = await upload(buffer, filename);
 
     await conn.sendButton(m.chat, {
-        text: '\u0000',
+        text: `${formatSize(buffer.length)} • Expired In 7 Days`,
         nativeFlow: [
             {},
             { text: 'Copy', copy: url },
             { text: 'View', url: url, useWebview: true },
         ]
-    }, {
-            key: { participant: "0@s.whatsapp.net" },
-            message: {
-                newsletterAdminInviteMessage: {
-                    newsletterJid: '120363280758084443@newsletter',
-                    newsletterName: '.',
-                    caption: `Size: ${formatSize(buffer.length)}`
-                }
-            }
-        });
+    }, m);
 };
 
 handler.help = ['upload', 'tourl'].map(v => v + ' (reply media)');
