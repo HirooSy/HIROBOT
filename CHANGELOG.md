@@ -1,3 +1,22 @@
+14/Aug/2026
+- Fix video call implementation.
+- Refactor VoIP signaling and WASM engine.
+- Remove obsolete testvideo plugin.
+- Add video feeder module.
+- Fix issues in call connection (call connection issue).
+
+Modified files:
+- lib/simple.js
+- lib/voip/index.js
+- lib/voip/signaling.js
+- lib/voip/wasm-engine.js
+- lib/voip/worker.js
+- plugins/owner/call.js
+- plugins/owner/testvideo.js
+- lib/voip/video-feeder.js
+
+____________________
+
 13/Aug/2026
 - Fixes and improvements for VoIP audio handling.
 - Added basic video frame functionality.

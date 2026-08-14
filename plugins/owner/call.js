@@ -42,15 +42,31 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   const phoneNumber = args[0].replace(/\D/g, '')
   if (!phoneNumber) throw 'Invalid phone number.'
 
-  const isVideo = args.includes('video')
-  const audioUrl = args.find((a, i) => i > 0 && /^https?:\/\//i.test(a))
+  const VIDEO_EXT_RE = /\.(mp4|mkv|mov|webm|avi|m4v)(\?|$)/i
 
-  let audioSource = audioUrl || 'silence'
+  const explicitVideoFlag = args.includes('video')
+  const url = args.find((a, i) => i > 0 && /^https?:\/\//i.test(a))
+  const urlIsVideo = url ? VIDEO_EXT_RE.test(url) : false
+
+  let audioSource = 'silence'
+  let videoSource = null
   let isTempFile = false
 
-  if (!audioUrl && m.quoted) {
+  if (url && urlIsVideo) {
+    videoSource = url
+  } else if (url) {
+    audioSource = url
+  } else if (m.quoted) {
     const mime = m.quoted.mimetype || ''
-    if (/audio/.test(mime)) {
+    if (/^video/.test(mime)) {
+      const tmpDir = path.join(process.cwd(), process.env.TMP || 'data/tmp')
+      if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
+      const buffer = await m.quoted?.download()
+      if (!buffer) throw 'Failed to download the replied video.'
+      videoSource = path.join(tmpDir, `voipvideo_${Date.now()}.mp4`)
+      fs.writeFileSync(videoSource, buffer)
+      isTempFile = true
+    } else if (/^audio/.test(mime)) {
       const tmpDir = path.join(process.cwd(), process.env.TMP || 'data/tmp')
       if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
       const buffer = await m.quoted?.download()
@@ -61,10 +77,12 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
   }
 
+  const isVideo = explicitVideoFlag || !!videoSource
+
   const { key } = await m.reply(`✦ Calling ${phoneNumber}...${isVideo ? ' (video)' : ''} (Use .voipend to end call)`)
 
   try {
-    const call = await conn.call(phoneNumber, audioSource, { isVideo })
+    const call = await conn.call(phoneNumber, audioSource, { isVideo, videoSource })
     activeCalls.set(m.chat, { call, key, phoneNumber })
 
     call.on('ringing', () => {
@@ -79,22 +97,31 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         ? `✦ Call to ${phoneNumber} was declined.`
         : `✦ Call ended for ${phoneNumber}: ${reason}`
       conn.sendMessage(m.chat, { text: friendlyText, edit: key })
-      if (isTempFile && fs.existsSync(audioSource)) fs.unlink(audioSource, () => {})
+      if (isTempFile) {
+        if (audioSource !== 'silence' && fs.existsSync(audioSource)) fs.unlink(audioSource, () => {})
+        if (videoSource && fs.existsSync(videoSource)) fs.unlink(videoSource, () => {})
+      }
     })
     call.on('error', (err) => {
       activeCalls.delete(m.chat)
       conn.reply(m.chat, `Call error: ${err?.message || err}`, m)
-      if (isTempFile && fs.existsSync(audioSource)) fs.unlink(audioSource, () => {})
+      if (isTempFile) {
+        if (audioSource !== 'silence' && fs.existsSync(audioSource)) fs.unlink(audioSource, () => {})
+        if (videoSource && fs.existsSync(videoSource)) fs.unlink(videoSource, () => {})
+      }
     })
   } catch (e) {
     console.error('[ VOIP ] conn.call() threw:', e)
     activeCalls.delete(m.chat)
-    if (isTempFile && fs.existsSync(audioSource)) fs.unlink(audioSource, () => {})
+    if (isTempFile) {
+      if (audioSource !== 'silence' && fs.existsSync(audioSource)) fs.unlink(audioSource, () => {})
+      if (videoSource && fs.existsSync(videoSource)) fs.unlink(videoSource, () => {})
+    }
     throw `Failed to place call: ${e?.message || e}`
   }
 }
 
-handler.help = ['voippair (one-time device setup)', 'voipcall <number> [audio_url] [video] (reply to audio or provide URL)', 'voipend']
+handler.help = ['voippair (one-time device setup)', 'voipcall <number> [audio_url|video_url] [video] (reply to audio/video or provide URL)', 'voipend']
 handler.tags = ['owner']
 handler.command = /^(voippair|voipcall|voipend)$/i
 handler.rowner = true
