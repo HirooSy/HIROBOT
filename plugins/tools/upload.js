@@ -11,8 +11,11 @@ let handler = async (m, { conn, command, usedPrefix }) => {
     const filename = `file_${Date.now()}.${ext}`;
     const url = await upload(buffer, filename);
 
+    const isLocal = global.opts?.server && url.startsWith(global.opts.server);
+    const status = isLocal ? 'Expired In 7 Days' : 'Never Expires';
+
     await conn.sendButton(m.chat, {
-        text: `${formatSize(buffer.length)} • Expired In 7 Days`,
+        text: `${formatSize(buffer.length)} • ${status}`,
         nativeFlow: [
             {},
             { text: 'Copy', copy: url },
