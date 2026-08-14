@@ -14,7 +14,7 @@
 ---
 
 > [!IMPORTANT]
-> <sub>**CALL INFO:** Video call is still work in progress, no video frame yet. and im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub>
+> <sub>**CALL INFO:** still working on it, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub>
 > > <sub>Q: Will my account get banned after i use the call feature?</sub><br>
 > > <sub>A: No, it willn't. Source: trust me</sub>
 

@@ -3,7 +3,7 @@
 - Refactor VoIP signaling and WASM engine.
 - Remove obsolete testvideo plugin.
 - Add video feeder module.
-- Fix video call implementation. (but still have a connection issue there)
+- Fix call connection state.
 
 Modified files:
 - lib/simple.js
