@@ -5,6 +5,7 @@
 - Add video feeder module.
 - Fix call connection state.
 - Replace temporary uploader with local /api/upload endpoint and add caching.
+- Add onlyfiles.com as the primary file uploader, with the local bot server as a fallback.
 
 Modified files:
 - lib/simple.js
