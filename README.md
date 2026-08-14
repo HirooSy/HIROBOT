@@ -39,24 +39,29 @@
                       ---Project Structure---
 HIROBOT
 ├── 📁lib
-│   ├── 📁ai               # Ai system
-│   ├── 📄color.js         # Chalk tool
-│   ├── 📄config.js        # Set your bot's preference here
-│   ├── 📄connection.js    # connection manager
-│   ├── 📄converter.js     # Converter tool
-│   ├── 📄database.js      # database manager
-│   ├── 📄handler.js       # event handler
-│   ├── 📄helper.js        # lib helper
-│   ├── 📄main.js          # Tunnel, all interval
-│   ├── 📁scraper          # Scrapers
-│   ├── 📄server.js        # Website endpoint
-│   ├── 📄simple.js        # Functions conn
-│   ├── 📄start.js         # Start script
-│   ├── 📄sticker.js       # Sticker builder
+│   ├── 📁ai               
+│   │   ├── 📁tools
+│   │   └── 📄mcp.js
+│   ├── 📄color.js         
+│   ├── 📄config.js        # set your bot's preference here
+│   ├── 📄connection.js    
+│   ├── 📄converter.js     
+│   ├── 📄database.js      
+│   ├── 📄handler.js       
+│   ├── 📄helper.js        
+│   ├── 📄main.js          
+│   ├── 📁scraper          
+│   ├── 📄server.js        
+│   ├── 📄simple.js        
+│   ├── 📄start.js         
+│   ├── 📄sticker.js       
 │   ├── 📁views            # HTML folder
-│   └── 📁voip             # Caller ( beta )
-├── 📁data                 # Sessions, database, TMP, Tunnel data, All .json
-├── 📁plugins              # commands here
+│   └── 📁voip             # Caller ( Beta )
+├── 📁data
+│   ├── 📁sessions
+│   ├── 📁tunnel
+│   └── 📁tmp
+├── 📁plugins               
 ├── 📄.env                 # Set your tokens here
 ├── 📄package.json
 └── 📄README.md
@@ -450,7 +455,7 @@ $ node .
   
   <a href="https://replit.com"><img height="22" align=left src="https://img.shields.io/badge/Deploy_on_Replit-black?style=for-the-badge&logo=replit"/></a>
     
-  <a href="#"><img height="22" align=right src="https://img.shields.io/badge/Size-130_MB-black?style=for-the-badge"/> </a>
+  <a href="#"><img height="22" align=right src="https://img.shields.io/badge/Size-150_MB-black?style=for-the-badge"/> </a>
 
 </div>
 
