@@ -65,6 +65,14 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
       videoSource = path.join(tmpDir, `voipvideo_${Date.now()}.mp4`)
       fs.writeFileSync(videoSource, buffer)
       isTempVideoFile = true
+      // The replied video's own audio track becomes the call's audio unless
+      // the caller separately supplied an audio URL — without this,
+      // audioSource stays 'silence' even though the video has sound,
+      // because AudioFeeder and VideoFeeder are fed independently and
+      // nothing here previously connected the two.
+      if (!audioUrl) {
+        audioSource = videoSource
+      }
     } else if (!audioUrl && /^audio/.test(mime)) {
       const buffer = await m.quoted?.download()
       if (!buffer) throw 'Failed to download the replied audio.'

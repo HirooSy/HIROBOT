@@ -1,173 +1,24 @@
-14/Aug/2026
-- Fix video call implementation.
-- Refactor VoIP signaling and WASM engine.
-- Remove obsolete testvideo plugin.
-- Add video feeder module.
-- Fix call connection state.
-- Replace temporary uploader with local /api/upload endpoint and add caching.
-- Add onlyfiles.com as the primary file uploader, with the local bot server as a fallback.
+<h3>15/August/2026</h3>
+<sub>
 
-Modified files:
-- lib/simple.js
-- lib/voip/index.js
-- lib/voip/signaling.js
-- lib/voip/wasm-engine.js
-- lib/voip/worker.js
-- plugins/owner/call.js
-- plugins/owner/testvideo.js
-- lib/voip/video-feeder.js
-- README.md
-- lib/scraper/upload.js
-- lib/server.js
-- plugins/tools/upload.js
+```diff
+• Massive refactor of VoIP infrastructure: removed legacy/unused modules (lib/voip/*), streamlined signaling and transport logic
+• Improved sticker metadata handling and watermark injection in plugins/sticker/
+• Enhanced AI tools (lib/ai/mcp.js, lib/ai/tools/files.js) for better performance
+• General cleanup and dependency updates in package.json
+• Refactored core modules (lib/main.js, lib/simple.js) for better maintainability
 
-____________________
+________________________
 
-13/Aug/2026
-- Fixes and improvements for VoIP audio handling.
-- Added basic video frame functionality.
-- General improvements and updates.
-
-Modified files:
-- .env.example
-- README.md
-- lib/connection.js
-- lib/scraper/upload.js
-- lib/simple.js
-- lib/views/profile.html
-- lib/voip/audio-feeder.js
-- lib/voip/index.js
-- lib/voip/signaling.js
-- lib/voip/wasm-engine.js
-- lib/voip/worker.js
-- plugins/owner/backup.js
-- plugins/owner/call.js
-- plugins/owner/testvideo.js
-- plugins/tools/upload.js
-
-____________________
-
-12/Aug/2026
-- Uploader Catbox.moe
-
-Modified files:
-- plugins/tools/upload.js
-- lib/scraper/upload.js
-- .env
-  
-____________________
-
-10/Aug/2026
-- Add conn.call(jid, audio) functionality.
-- Add decline event to VOIP module
-- Update telegram sticker pack limit from 10 to 60
-
-Modified files:
-- README.md
-- lib/connection.js
-- lib/simple.js
-- lib/voip/index.js
-- lib/voip/signaling.js
-- lib/database.js
-- lib/voip/
-- lib/voip/voip.js
-- plugins/owner/call.js
-- lib/voip/audio-feeder.js
-- lib/voip/relay-transport.js
-- package.json
-- plugins/sticker/telegram.js
-
-____________________
-
-09/Aug/2026
-- Add port configurations for 3000 and 8080 in .replit
-- Improve Caller
-- Add git author name and email environment variables to pushToGitHub commit
-
-Modified files:
-- .replit
-- plugins/owner/call.js
-- lib/voip/call-worker.js
-- lib/voip/dist/wasm-engine.mjs
-- lib/voip/dist/index.mjs
-- plugins/owner/github.js
-
-____________________
-
-08/Aug/2026
-- Remove AGENT.md
-- Update README.md badge layout
-- Clean up package.json dependencies (add cheerio, remove unused)
-- Refactor plugins.js to use Helper.checkSyntax
-- Major refactor of lib/database.js, lib/converter.js, lib/helper.js
-- Add lib/scraper/ytsearch.js
-- Improve README.md badge layout and add license notice
-- Update run_python description in lib/ai/tools/system.js
-- Remove unused dependencies (human-readable, requests) in package.json
-- Replace human-readable dependency with custom format function in plugins/main/ping.js
-- Replace chalk dependency with custom local lib/color.js module
-- Add Call feature to README
-- Refactor youtube downloader scraper
-- Update youtube downloader command
-- Add Call feature (beta)
-
-Modified files:
-- README.md
-- lib/ai/tools/system.js
-- package.json
-- plugins/main/ping.js
-- lib/color.js
-- lib/config.js
-- lib/connection.js
-- lib/database.js
-- lib/handler.js
-- lib/main.js
-- lib/plugins.js
-- lib/server.js
-- lib/start.js
-- plugins/_event/system.js
-- AGENT.md
-- lib/converter.js
-- lib/helper.js
-- lib/simple.js
-- plugins/dl/yt.js
-- plugins/owner/backup.js
-- plugins/owner/exec.js
-- lib/scraper/ytsearch.js
-- lib/scraper/ytdl.js
-- lib/voip/
-- plugins/owner/call.js
-
-____________________
-
-07/Aug/2026
-- Improve context info extraction for messages in lib/ai/mcp.js
-- Minor updates in lib/ai/tools/messaging.js
-- Refine system prompt rule 0.5 for reply handling in lib/ai/mcp.js
-- Update plugins/ai/ai.js
-- Update AI Agent documentation (plugin risk levels) in lib/ai/mcp.js
-- Refactor plugin handling in lib/ai/tools/plugin.js
-- Improve viewonce tool in plugins/tools/viewonce.js
-- Refactor YouTube scraper to use https/dns with custom lookup and axios for improved stability in lib/scraper/ytdl.js, and update yt plugin
-
-Modified files:
-- lib/ai/mcp.js
-- lib/ai/tools/messaging.js
-- plugins/ai/ai.js
-- lib/ai/tools/plugin.js
-- plugins/tools/viewonce.js
-- lib/scraper/ytdl.js
-- plugins/dl/yt.js
-
-____________________
-
-06/Aug/2026
-- Update AI Agent Guide (AGENT.md) to English
-- Update README.md
-- Refactor lib/ai/mcp.js
-- Update changelog update instructions in mcp.js
-
-Modified files:
-- AGENT.md
-- README.md
-- lib/ai/mcp.js
+- Delete "lib/voip/signaling.js"
+- Delete "lib/voip/wasm-engine.js"
+- Delete "lib/sticker.js"
++ Add "lib/voip/modules/audio-feeder.js"
+* Edit "lib/ai/mcp.js"
+- const MCP_VERSION = "1.0.0";
++ const MCP_VERSION = "1.1.0";
+* Edit "plugins/sticker/sticker.js"
+- if (type === 'image') {
++ if (type === 'image' || type === 'video') {
+```
+</sub>

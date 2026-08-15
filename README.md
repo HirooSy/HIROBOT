@@ -54,7 +54,6 @@ HIROBOT
 │   ├── 📄server.js        
 │   ├── 📄simple.js        
 │   ├── 📄start.js         
-│   ├── 📄sticker.js       
 │   ├── 📁views            # HTML folder
 │   └── 📁voip             # Caller ( Beta )
 ├── 📁data
@@ -215,10 +214,15 @@ export default [
 ```javascript
 conn.reply(m.chat, 'Hello world!', m)
 
-conn.sendFile(m.chat, media, filename, caption, m)
-// media > buffer / fs path
-// voice note > { ptt: true }
-// document > { document: true }
+/** @Media
+URL — 'https://example.com/audio.mp3'
+Local — '/path/to/video.mp4'
+
+@Options
+send as document — { document:true }
+send as voicenote — { ptt: true }
+**/
+conn.sendFile(m.chat, media, "file.png", "hello world!", m, { options })
 
 conn.sendContact(m.chat, [
   ['6281234567890', 'HirooSy'],
@@ -341,11 +345,19 @@ await conn.aiRich()
 ```
 </sub></details>
 
-<details> <summary><sub>📦 Sticker pack</sub></summary>
+<details> <summary><sub>📦 Sticker</sub></summary>
   <sub>
 
 ```javascript
-// Media = buffer / path
+/** @Media
+URL — 'https://example.com/image.png'
+Local — '/path/to/image.png'
+**/
+
+// Sticker
+conn.sendSticker(m.chat, media, { packname: "Hiro", author: "Bot" }, m)
+ 
+// StickerPack
 conn.sendStickerPack(m.chat, {
    cover: { url: media },
    stickers: [
@@ -358,6 +370,35 @@ conn.sendStickerPack(m.chat, {
 })
 ```
 </sub></details>
+
+<details> <summary><sub>📞 Call</sub></summary>
+  <sub>
+
+```javascript
+/** @Media
+URL — 'https://example.com/audio.mp3'
+Local — '/path/to/video.mp4'
+**/
+
+// Audio
+const call = await conn.call('628123456789', media)
+
+// Video
+const call = await conn.call('628123456789', media, {
+  videoSource: media
+})
+
+// Silent
+const call = await conn.call('628123456789', 'silence')
+
+// Audio as video call
+const call = await conn.call('628123456789', Audio, {
+  isVideo: true
+})
+```
+</sub></details>
+</details>
+
 </details>
 
 <details> <summary align=center><sub>Plugin Format</sub></summary>
