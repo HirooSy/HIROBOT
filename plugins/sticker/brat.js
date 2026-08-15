@@ -14,7 +14,7 @@ const handler = async (m, { conn, text, command, usedPrefix }) => {
             try {
                 const { buffer, failures } = await generate();
 
-                conn.sendMessage(m.chat, { sticker: buffer }, { quoted: m });
+                await conn.sendSticker(m.chat, buffer, {}, m);
 
                 if (failures.length > 0) {
                     m.reply(buildFailureWarning(failures));

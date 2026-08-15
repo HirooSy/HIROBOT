@@ -1,8 +1,6 @@
-import { addExif } from '../../lib/sticker.js'
-
 let handler = async (m, { conn, text }) => {
   if (!m.quoted) throw 'Quoted the sticker!'
-  let stiker = false
+  let sent = false
   try {
     let [packname, ...author] = text.split('|')
     author = (author || []).join('|')
@@ -10,13 +8,12 @@ let handler = async (m, { conn, text }) => {
     if (!/webp/.test(mime)) throw 'Reply sticker!'
     let img = await m.quoted.download()
     if (!img) throw 'Reply a sticker!'
-    stiker = await addExif(img, packname || '', author || '')
+    await conn.sendSticker(m.chat, img, { packname: packname || '', author: author || '' }, m)
+    sent = true
   } catch (e) {
     console.error(e)
-    if (Buffer.isBuffer(e)) stiker = e
   } finally {
-    if (stiker) conn.sendFile(m.chat, stiker, 'wm.webp', '', m, false, { asSticker: true })
-    else throw 'Conversion failed'
+    if (!sent) throw 'Conversion failed'
   }
 }
 handler.help = ['wm <packname>|<author>']
