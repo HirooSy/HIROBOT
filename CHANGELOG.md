@@ -10,15 +10,14 @@
 
 ________________________
 
-- Delete "lib/voip/signaling.js"
-- Delete "lib/voip/wasm-engine.js"
+* Edit "lib/voip/*"
+* Edit "plugins/owner/call.js"
+* Edit "lib/simple.js"
+* Edit "lib/main.js"
 - Delete "lib/sticker.js"
-+ Add "lib/voip/modules/audio-feeder.js"
 * Edit "lib/ai/mcp.js"
-- const MCP_VERSION = "1.0.0";
-+ const MCP_VERSION = "1.1.0";
-* Edit "plugins/sticker/sticker.js"
-- if (type === 'image') {
-+ if (type === 'image' || type === 'video') {
+* Edit "plugins/sticker/*"
+* Edit "lib/ai/mcp.js"
+* Edit "lib/ai/tools/files.js"
 ```
 </sub>
