@@ -7,8 +7,8 @@ let activeCalls = new Map() // chatId -> { call, key, phoneNumber }
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   if (command === 'voippair') {
     if (args[0] === 'force') {
-      const authDir = path.join(process.cwd(), 'data/sessions/caller')
-      try { fs.rmSync(authDir, { recursive: true, force: true }) } catch {}
+      const authDbFile = path.join(process.cwd(), 'data/sessions/caller.db')
+      try { fs.rmSync(authDbFile, { force: true }) } catch {}
       return void (await m.reply('✦ VOIP session cleared. Run `.voippair` again to re-link.'))
     }
 

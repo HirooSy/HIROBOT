@@ -6,14 +6,25 @@
 • Comprehensive updates to message management utilities supporting the new poll update integration
 • Refactor VoIP core index exports for improved module structure
 • Optimization to video-feeder and WASM-engine modules for better performance/stability
+• Refactor handler and main logic to streamline core operations
+• Optimize database handling for improved performance and data integrity
+• Enhance connection persistence and connection recovery mechanics
+• Refine VoIP modules for better call stability and worker management
+• Update owner call and subbot plugins for expanded connectivity features
 
 ________________________
 
 * Edit "lib/connection.js"
+* Edit "lib/database.js"
+* Edit "lib/handler.js"
+* Edit "lib/main.js"
 * Edit "lib/simple.js"
 * Edit "lib/voip/index.js"
 * Edit "lib/voip/modules/video-feeder.js"
 * Edit "lib/voip/modules/wasm-engine.js"
+* Edit "lib/voip/modules/worker.js"
+* Edit "plugins/owner/call.js"
+* Edit "plugins/subbot/connect.js"
 ```
 </sub>
 
