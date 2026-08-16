@@ -1,18 +1,47 @@
-CC BY-NC 4.0
+HIROBOT License
 
 Copyright (c) 2026 HirooSy
-Repository: https://github.com/HirooSy/HIROBOT
 
-This work is licensed under the Creative Commons 
-Attribution-NonCommercial 4.0 International License. 
-To view a copy of this license, visit 
-http://creativecommons.org/licenses/by-nc/4.0/
+Permission is hereby granted to any person obtaining a copy of this software
+to modify the software for personal, non-commercial use only.
 
-You are free to:
-1. Share - copy and redistribute the material
-2. Adapt - remix, transform, and build upon the material
+The following conditions apply:
 
-Under the following terms:
-1. Attribution - You must give appropriate credit, provide a link to 
-   the license, and indicate if changes were made.
-2. NonCommercial - You may not use the material for commercial purposes.
+1. Non-Commercial Use:
+   This software may NOT be used for commercial purposes. Commercial purposes
+   include, but are not limited to:
+   - Selling the software or any part of it
+   - Using the software in a business or revenue-generating activity
+   - Monetizing any service that runs this software
+
+2. Modification:
+   You ARE permitted to modify the source code for your own personal use.
+
+3. No Redistribution:
+   You may NOT distribute, sublicense, or share the original or modified
+   software with any third party.
+
+4. Attribution (Required):
+   You MUST give appropriate credit to the original author.
+   This includes:
+   - Retaining this license text in any modified version
+   - Providing a clear notice that your version is based on the original work
+   - Including a link to the original repository: https://github.com/HirooSy/HIROBOT
+   - Crediting "HirooSy (https://github.com/HirooSy)" in any documentation or
+     about section of your modified version
+   You may NOT remove or alter this attribution requirement.
+
+5. No Claim of Ownership:
+   You may NOT claim this software or any modified version as your own work.
+   Original authorship must remain attributed to HirooSy.
+
+6. No Warranty:
+   This software is provided "AS IS", without warranty of any kind, express or
+   implied, including but not limited to warranties of merchantability,
+   fitness for a particular purpose, and noninfringement.
+
+For any use beyond these terms, you must obtain explicit written permission
+from the copyright holder.
+
+Project Repository: https://github.com/HirooSy/HIROBOT
+Original Author: HirooSy (https://github.com/HirooSy)

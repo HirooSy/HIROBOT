@@ -483,7 +483,7 @@ export default {
 <sub align=left>
   
 ```diff
-- REQUIRE : NODEJS V22+, RAM 1GB+, SERVER WITH IP+PORT
+- REQUIRE : NODEJS V24+, RAM 1GB+, SERVER WITH IP+PORT
 
 $ git clone https://github.com/HirooSy/HIROBOT.git
 $ cp .env.example .env
