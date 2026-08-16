@@ -1,3 +1,22 @@
+<h3>17/August/2026</h3>
+<sub>
+
+```diff
+• Implement poll vote decryption by wiring Baileys decryptPollVote to handle encrypted vote messages, mapping option hashes to readable names
+• Comprehensive updates to message management utilities supporting the new poll update integration
+• Refactor VoIP core index exports for improved module structure
+• Optimization to video-feeder and WASM-engine modules for better performance/stability
+
+________________________
+
+* Edit "lib/connection.js"
+* Edit "lib/simple.js"
+* Edit "lib/voip/index.js"
+* Edit "lib/voip/modules/video-feeder.js"
+* Edit "lib/voip/modules/wasm-engine.js"
+```
+</sub>
+
 <h3>16/August/2026</h3>
 <sub>
 
@@ -27,8 +46,6 @@ ________________________
 * Edit "LICENSE"
 ```
 </sub>
-
----
 
 <h3>15/August/2026</h3>
 <sub>
