@@ -14,9 +14,7 @@
 ---
 
 > [!IMPORTANT]
-> <sub>**CALL INFO:** still working on it, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub>
-> > <sub>Q: Will my account get banned after i use the call feature?</sub><br>
-> > <sub>A: No, it willn't. Source: trust me</sub>
+> <sub>**CALL INFO:** Beta feature, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb, Video call 12 fps — 144p. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub>
 
 > [!TIP]
 > <div align=center><sub>`+. Hirobot is a Lightweight Whatsapp bot using Baileys with AI Agent using Gemini that can help you maintain your project. With minimal depedencies and advanced baileys protocols.</sub><br><br>
@@ -24,7 +22,7 @@
 > <div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="20" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a><a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="20" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div>
 >
 > - [x] <sub> AI Agent Using Gemini. </sub>
-> - [x] <sub> Call Feature ( **Beta** ) </sub>
+> - [x] <sub> Voice & Video Call </sub>
 > - [x] <sub> Multi Sessions. </sub> 
 > - [x] <sub> Database Node:Sqlite / Mongodb / MySQL.</sub>
 > - [x] <sub> Support AI Rich and Button message.</sub>
@@ -55,7 +53,7 @@ HIROBOT
 │   ├── 📄simple.js        
 │   ├── 📄start.js         
 │   ├── 📁views            # HTML folder
-│   └── 📁voip             # Caller ( Beta )
+│   └── 📁voip             # Call
 ├── 📁data
 │   ├── 📁sessions
 │   ├── 📁tunnel
