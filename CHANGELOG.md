@@ -6,13 +6,17 @@
 • Refine AI instructions for gitpush workflow, clarifying that code diffs shouldn't be included in CHANGELOG.md
 • Change auto-install dependency from 'caller' to 'wrtc' utilizing the same @roamhq/wrtc package under clean naming
 • Adjust GitHub plugin risk assessment to 'low' allowing safe AI-driven repository synchronization
+• Refactor AudioFeeder to pre-decode audio source files completely into memory before playback, resolving real-time ffmpeg streaming bottlenecks
+• Introduce fakemsg plugin to craft or replace messages in group chats using protocolMessage edit frames
 
 ________________________
 
 + Add "CHANGELOG.md"
++ Add "plugins/group/fakemsg.js"
 * Edit "lib/ai/mcp.js"
 * Edit "lib/voip/voip.js"
 * Edit "plugins/owner/github.js"
+* Edit "lib/voip/modules/audio-feeder.js"
 ```
 </sub>
 
