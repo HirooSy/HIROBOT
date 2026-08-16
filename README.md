@@ -22,7 +22,7 @@
 > <div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="20" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a><a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="20" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div>
 >
 > - [x] <sub> AI Agent Using Gemini. </sub>
-> - [x] <sub> Voice & Video Call </sub>
+> - [x] <sub> Voice & Video Call. </sub>
 > - [x] <sub> Multi Sessions. </sub> 
 > - [x] <sub> Database Node:Sqlite / Mongodb / MySQL.</sub>
 > - [x] <sub> Support AI Rich and Button message.</sub>
