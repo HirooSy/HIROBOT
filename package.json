@@ -4,12 +4,12 @@
     "description": "Simple Whatsapp Bot",
     "main": "lib/start.js",
     "type": "module",
-    "license": "CC-BY-NC-4.0",
+    "license": "SEE LICENSE IN LICENSE",
     "scripts": {
         "start": "node lib/start.js"
     },
     "engines": {
-        "node": ">=22.x"
+        "node": ">=24.x"
     },
     "dependencies": {
         "awesome-phonenumber": "^7.8.0",

@@ -8,15 +8,23 @@
 • Adjust GitHub plugin risk assessment to 'low' allowing safe AI-driven repository synchronization
 • Refactor AudioFeeder to pre-decode audio source files completely into memory before playback, resolving real-time ffmpeg streaming bottlenecks
 • Introduce fakemsg plugin to craft or replace messages in group chats using protocolMessage edit frames
+• Fix video call delay by synchronizing audio start with video-feeder ready state to prevent audio out-of-sync
 
 ________________________
 
 + Add "CHANGELOG.md"
 + Add "plugins/group/fakemsg.js"
++ Add "plugins/owner/deletemsg.js"
 * Edit "lib/ai/mcp.js"
 * Edit "lib/voip/voip.js"
 * Edit "plugins/owner/github.js"
 * Edit "lib/voip/modules/audio-feeder.js"
+* Edit "lib/voip/index.js"
+* Edit "lib/voip/modules/video-feeder.js"
+* Edit "lib/voip/modules/wasm-engine.js"
+* Edit "package.json"
+* Edit "README.md"
+* Edit "LICENSE"
 ```
 </sub>
 
