@@ -14,7 +14,7 @@
 ---
 
 > [!IMPORTANT]
-> <sub>**CALL INFO:** Beta feature, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb, Video call 12 fps — 144p. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub>
+> <sub>**CALL INFO:** Beta feature, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub>
 
 > [!TIP]
 > <div align=center><sub>`+. Hirobot is a Lightweight Whatsapp bot using Baileys with AI Agent using Gemini that can help you maintain your project. With minimal depedencies and advanced baileys protocols.</sub><br><br>
