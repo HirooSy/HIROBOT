@@ -13,16 +13,6 @@
 
 ---
 
-> [!IMPORTANT]
-> - [x] <sub>240p 12fps Video Calls</sub>
-> - [x] <sub>Stream Video and Audio from local files</sub>
-> - [x] <sub>Outbound 1:1 video and voice calls</sub>
-> - [ ] <sub>Group Calls</sub>
-> - [ ] <sub>Inbound Calls</sub><br>
-> <div align=center>──────────────</div>
-> <sub>Beta feature, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub><br>
-> > <sub>Original project by <a href="https://github.com/SheIITear/baileys-caller">ShellTear</a></sub>
-
 > [!TIP]
 > <div align=center><sub>`+. Hirobot is a Lightweight Whatsapp bot using Baileys with AI Agent using Gemini that can help you maintain your project. With minimal depedencies and advanced baileys protocols.</sub><br><br>
 > ──────────────</div>
@@ -36,10 +26,27 @@
 > - [x] <sub> Fast & Free Website.</sub>
 > - [x] <sub> No Encrypted File.</sub>
 
+> [!IMPORTANT]
+> <div align=center><b>CALL FEATURE</b><br>
+> ──────────────</div>
+> 
+> <sub><b>Currently Beta</b>, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub><br>
+> 
+> - [x] <sub>240p 12fps Video Calls (costumizable)</sub>
+> - [x] <sub>Stream Video and Audio from local files</sub>
+> - [x] <sub>Outbound 1:1 video and voice calls</sub>
+> - [ ] <sub>Group Calls</sub>
+> - [ ] <sub>Inbound Calls</sub><br>
+> 
+> > <sub>Original project: <a href="https://github.com/SheIITear/baileys-caller">ShellTear/Baileys-caller</a></sub>
+
 ---
 
-<sub>
-
+<table align=center height=100>
+  <td>
+  <sub>
+  <sub>
+    
 ```env
                       ---Project Structure---
 HIROBOT
@@ -71,6 +78,9 @@ HIROBOT
 └── 📄README.md
 ```
 </sub>
+</sub>
+  </td>
+</table>
 
 <details> <summary align=center><sub>About AI Agent</sub></summary>
 <p align=center>──────────────</p>
@@ -103,69 +113,74 @@ HIROBOT
   
 <details>
   <summary align=center><sub>All MCP Helper</sub></summary>
-  
+
+  <table align=center height=100>
+  <td>
 <sub>
   
 ```
-              -- Session / chat history --
-              getSession(jid)                  get chat history array for a chat
-              resetSession(jid)                clear chat history for a chat
-              getPinnedNotesReadOnly(jid)      get notes pinned to a chat
+-- Session / chat history --
+getSession(jid)                  get chat history array for a chat
+resetSession(jid)                clear chat history for a chat
+getPinnedNotesReadOnly(jid)      get notes pinned to a chat
 
-              -- Talking to the AI / agent loop --
-              runAgent(conn, m, text, opts)     run a full AI turn, get a reply
-              runAgentConfirmed(conn, m, opts)  resume an agent turn awaiting confirmation
-              callTool(name, args)             call another registered tool by name
-              listTools() / countTools()       list / count registered tools
+-- Talking to the AI / agent loop --
+runAgent(conn, m, text, opts)     run a full AI turn, get a reply
+runAgentConfirmed(conn, m, opts)  resume an agent turn awaiting confirmation
+callTool(name, args)             call another registered tool by name
+listTools() / countTools()       list / count registered tools
 
-              -- Identity & permissions --
-              getUserIdentity(jid, db, conn)    get sender's name/number/owner/timezone
-              checkGroupAdminOrOwner(groupJid)  check if sender is group admin/owner
-              readGroupSettings(groupJid)       read group settings from brain storage
-              readOwnerList()                   list registered bot owners
+-- Identity & permissions --
+getUserIdentity(jid, db, conn)    get sender's name/number/owner/timezone
+checkGroupAdminOrOwner(groupJid)  check if sender is group admin/owner
+readGroupSettings(groupJid)       read group settings from brain storage
+readOwnerList()                   list registered bot owners
 
-              -- Persistent storage ("brain") --
-              loadBrain() / saveBrain(brain)         read/write ai-brain.json
-              ensureBrainGroupSlot(brain, jid)       ensure a group slot exists in brain
+-- Persistent storage ("brain") --
+loadBrain() / saveBrain(brain)         read/write ai-brain.json
+ensureBrainGroupSlot(brain, jid)       ensure a group slot exists in brain
 
-              -- Web & media --
-              searchWebGrounded(query)                     grounded web search
-              captureWebsiteScreenshot(url)                screenshot a webpage
-              fetchWebsiteHtmlFallback(url)                fetch raw HTML of a page
-              peekFetchBuffer(url, headers)                peek a file buffer from a URL
-              peekfetchVideoBuffer(url, maxBytes, headers) peek a video buffer from a URL
-              detectPlatform(url)                          detect platform (YouTube/TikTok/etc)
-              peekAnalyzeWithVision(mediaItems, platform, url, context)  analyze media with vision model
-              buildMediaPart(m)                            extract image/video/audio from a message
-              fetchSocialMulti(url)                         download helper for social media
-              downloadUserImageAsUrl(m)                    upload user's image, get back a URL
+-- Web & media --
+searchWebGrounded(query)                     grounded web search
+captureWebsiteScreenshot(url)                screenshot a webpage
+fetchWebsiteHtmlFallback(url)                fetch raw HTML of a page
+peekFetchBuffer(url, headers)                peek a file buffer from a URL
+peekfetchVideoBuffer(url, maxBytes, headers) peek a video buffer from a URL
+detectPlatform(url)                          detect platform (YouTube/TikTok/etc)
+peekAnalyzeWithVision(mediaItems, platform, url, context)  analyze media with vision model
+buildMediaPart(m)                            extract image/video/audio from a message
+fetchSocialMulti(url)                         download helper for social media
+downloadUserImageAsUrl(m)                    upload user's image, get back a URL
 
-              -- File & data tools --
-              readFileToolCore(file_path, offset)   core logic behind "read file" tool
-              buildSimpleDiff(oldStr, newStr)       build a text diff between two strings
-              parseDbKeyPath(key_path)              parse a dotted key path for db access
+-- File & data tools --
+readFileToolCore(file_path, offset)   core logic behind "read file" tool
+buildSimpleDiff(oldStr, newStr)       build a text diff between two strings
+parseDbKeyPath(key_path)              parse a dotted key path for db access
 
-              -- Plugin execution (advanced/internal) --
-              resolvePlugin(command)                      find which plugin matches a command
+-- Plugin execution (advanced/internal) --
+resolvePlugin(command)                      find which plugin matches a command
               resolveCustomPrefixPlugin(rawInput)         same, for custom-prefix commands
-              execPluginCommand(command, argsStr, opts)   run an existing bot plugin/command
-              execEval(code, opts)                        evaluate raw JS code (owner-only, dangerous)
-              classifyPluginRisk(name, plugin)            classify a plugin's risk level
-              accessLabel(level) / riskBadge(level)       risk-level label/badge helpers
-              pluginRequirements(plugin)                  get a plugin's access requirements
-              getDangerousDocReason(m)                    check if a message/doc looks risky
+execPluginCommand(command, argsStr, opts)   run an existing bot plugin/command
+execEval(code, opts)                        evaluate raw JS code (owner-only, dangerous)
+classifyPluginRisk(name, plugin)            classify a plugin's risk level
+accessLabel(level) / riskBadge(level)       risk-level label/badge helpers
+pluginRequirements(plugin)                  get a plugin's access requirements
+getDangerousDocReason(m)                    check if a message/doc looks risky
 
-              -- Error handling & internals (rarely needed in tools) --
-              handleError(conn, m, err, pluginName)   central error handler/reporter
-              isTransientApiError(err)                check if an API error is transient
-              getApiKeys() / getNextKey() / rotateKey() / resetRateLimit(jid)  API key pool mgmt
-              normalizeApiKeys(input)                 format/clean a raw API key list
-              getPersonality()                        get bot's configured personality/system prompt
-              MODELS                                  map of available AI models
-              setCurrentContext(...) / hasPending() / confirmPending() / cancelPending()
-                                                       internal turn/state mgmt (used by mcp.js itself)
+-- Error handling & internals (rarely needed in tools) --
+handleError(conn, m, err, pluginName)   central error handler/reporter
+isTransientApiError(err)                check if an API error is transient
+getApiKeys() / getNextKey() / rotateKey() / resetRateLimit(jid)  API key pool mgmt
+normalizeApiKeys(input)                 format/clean a raw API key list
+getPersonality()                        get bot's configured personality/system prompt
+MODELS                                  map of available AI models
+setCurrentContext(...) / hasPending() / confirmPending() / cancelPending()
+internal turn/state mgmt (used by mcp.js itself)
   ```
 </sub>
+</td>
+</table>
+
 </div>
 </details>
 
@@ -210,7 +225,7 @@ export default [
 </sub>
 </details>
 
-<details> <summary align=center><sub>Send Message</sub></summary>
+<details> <summary align=center><sub>Message Builder</sub></summary>
 <p align=center>──────────────</p>
 
 <details> <summary><sub>📖 Basic</sub></summary>
@@ -403,81 +418,6 @@ const call = await conn.call('628123456789', Audio, {
 ```
 </sub></details>
 </details>
-
-</details>
-
-<details> <summary align=center><sub>Plugin Format</sub></summary>
-<p align=center>──────────────</p>
-  
-<h3>Handler Style</h3>
-  <sub>
-
-```javascript
-let handler = async (m, { conn }) => {
-  // Your code here
-};
-
-handler.command = Array / String
-handler.help = Array / String
-handler.rowner = Boolean
-handler.owner = Boolean
-handler.mods = Boolean
-handler.group = Boolean
-handler.private = Boolean
-handler.botAdmin = Boolean
-handler.premium = Boolean
-handler.admin = Boolean
-handler.limit = Boolean / Numberic
-handler.level = Numberic
-handler.customPrefix = String
-handler.ai = Array
-
-export default handler
-```
-
-```javascript
-let handler = (m) => m;
-handler.before = async (m, { conn }) => {
-  // Your code here
-};
-export default handler;
-```
-</sub>
-
-<h3>Export Style</h3>
-  <sub>
-    
-```javascript
-export default {
-   run: async (m, { conn }) => {
-      // Your code here
-   },
-   command: Array / String,
-   tags: Array / String,
-   help: Array / String,
-   rowner: Boolean,
-   owner: Boolean,
-   mods: Boolean,
-   group: Boolean,
-   private: Boolean,
-   botAdmin: Boolean,
-   premium: Boolean,
-   admin: Boolean,
-   limit: Boolean / Numberic,
-   level: Numberic,
-   customPrefix: String,
-   ai: Array,
-}
-```
-
-```javascript
-export default {
-  async before(m, { conn }) {
-     // Your code here
-  },
-};
-```
-</sub>
 
 </details>
   
