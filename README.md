@@ -20,7 +20,7 @@
 > - [ ] <sub>Group Calls</sub>
 > - [ ] <sub>Inbound Calls</sub><br>
 > <div align=center>──────────────</div>
-> <sub>Beta feature, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub>
+> <sub>Beta feature, im planning to make the process lighter and faster. For now, it will consume your memory up to 1gb. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub><br>
 > > <sub>Original project by <a href="https://github.com/SheIITear/baileys-caller">ShellTear</a></sub>
 
 > [!TIP]
