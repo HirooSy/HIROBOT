@@ -11,6 +11,9 @@
 • Enhance connection persistence and connection recovery mechanics
 • Refine VoIP modules for better call stability and worker management
 • Update owner call and subbot plugins for expanded connectivity features
+• Implement log muting for noise/unnecessary console outputs in main handler
+• Refactor VoIP initialization logic in index.js to streamline call connection
+• Refine signaling and audio/video feeder modules for improved sync stability
 
 ________________________
 
@@ -20,6 +23,8 @@ ________________________
 * Edit "lib/main.js"
 * Edit "lib/simple.js"
 * Edit "lib/voip/index.js"
+* Edit "lib/voip/modules/audio-feeder.js"
+* Edit "lib/voip/modules/signaling.js"
 * Edit "lib/voip/modules/video-feeder.js"
 * Edit "lib/voip/modules/wasm-engine.js"
 * Edit "lib/voip/modules/worker.js"
