@@ -17,6 +17,7 @@
 • Refactor database default objects into a single nested structure for better maintainability
 • Add helper function for splitting default values and keys to streamline structure management
 • Cleanup redundant exports in database and unused functions in handler
+• Refactor database handling by removing lodash dependency and implementing a custom chain helper wrapper for native Javascript operations
 
 ________________________
 
@@ -31,6 +32,7 @@ ________________________
 * Edit "lib/voip/modules/video-feeder.js"
 * Edit "lib/voip/modules/wasm-engine.js"
 * Edit "lib/voip/modules/worker.js"
+* Edit "package.json"
 * Edit "plugins/owner/call.js"
 * Edit "plugins/subbot/connect.js"
 ```
