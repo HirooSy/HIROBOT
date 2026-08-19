@@ -1,7 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
 import path from 'path';
-import { facebook } from "../../lib/scraper/facebook.js"
+const { facebook } = global.scraper.facebook
 
 ffmpeg.setFfmpegPath('/usr/bin/ffmpeg');
 

@@ -1,6 +1,6 @@
-import { webp2png } from '../../lib/scraper/ezgif.js'
+const { webp2png } = global.scraper.ezgif
 import { S_WHATSAPP_NET, downloadMediaMessage, areJidsSameUser } from 'baileys'
-import Connection from '../../lib/connection.js'
+import Connection from '../../lib/utils/connection.js'
 
 let handler = async (m, { conn, args }) => {
   if (areJidsSameUser((await Connection.conn).user.id, conn.user.id)) {

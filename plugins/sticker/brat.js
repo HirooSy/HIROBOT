@@ -1,4 +1,4 @@
-import { generateBratImage, generateBratVideo, buildFailureWarning } from '../../lib/scraper/brat.js';
+const { generateBratImage, generateBratVideo, buildFailureWarning } = global.scraper.brat;
 
 const handler = async (m, { conn, text, command, usedPrefix }) => {
     if (!text) throw `*• Example :* ${usedPrefix + command} [text]`;

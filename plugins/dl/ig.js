@@ -1,7 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
 import path from 'path';
-import { instagram } from "../../lib/scraper/ig.js"
+const { instagram } = global.scraper.ig
 
 ffmpeg.setFfmpegPath('/usr/bin/ffmpeg');
 

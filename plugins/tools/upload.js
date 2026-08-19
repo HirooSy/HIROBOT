@@ -1,4 +1,4 @@
-import upload from '../../lib/scraper/upload.js';
+const upload = global.scraper.upload.default;
 
 let handler = async (m, { conn, command, usedPrefix }) => {
     let q = m.quoted ? m.quoted : m;

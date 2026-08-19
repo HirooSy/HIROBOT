@@ -1,4 +1,4 @@
-import { tiktok, tiktokBoostVolume, isLink } from '../../lib/scraper/tiktok.js';
+const { tiktok, tiktokBoostVolume, isLink } = global.scraper.tiktok;
 
 let handler = async (m, { conn, args, command }) => {
 

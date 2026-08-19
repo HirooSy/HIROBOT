@@ -13,9 +13,9 @@ import fs from 'fs'
 import path from 'path'
 import { DatabaseSync } from 'node:sqlite'
 import P from 'pino'
-import Connection from '../../lib/connection.js'
-import { HelperConnection } from '../../lib/simple.js'
-import db, { loadDatabase, getUserAutoReconnect as dbGetUserAutoReconnect, setUserAutoReconnect as dbSetUserAutoReconnect } from '../../lib/database.js'
+import Connection from '../../lib/utils/connection.js'
+import { HelperConnection } from '../../lib/utils/simple.js'
+import db, { loadDatabase, getUserAutoReconnect as dbGetUserAutoReconnect, setUserAutoReconnect as dbSetUserAutoReconnect } from '../../lib/utils/database.js'
 
 const KEY_MAP = {
     'pre-key': 'preKeys',
@@ -184,11 +184,13 @@ export async function startSubBot(jid, opts = {}) {
             printQRInTerminal: false,
             mobile: false,
             version,
-            browser: opts.browser || Browsers.ubuntu('Firefox'),
+            browser: opts.browser || global.settings.connection.subbot.browser,
             generateHighQualityLinkPreview: true,
             connectTimeoutMs: 60000,
             keepAliveIntervalMs: 15000,
             retryRequestDelayMs: 500,
+            syncFullHistory: !!global.settings.connection.subbot.loadhistory,
+            markOnlineOnConnect: !!global.settings.system.online,
             logger,
             auth: {
                 creds: state.creds,
@@ -209,7 +211,7 @@ export async function startSubBot(jid, opts = {}) {
 
         let Handler
         try {
-            Handler = await import(`../../lib/handler.js?t=${Date.now()}`).catch(console.error)
+            Handler = await import(`../../lib/utils/handler.js?t=${Date.now()}`).catch(console.error)
         } catch (e) {
             console.error(e)
         }

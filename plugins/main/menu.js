@@ -1,7 +1,7 @@
 import { promises } from 'fs'
 import { join } from 'path'
 import os from 'os'
-import { plugins } from '../../lib/plugins.js'
+import { plugins } from '../../lib/utils/plugins.js'
 
 let handler = async (m, { conn, usedPrefix: _p, args, isPrems, isOwner, command: cmd }) => {
 
@@ -69,7 +69,7 @@ const defaultMenu = {
 ──────────────────
 
 *I N F O R M A T I O N*
-- \`Bot Name:\` ${process.env.BOT_NAME}
+- \`Bot Name:\` ${global.settings.botname}
 - \`Developer:\` @${dev}
 - \`Version:\` ${_package.version}
 
@@ -116,7 +116,7 @@ const defaultMenu = {
         ),
         mimetype: 'image/webp',
         caption: TeksBefore,
-        fileName: process.env.BOT_NAME,
+        fileName: global.settings.botname,
         fileLength: '665666646645000',
         nativeFlow: [{},
           { text: '📢', url: 'https://whatsapp.com/channel/0029VaVJo460bIdoxTVoJY3e' },

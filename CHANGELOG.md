@@ -1,3 +1,70 @@
+<h3>19/August/2026</h3>
+<sub>
+
+```diff
+• Massive architectural refactor: migrated legacy lib modules into structured directories (lib/package, lib/scrapers) for better maintainability and modularity
+• Removed redundant/legacy lib files and VoIP modules in favor of new structured system
+• Updated plugins and handlers to align with new project structure
+
+________________________
+
+* Edit ".env.example"
+* Edit "README.md"
+- Delete "lib/ai/mcp.js"
+- Delete "lib/ai/tools/database.js"
+- Delete "lib/ai/tools/files.js"
+- Delete "lib/ai/tools/group.js"
+- Delete "lib/ai/tools/media.js"
+- Delete "lib/ai/tools/memory.js"
+- Delete "lib/ai/tools/messaging.js"
+- Delete "lib/ai/tools/plugin.js"
+- Delete "lib/ai/tools/reminder.js"
+- Delete "lib/ai/tools/system.js"
+- Delete "lib/ai/tools/web.js"
+- Delete "lib/color.js"
+* Edit "lib/config.js"
+- Delete "lib/connection.js"
+- Delete "lib/converter.js"
+- Delete "lib/database.js"
+- Delete "lib/handler.js"
+- Delete "lib/helper.js"
+* Edit "lib/main.js"
+- Delete "lib/plugins.js"
+- Delete "lib/scraper/ai-image.js"
+- Delete "lib/scraper/animein.js"
+- Delete "lib/scraper/brat.js"
+- Delete "lib/scraper/e621.js"
+- Delete "lib/scraper/ezgif.js"
+- Delete "lib/scraper/facebook.js"
+- Delete "lib/scraper/ig.js"
+- Delete "lib/scraper/nano.js"
+- Delete "lib/scraper/pinterest.js"
+- Delete "lib/scraper/tiktok.js"
+- Delete "lib/scraper/upload.js"
+- Delete "lib/scraper/x.js"
+- Delete "lib/scraper/ytdl.js"
+- Delete "lib/scraper/ytsearch.js"
+- Delete "lib/server.js"
+- Delete "lib/simple.js"
+* Edit "lib/start.js"
+- Delete "lib/views/index.html"
+- Delete "lib/views/profile.html"
+- Delete "lib/voip/index.js"
+- Delete "lib/voip/loader.js"
+- Delete "lib/voip/modules/audio-feeder.js"
+- Delete "lib/voip/modules/relay-transport.js"
+- Delete "lib/voip/modules/signaling.js"
+- Delete "lib/voip/modules/types.js"
+- Delete "lib/voip/modules/video-feeder.js"
+- Delete "lib/voip/modules/wasm-engine.js"
+- Delete "lib/voip/modules/whatsapp.wasm"
+- Delete "lib/voip/modules/worker-bootstrap.js"
+- Delete "lib/voip/modules/worker-modules.js"
+- Delete "lib/voip/modules/worker.js"
+- Delete "lib/voip/voip.js"
+```
+</sub>
+
 <h3>17/August/2026</h3>
 <sub>
 

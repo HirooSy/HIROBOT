@@ -2,7 +2,7 @@ import fs from 'fs'
 import { join } from 'path'
 import cp, { exec as _exec } from 'child_process'
 import { promisify } from 'util'
-import { plugins } from '../../lib/plugins.js'
+import { plugins } from '../../lib/utils/plugins.js'
 
 const _fs = fs.promises
 const exec = promisify(_exec).bind(cp)

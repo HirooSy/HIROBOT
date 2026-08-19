@@ -1,4 +1,4 @@
-import Connection from '../../lib/connection.js'
+import Connection from '../../lib/utils/connection.js'
 
 let handler = async (m, { conn }) => {
     let txt = ''

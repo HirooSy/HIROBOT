@@ -1,4 +1,4 @@
-import { plugins } from "../../lib/plugins.js"
+import { plugins } from "../../lib/utils/plugins.js"
 const {
     proto,
     generateWAMessageFromContent,

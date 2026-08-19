@@ -1,4 +1,4 @@
-import { twitter, gifToMp4, isLink } from '../../lib/scraper/x.js';
+const { twitter, gifToMp4, isLink } = global.scraper.x;
 import * as fs from 'fs';
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
