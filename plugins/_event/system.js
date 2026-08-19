@@ -1,6 +1,7 @@
 import { plugins } from "../../lib/utils/plugins.js"
 import { performance } from 'perf_hooks';
 import chalk from '../../lib/utils/color.js';
+import Helper from '../../lib/utils/helper.js';
 
 const linkRegex = /chat.whatsapp.com\/(?:invite\/)?([0-9A-Za-z]{20,24})/i
 const SPAM_LIMIT       = 3;
@@ -170,7 +171,7 @@ handler.before = async function (m, { match, groupMetaData, command, isAdmin, is
   const senderNumber = m.sender?.replace(/[^0-9]/g, '') || ''
   const isExempted   = m.sender === this.user?.jid || ownerNumbers.includes(senderNumber)
 
-  const isCommandTriggered = !!command || m.isCommand === true || (global.prefix?.test?.(m.text || ''));
+  const isCommandTriggered = !!command || m.isCommand === true || Helper.prefix.test(m.text || '');
 
   if (!isExempted && isCommandTriggered) {
     if (!this.spam) this.spam = {}
