@@ -1,7 +1,7 @@
-import { search as yts } from '../../lib/scraper/ytsearch.js'
 import axios from 'axios'
 import crypto from 'crypto';
-import { ytdl } from "../../lib/scraper/ytdl.js"
+const { search: yts } = global.scraper.ytsearch
+const { ytdl } = global.scraper.ytdl
 
 let handler = async(m, { conn, usedPrefix, text, args, command }) => {
 let chat = db.data.chats[m.chat]

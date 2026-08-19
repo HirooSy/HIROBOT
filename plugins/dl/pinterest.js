@@ -1,7 +1,7 @@
-import upload from '../../lib/scraper/upload.js'
 import axios from 'axios'
 import fs from 'fs'
-import {
+const upload = global.scraper.upload.default
+const {
   pinterest,
   gifToMp4,
   getPinterestHLS,
@@ -10,7 +10,7 @@ import {
   isPinterestUrl,
   detectMode,
   extractMediaFromPin
-} from '../../lib/scraper/pinterest.js'
+} = global.scraper.pinterest
 
 // ─── Main Handler ────────────────────────────────────────────────────────────
 let handler = async (m, { conn, args }) => {
@@ -132,7 +132,6 @@ let handler = async (m, { conn, args }) => {
             const videoBuffer = fs.readFileSync(videoPath)
             fs.unlinkSync(videoPath)
 
-            // Upload via lib/scraper/upload.js (Discord webhook)
             const uploadedUrl = await upload(videoBuffer, `pinterest_gif_${Date.now()}.mp4`)
 
             if (uploadedUrl) {

@@ -1,5 +1,5 @@
-import { webp2png, webp2mp4 } from '../../lib/scraper/ezgif.js'
-import { ffmpeg, toPTT, toAudio } from '../../lib/converter.js'
+const { webp2png, webp2mp4 } = global.scraper.ezgif
+import { ffmpeg, toPTT, toAudio } from '../../lib/utils/converter.js'
 
 let handler = async (m, { conn, usedPrefix, command }) => {
 

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import {
+const {
     searchAnime,
     getDetail,
     getEpisodes,
@@ -8,7 +8,7 @@ import {
     getFileSize,
     downloadEpisode,
     formatSize
-} from '../../lib/scraper/animein.js'
+} = global.scraper.animein
 
 const TMP_DIR = path.isAbsolute(process.env.TMP || '')
     ? process.env.TMP

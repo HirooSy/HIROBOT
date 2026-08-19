@@ -1,5 +1,5 @@
-import upload from '../../lib/scraper/upload.js'
-import { webp2png } from '../../lib/scraper/ezgif.js'
+const upload = global.scraper.upload.default
+const { webp2png } = global.scraper.ezgif
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   let user = db.data.users[m.sender]
@@ -28,8 +28,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         if (/webp/g.test(mime)) out = await webp2png(img)
         else if (/video|image/g.test(mime)) out = await upload(img)
         if (!out || typeof out !== 'string') {
-          const uploadFile = (await import('../../lib/scraper/upload.js')).default
-          out = await uploadFile(img)
+          out = await global.scraper.upload.default(img)
         }
         await conn.sendSticker(m.chat, false, { packname: scap.name, author: scap.author, url: out }, m)
         sent = true

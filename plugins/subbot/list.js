@@ -1,5 +1,5 @@
-import Connection from '../../lib/connection.js'
-import db from '../../lib/database.js'
+import Connection from '../../lib/utils/connection.js'
+import db from '../../lib/utils/database.js'
 import { listSavedSessionJids, getSubbotConfig } from './connect.js'
 
 const handler = async (m, { conn }) => {

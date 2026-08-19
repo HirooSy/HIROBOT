@@ -2,10 +2,10 @@ import { format } from 'util'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import { createRequire } from 'module'
-import connection from '../../lib/connection.js'
+import connection from '../../lib/utils/connection.js'
 import cp, { exec as _exec } from 'child_process'
 import { promisify } from 'util'
-import Helper from '../../lib/helper.js'
+import Helper from '../../lib/utils/helper.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)

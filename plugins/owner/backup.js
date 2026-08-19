@@ -1,4 +1,4 @@
-import { ZipFile as JSZip } from '../../lib/converter.js'
+import { ZipFile as JSZip } from '../../lib/utils/converter.js'
 import { join } from 'path'
 import { statSync, readFileSync, readdirSync } from 'fs'
 

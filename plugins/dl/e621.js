@@ -1,4 +1,4 @@
-import e621 from "../../lib/scraper/e621.js"
+const e621 = global.scraper.e621.default
 import { default as axios } from 'axios';
 import { default as ffmpeg } from 'fluent-ffmpeg';
 import * as fs from 'fs';
