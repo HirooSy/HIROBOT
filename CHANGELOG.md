@@ -5,6 +5,9 @@
 • Massive architectural refactor: migrated legacy lib modules into structured directories (lib/package, lib/scrapers) for better maintainability and modularity
 • Removed redundant/legacy lib files and VoIP modules in favor of new structured system
 • Updated plugins and handlers to align with new project structure
+• Clean up legacy single-file and multi-file credentials migration logic from connection utility, simplifying SQLite-based auth state initialization
+• Migrate VoIP authentication and device-pairing status checks to utilize SQLite credentials structure natively instead of checking legacy JSON file existence
+• Adjust default VoIP worker authentication database extension path from '.db' to '.session'
 
 ________________________
 
@@ -62,6 +65,9 @@ ________________________
 - Delete "lib/voip/modules/worker-modules.js"
 - Delete "lib/voip/modules/worker.js"
 - Delete "lib/voip/voip.js"
+* Edit "lib/package/voip/modules/worker.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/simple.js"
 ```
 </sub>
 
