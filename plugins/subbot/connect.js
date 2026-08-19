@@ -117,9 +117,11 @@ async function fetchVersionWithTimeout(timeoutMs = 8000) {
 }
 
 export function getSubbotConfig() {
-    const cfg = global.settings?.subbot || {}
+    const cfg = global.settings?.connection?.subbot || {}
+    const template = cfg.file || 'data/sessions/subbot/[number].session'
     return {
-        base: cfg.path || 'data/sessions/subbot',
+        base: path.dirname(template),
+        template,
         max: cfg.maxConnect ?? 3,
         autoConnect: cfg.autoConnect ?? true,
     }
@@ -134,7 +136,8 @@ function getUserAutoReconnect(jid) {
 }
 
 export function sessionPath(jid) {
-    return `${getSubbotConfig().base}/${jid}.data`
+    const number = String(jid).replace(/@(s\.whatsapp\.net|lid)$/i, '')
+    return getSubbotConfig().template.replace('[number]', number)
 }
 
 export function hasSavedSession(jid) {
@@ -152,11 +155,12 @@ export function hasSavedSession(jid) {
 }
 
 export function listSavedSessionJids() {
-    const { base } = getSubbotConfig()
+    const { base, template } = getSubbotConfig()
     if (!fs.existsSync(base)) return []
+    const ext = path.extname(template)
     return fs.readdirSync(base)
-        .filter(name => name.endsWith('.data'))
-        .map(name => name.slice(0, -'.data'.length))
+        .filter(name => name.endsWith(ext))
+        .map(name => name.slice(0, -ext.length) + '@s.whatsapp.net')
         .filter(jid => hasSavedSession(jid))
 }
 
