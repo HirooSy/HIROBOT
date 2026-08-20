@@ -2,6 +2,8 @@
 <sub>
 
 ```diff
+• Fix hot reload mechanism by correctly excluding unnecessary directories (node_modules, .git, etc.) from file watch list and fixing library directory path resolution
+• Replace heavy 'awesome-phonenumber' dependency with a lightweight native country code formatting implementation
 • Migrate image processing logic to Sharp for improved performance and reliability
 • Improve connection reload socket handling for cleaner closure
 • Add image buffer helper and minimal WebP chunk parsing in simple utilities
@@ -14,10 +16,11 @@
 
 ________________________
 
-* Edit "lib/scrapers/src/brat.js"
-* Edit "lib/utils/connection.js"
+* Edit "lib/main.js"
 * Edit "lib/utils/simple.js"
 * Edit "package.json"
+* Edit "lib/scrapers/src/brat.js"
+* Edit "lib/utils/connection.js"
 * Edit "plugins/owner/setpp.js"
 * Edit "plugins/tools/exif.js"
 * Edit "plugins/tools/resize.js"
