@@ -20,6 +20,9 @@
 • Implement PDF image extraction and PNG conversion in utilities using pureimage
 • Improve didYouMean command suggestion logic with custom prefix support
 • Enhance quoted message download safety and cleanup redundant download property deletions
+• Fix SQL local database autosave mechanism
+• Add Mistral AI fallback when AI_KEYS are missing
+• Fix autoheal mechanism
 
 ________________________
 
@@ -42,6 +45,9 @@ ________________________
 * Edit "lib/start.js"
 * Edit "lib/utils/database.js"
 + Add "plugins/owner/migratedb.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "plugins/ai/ai.js"
++ Add "lib/package/ai/prompt.txt"
 ```
 </sub>
 

@@ -69,16 +69,13 @@ function hasQuotedMedia(m) {
 function mediaDefaultText(m) {
     const msg = m.message || {}
     const qmsg = getContextInfo(m)?.quotedMessage || {}
-    // PRIORITASKAN media yang BARU dikirim (msg) di atas media dari quoted (qmsg).
-    // Kalau msg punya media apapun, pakai itu — jangan campur logic per-tipe dulu,
-    // karena kalau urut per-tipe (sticker>image>audio>...) bisa salah pilih pesan
-    // quoted duluan walau ada media baru dari tipe lain yang harusnya lebih relevan.
+
     if (msg.stickerMessage) return 'React and respond simply and naturally to this sticker as if it were a real reply in our conversation'
     if (msg.imageMessage)   return 'Analyze or describe this image if it needed or if there problem, if no react and respond simply and naturally to this image as if it were a real reply in our conversation'
     if (msg.audioMessage)   return 'Transcribe and understand this voice note/audio'
     if (msg.videoMessage)   return 'Describe this video'
     if (msg.documentMessage) return 'Read and summarize this document'
-    // Baru fallback ke media dari pesan yang di-quote/reply kalau tidak ada media baru sama sekali.
+
     if (qmsg.stickerMessage) return 'React and respond simply and naturally to this sticker as if it were a real reply in our conversation'
     if (qmsg.imageMessage)   return 'Analyze or describe this image if it needed or if there problem, if no react and respond simply and naturally to this image as if it were a real reply in our conversation'
     if (qmsg.audioMessage)   return 'Transcribe and understand this voice note/audio'
@@ -91,8 +88,6 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
     const senderJid = m.sender || m.key?.remoteJid
     const chat      = m.key?.remoteJid || m.chat
 
-    // Ambil contextInfo pakai m.msg (getter bawaan lib/simple.js, terbukti reliable dari
-    // pengetesan m.quoted) sebagai sumber utama, fallback ke scan manual kalau tidak ada.
     let explicitContextInfo = m.msg?.contextInfo || null
     if (!explicitContextInfo) {
         const commonKeys = ['extendedTextMessage', 'imageMessage', 'videoMessage', 'documentMessage', 'stickerMessage', 'audioMessage']
@@ -161,14 +156,6 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
         }, { quoted: m })
     }
 
-    // API key validation
-    if (!keyOk()) {
-        return conn.sendMessage(chat, {
-            text: '*process.env.AI_KEYS is not filled yet*'
-        }, { quoted: m })
-    }
-
-    // Help display if no text or media present
     const hasContent = rawText.trim() || hasMedia(m) || hasQuotedMedia(m)
     if (!hasContent) {
         return conn.sendMessage(chat, {
@@ -176,16 +163,13 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
         }, { quoted: m })
     }
 
-    // Text content
     let userText = rawText.trim()
     if (!userText && (hasMedia(m) || hasQuotedMedia(m))) {
         userText = mediaDefaultText(m)
     }
 
-    // Typing indicator
     await conn.sendPresenceUpdate?.('composing', chat).catch(() => {})
 
-    // ─── Thinking mode: show live progress by editing one status message ───
     const thinkingOn = !!global.settings?.ai?.thinking
     let statusKey = null
     let statusAlive = false
@@ -207,7 +191,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
                 try {
                     await conn.sendMessage(chat, { edit: statusKey, text: `> ${label}` })
                 } catch (_) {
-                    // status message might've been deleted/unavailable, stop trying
+
                     statusAlive = false
                 }
             }
@@ -250,16 +234,13 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
         return conn.sendMessage(chat, { text: `❌ Unexpected error: ${err.message}` }, { quoted: m })
     }
 
-    // Handle result
     if (result.type === 'confirm' || result.type === 'error') {
-        // Masih teks biasa — cukup edit pesan status jadi hasil akhirnya.
+
         if (await finishStatus(result.text)) return
         await clearStatus()
         return conn.sendMessage(chat, { text: result.text }, { quoted: m })
     }
 
-    // messageType: codeblock atau buttons — bukan teks biasa, hapus pesan
-    // status thinking lalu kirim hasil aslinya secara terpisah.
     if (result.type === 'message') {
         await clearStatus()
         const { messageType, messageData: d } = result
@@ -307,8 +288,7 @@ ${d.code || ''}
     }
 
     if (result.text) {
-        // Safety net: tangkap JSON codeblock/buttons yang lolos dari mcp.js.
-        // Ini bukan teks biasa juga -> hapus status thinking, kirim terpisah.
+
         if (result.text.includes('__type')) {
             try {
                 const t = result.text.trim()
@@ -355,18 +335,15 @@ ${d.code || ''}
                 }
             } catch (_) {}
         }
-        // Hasil akhir teks biasa -> edit pesan status jadi jawaban akhirnya.
+
         if (await finishStatus(result.text)) return
         await clearStatus()
         await conn.sendMessage(chat, { text: result.text }, { quoted: m })
         return
     }
 
-    // Tidak ada teks sama sekali (mis. dibatalkan/silent) -> buang status.
     await clearStatus()
 }
-
-// ─── Plugin Handler ────────────────────────────────────────────
 
 let handler = async function (m, { conn, command, text, args, usedPrefix, isOwner }) {
     const modelKey = command.includes(':') ? command.split(':')[1] : 'default'
@@ -376,8 +353,6 @@ let handler = async function (m, { conn, command, text, args, usedPrefix, isOwne
 handler.command = /^ai(:[a-z-]+)?$/i
 handler.help    = ['ai <text>']
 handler.tags    = ['ai']
-
-// ─── Passive Listener ─────────────────────────────────────────────────────────
 
 handler.all = async function (m) {
   try {
@@ -409,7 +384,6 @@ handler.all = async function (m) {
 
     const isOwner  = (await getUserIdentity(m.sender, global.db, conn)).isOwner || m.fromMe
 
-    // Private chat
     if (!isGroup) {
         const chatDb = global.db.data.chats[chat]
         if (!chatDb?.aiChat && !chatDb?.gptChat) return
@@ -421,7 +395,6 @@ handler.all = async function (m) {
         return
     }
 
-    // Group
     if (isGroup) {
         const mentioned = isBotMentioned(m, conn)
         const replied   = isReplyToBot(m, conn)
