@@ -3,9 +3,6 @@ import { S_WHATSAPP_NET, downloadMediaMessage, areJidsSameUser } from 'baileys'
 import Connection from '../../lib/utils/connection.js'
 
 let handler = async (m, { conn, args }) => {
-  if (areJidsSameUser((await Connection.conn).user.id, conn.user.id)) {
-      throw "You cannot change the profile picture of the main bot as a sub-bot."
-  }
   let q = m.quoted || m;
   let mime = q.mimetype || q.mediaType || '';
 
