@@ -1,3 +1,25 @@
+<h3>20/August/2026</h3>
+<sub>
+
+```diff
+• Migrate image processing logic to Sharp for improved performance and reliability
+• Improve connection reload socket handling for cleaner closure
+• Add image buffer helper and minimal WebP chunk parsing in simple utilities
+• Optimize EXIF handling and refactor resize logic
+• Cleanup package dependencies and refactor owner set profile picture plugin
+
+________________________
+
+* Edit "lib/scrapers/src/brat.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/owner/setpp.js"
+* Edit "plugins/tools/exif.js"
+* Edit "plugins/tools/resize.js"
+```
+</sub>
+
 <h3>19/August/2026</h3>
 <sub>
 
@@ -47,6 +69,7 @@ ________________________
 - Delete "lib/scraper/x.js"
 - Delete "lib/scraper/ytdl.js"
 - Delete "lib/scraper/ytsearch.js"
+- Delete "lib/scraper/ytsearch.js"
 - Delete "lib/server.js"
 - Delete "lib/simple.js"
 * Edit "lib/start.js"
@@ -59,7 +82,6 @@ ________________________
 - Delete "lib/voip/modules/signaling.js"
 - Delete "lib/voip/modules/types.js"
 - Delete "lib/voip/modules/video-feeder.js"
-- Delete "lib/voip/modules/wasm-engine.js"
 - Delete "lib/voip/modules/whatsapp.wasm"
 - Delete "lib/voip/modules/worker-bootstrap.js"
 - Delete "lib/voip/modules/worker-modules.js"
@@ -138,29 +160,5 @@ ________________________
 * Edit "package.json"
 * Edit "README.md"
 * Edit "LICENSE"
-```
-</sub>
-
-<h3>15/August/2026</h3>
-<sub>
-
-```diff
-• Massive refactor of VoIP infrastructure: removed legacy/unused modules (lib/voip/*), streamlined signaling and transport logic
-• Improved sticker metadata handling and watermark injection in plugins/sticker/
-• Enhanced AI tools (lib/ai/mcp.js, lib/ai/tools/files.js) for better performance
-• General cleanup and dependency updates in package.json
-• Refactored core modules (lib/main.js, lib/simple.js) for better maintainability
-
-________________________
-
-* Edit "lib/voip/*"
-* Edit "plugins/owner/call.js"
-* Edit "lib/simple.js"
-* Edit "lib/main.js"
-- Delete "lib/sticker.js"
-* Edit "lib/ai/mcp.js"
-* Edit "plugins/sticker/*"
-* Edit "lib/ai/mcp.js"
-* Edit "lib/ai/tools/files.js"
 ```
 </sub>
