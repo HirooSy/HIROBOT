@@ -2,6 +2,9 @@
 <sub>
 
 ```diff
+• Add pure JS pdf2img converter function utilizing pureimage for extracting embedded scan-style page images without external system binaries
+• Fix didYouMean suggestions by matching customPrefix plugins to prevent command suggestions from interfering with regex-triggered commands
+• Refactor quoted message download guard in simple serializer to safely prevent downloads on non-media messages
 • Fix hot reload mechanism by correctly excluding unnecessary directories (node_modules, .git, etc.) from file watch list and fixing library directory path resolution
 • Replace heavy 'awesome-phonenumber' dependency with a lightweight native country code formatting implementation
 • Migrate image processing logic to Sharp for improved performance and reliability
@@ -14,9 +17,14 @@
 • Refactor lazy module loader in database.js to include robust npm install retries and dynamic project root detection for cleaner dependency management
 • Improve lib/start.js error logging and ensure config.js is imported after confirming environment dependencies are met
 • Add 'migratedb' owner plugin to enable data migration between local SQLite and cloud (MongoDB/MySQL) databases
+• Implement PDF image extraction and PNG conversion in utilities using pureimage
+• Improve didYouMean command suggestion logic with custom prefix support
+• Enhance quoted message download safety and cleanup redundant download property deletions
 
 ________________________
 
+* Edit "lib/utils/converter.js"
+* Edit "lib/utils/handler.js"
 * Edit "lib/main.js"
 * Edit "lib/utils/simple.js"
 * Edit "package.json"
