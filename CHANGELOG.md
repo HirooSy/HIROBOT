@@ -13,6 +13,7 @@
 • Minor refactor to utility simple module and cleanup package dependencies
 • Refactor lazy module loader in database.js to include robust npm install retries and dynamic project root detection for cleaner dependency management
 • Improve lib/start.js error logging and ensure config.js is imported after confirming environment dependencies are met
+• Add 'migratedb' owner plugin to enable data migration between local SQLite and cloud (MongoDB/MySQL) databases
 
 ________________________
 
@@ -32,6 +33,7 @@ ________________________
 * Edit "plugins/dl/pornhub.js"
 * Edit "lib/start.js"
 * Edit "lib/utils/database.js"
++ Add "plugins/owner/migratedb.js"
 ```
 </sub>
 
