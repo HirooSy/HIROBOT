@@ -1,9 +1,6 @@
-import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
 import path from 'path';
 const { facebook } = global.scraper.facebook
-
-ffmpeg.setFfmpegPath('/usr/bin/ffmpeg');
 
 function tmpFile(ext) {
     return path.join('/data/tmp', `fb_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);

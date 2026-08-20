@@ -2,7 +2,11 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
 import * as path from 'path';
-import { default as ffmpeg } from 'fluent-ffmpeg';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+
+const execFileAsync = promisify(execFile);
+const FFMPEG_PATH = '/usr/bin/ffmpeg';
 
 const TMP_DIR = path.join(process.cwd(), 'data/tmp');
 
@@ -35,28 +39,26 @@ async function hlsToMp4(m3u8Url) {
     const ts = Date.now();
     const tmpOutput = path.join(tmpDir, `ph_tmp_${ts}.mp4`);
 
-    await new Promise((resolve, reject) => {
-        ffmpeg(m3u8Url)
-            .inputOptions([
-                '-allowed_extensions', 'ALL',
-                '-protocol_whitelist', 'file,http,https,tcp,tls,crypto',
-                '-headers', `User-Agent: ${PH_HEADERS['User-Agent']}\r\nReferer: https://www.pornhub.com\r\n`,
-            ])
-            .outputOptions([
-                '-c', 'copy',
-                '-movflags', 'faststart',
-                '-bsf:a', 'aac_adtstoasc',
-            ])
-            .toFormat('mp4')
-            .output(tmpOutput)
-            .on('start', cmd => console.log('[ph ffmpeg]', cmd))
-            .on('end', () => { console.log('[ph ffmpeg] done:', tmpOutput); resolve(); })
-            .on('error', (err, _stdout, stderr) => {
-                console.error('[ph ffmpeg stderr]', stderr);
-                reject(new Error(`ffmpeg: ${err.message}\n${stderr}`));
-            })
-            .run();
-    });
+    try {
+        const args = [
+            '-y',
+            '-allowed_extensions', 'ALL',
+            '-protocol_whitelist', 'file,http,https,tcp,tls,crypto',
+            '-headers', `User-Agent: ${PH_HEADERS['User-Agent']}\r\nReferer: https://www.pornhub.com\r\n`,
+            '-i', m3u8Url,
+            '-c', 'copy',
+            '-movflags', 'faststart',
+            '-bsf:a', 'aac_adtstoasc',
+            '-f', 'mp4',
+            tmpOutput
+        ];
+        console.log('[ph ffmpeg]', FFMPEG_PATH, args.join(' '));
+        await execFileAsync(FFMPEG_PATH, args);
+        console.log('[ph ffmpeg] done:', tmpOutput);
+    } catch (err) {
+        console.error('[ph ffmpeg stderr]', err.stderr);
+        throw new Error(`ffmpeg: ${err.message}\n${err.stderr || ''}`);
+    }
 
     if (!fs.existsSync(tmpOutput) || fs.statSync(tmpOutput).size === 0)
         throw new Error('Remux failed — output empty.');

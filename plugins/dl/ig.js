@@ -1,9 +1,11 @@
-import ffmpeg from 'fluent-ffmpeg';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 const { instagram } = global.scraper.ig
 
-ffmpeg.setFfmpegPath('/usr/bin/ffmpeg');
+const execFileAsync = promisify(execFile);
+const FFMPEG_PATH = '/usr/bin/ffmpeg';
 
 if (!global.igDownloadState) global.igDownloadState = {};
 
@@ -45,15 +47,16 @@ function cleanFiles(...files) {
 }
 
 async function mergeVideoAudio(videoUrl, audioUrl, output) {
-    return new Promise((resolve, reject) => {
-        ffmpeg()
-            .input(videoUrl)
-            .input(audioUrl)
-            .outputOptions(['-c:v copy', '-c:a aac', '-shortest'])
-            .on('error', reject)
-            .on('end', () => resolve(output))
-            .save(output);
-    });
+    await execFileAsync(FFMPEG_PATH, [
+        '-y',
+        '-i', videoUrl,
+        '-i', audioUrl,
+        '-c:v', 'copy',
+        '-c:a', 'aac',
+        '-shortest',
+        output
+    ]);
+    return output;
 }
 
 async function sendSingleVideo(conn, m, videoUrl, audios) {
