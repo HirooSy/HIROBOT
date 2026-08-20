@@ -7,6 +7,8 @@
 • Add image buffer helper and minimal WebP chunk parsing in simple utilities
 • Optimize EXIF handling and refactor resize logic
 • Cleanup package dependencies and refactor owner set profile picture plugin
+• Update Pinterest, X, and downloader plugins (e621, fb, ig, pornhub) for improved robustness
+• Minor refactor to utility simple module and cleanup package dependencies
 
 ________________________
 
@@ -17,6 +19,12 @@ ________________________
 * Edit "plugins/owner/setpp.js"
 * Edit "plugins/tools/exif.js"
 * Edit "plugins/tools/resize.js"
+* Edit "lib/scrapers/src/pinterest.js"
+* Edit "lib/scrapers/src/x.js"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/dl/fb.js"
+* Edit "plugins/dl/ig.js"
+* Edit "plugins/dl/pornhub.js"
 ```
 </sub>
 

@@ -1,8 +1,12 @@
 const e621 = global.scraper.e621.default
 import { default as axios } from 'axios';
-import { default as ffmpeg } from 'fluent-ffmpeg';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
+
+const execFileAsync = promisify(execFile);
+const FFMPEG_PATH = '/usr/bin/ffmpeg';
 
 function getTmpDir() {
     const TMP_DIR = path.join(process.cwd(), 'data', 'tmp');
@@ -51,21 +55,21 @@ async function convertToMp4(fileUrl, inputExt) {
         throw new Error('Download failed, input file is empty');
     }
 
-    await new Promise((resolve, reject) => {
-        ffmpeg(tmpInput)
-            .outputOptions([
-                '-movflags faststart',
-                '-pix_fmt yuv420p',
-                '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2',
-                '-c:v libx264',
-                '-c:a aac',
-            ])
-            .toFormat('mp4')
-            .output(tmpOutput)
-            .on('end', () => resolve())
-            .on('error', (err, stdout, stderr) => reject(new Error(`ffmpeg error: ${err.message}`)))
-            .run();
-    });
+    try {
+        await execFileAsync(FFMPEG_PATH, [
+            '-y',
+            '-i', tmpInput,
+            '-movflags', 'faststart',
+            '-pix_fmt', 'yuv420p',
+            '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+            '-c:v', 'libx264',
+            '-c:a', 'aac',
+            '-f', 'mp4',
+            tmpOutput
+        ]);
+    } catch (err) {
+        throw new Error(`ffmpeg error: ${err.message}`);
+    }
 
     if (fs.existsSync(tmpInput)) fs.unlinkSync(tmpInput);
 
