@@ -12,7 +12,6 @@
         "node": ">=24.x"
     },
     "dependencies": {
-        "awesome-phonenumber": "^7.8.0",
         "axios": "^1.18.1",
         "baileys": "npm:@whiskeysockets/baileys",
         "cheerio": "^1.2.0",
