@@ -53,12 +53,9 @@ async function generateProfilePicture(mediaUpload) {
     ? mediaUpload
     : Buffer.from(mediaUpload.stream);
 
-  const { Jimp, JimpMime } = await import('jimp');
-  const jimp = await Jimp.read(bufferOrFilePath);
-  const min = jimp.width;
-  const max = jimp.height;
-
-  jimp.crop({ x: 0, y: 0, w: min, h: max });
-  jimp.scaleToFit({ w: 720, h: 720 });
-  return jimp.getBuffer(JimpMime.jpeg);
+  const sharp = (await import('sharp')).default;
+  return sharp(bufferOrFilePath)
+    .resize(720, 720, { fit: 'inside' })
+    .jpeg()
+    .toBuffer();
 }
