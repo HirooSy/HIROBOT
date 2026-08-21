@@ -6,6 +6,7 @@
 • Optimize image/PDF converter utilities for improved buffer management and processing efficiency
 • Refactor Mistral chat session management to utilize shared database history, synchronizing session state with Gemini
 • Cleanup JSDoc and implement PDF image object extraction utilities in converter module
+• Add pure JS/Node unzip utility supporting extraction with directory traversal safety and in-memory zip structure parsing
 
 ________________________
 
