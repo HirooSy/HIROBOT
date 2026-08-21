@@ -2,6 +2,8 @@
 <sub>
 
 ```diff
+• Refactor MCP integration for better tool handling and execution reliability
+• Optimize image/PDF converter utilities for improved buffer management and processing efficiency
 • Refactor Mistral chat session management to utilize shared database history, synchronizing session state with Gemini
 • Cleanup JSDoc and implement PDF image object extraction utilities in converter module
 
@@ -161,11 +163,12 @@ ________________________
 
 ________________________
 
-* Edit "lib/connection.js"
-* Edit "lib/database.js"
-* Edit "lib/handler.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/database.js"
+* Edit "lib/utils/handler.js"
 * Edit "lib/main.js"
-* Edit "lib/simple.js"
+* Edit "lib/utils/simple.js"
 * Edit "lib/voip/index.js"
 * Edit "lib/voip/modules/audio-feeder.js"
 * Edit "lib/voip/modules/signaling.js"
@@ -175,35 +178,5 @@ ________________________
 * Edit "package.json"
 * Edit "plugins/owner/call.js"
 * Edit "plugins/subbot/connect.js"
-```
-</sub>
-
-<h3>16/August/2026</h3>
-<sub>
-
-```diff
-• Simplify contextInfo retrieval and clean up internal helper comments
-• Refine AI instructions for gitpush workflow, clarifying that code diffs shouldn't be included in CHANGELOG.md
-• Change auto-install dependency from 'caller' to 'wrtc' utilizing the same @roamhq/wrtc package under clean naming
-• Adjust GitHub plugin risk assessment to 'low' allowing safe AI-driven repository synchronization
-• Refactor AudioFeeder to pre-decode audio source files completely into memory before playback, resolving real-time ffmpeg streaming bottlenecks
-• Introduce fakemsg plugin to craft or replace messages in group chats using protocolMessage edit frames
-• Fix video call delay by synchronizing audio start with video-feeder ready state to prevent audio out-of-sync
-
-________________________
-
-+ Add "CHANGELOG.md"
-+ Add "plugins/group/fakemsg.js"
-+ Add "plugins/owner/deletemsg.js"
-* Edit "lib/ai/mcp.js"
-* Edit "lib/voip/voip.js"
-* Edit "plugins/owner/github.js"
-* Edit "lib/voip/modules/audio-feeder.js"
-* Edit "lib/voip/index.js"
-* Edit "lib/voip/modules/video-feeder.js"
-* Edit "lib/voip/modules/wasm-engine.js"
-* Edit "package.json"
-* Edit "README.md"
-* Edit "LICENSE"
 ```
 </sub>
