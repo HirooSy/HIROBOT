@@ -7,7 +7,6 @@
 • Clean up redundant diagnostic logs and unused unknownCallEvent event listeners from VOIP modules
 • Improve safety of worker process communication by catching IPC channel closure errors before calling process.send
 • Optimize project root path discovery in loadVoip using an iterative parent-directory node_modules check
-• Update package version to 1.2.0
 
 ________________________
 
