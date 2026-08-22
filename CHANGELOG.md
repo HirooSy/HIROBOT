@@ -4,11 +4,21 @@
 ```diff
 • Replace 'pureimage' with direct font parsing and Sharp in lib/scrapers/src/brat.js for improved performance
 • Remove unused dependency 'pureimage' from package.json
+• Clean up redundant diagnostic logs and unused unknownCallEvent event listeners from VOIP modules
+• Improve safety of worker process communication by catching IPC channel closure errors before calling process.send
+• Optimize project root path discovery in loadVoip using an iterative parent-directory node_modules check
+• Update package version to 1.2.0
 
 ________________________
 
+* Edit "lib/package/voip/index.js"
+* Edit "lib/package/voip/modules/signaling.js"
+* Edit "lib/package/voip/modules/worker.js"
+* Edit "lib/package/voip/voip.js"
 * Edit "lib/scrapers/src/brat.js"
+* Edit "lib/utils/simple.js"
 * Edit "package.json"
+* Edit "plugins/owner/call.js"
 ```
 </sub>
 
@@ -159,7 +169,7 @@ ________________________
 <sub>
 
 ```diff
-• Implement poll vote decryption by wiring Baileys decryptPollVote to handle encrypted vote messages, mapping option hashes to readable names
+• Poll vote decryption by wiring Baileys decryptPollVote to handle encrypted vote messages, mapping option hashes to readable names
 • Comprehensive updates to message management utilities supporting the new poll update integration
 • Refactor VoIP core index exports for improved module structure
 • Optimization to video-feeder and WASM-engine modules for better performance/stability
