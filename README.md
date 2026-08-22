@@ -434,7 +434,7 @@ $ node .
 
 <div align=center>
 
-  <a href="#"><img height="22" align=right src="https://img.shields.io/badge/Size-150_MB-black?style=for-the-badge"/> </a>
+  <a href="#"><img height="22" align=right src="https://img.shields.io/badge/Size-120_MB-black?style=for-the-badge"/> </a>
   
   <a href="https://replit.com"><img height="22" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=replit"/></a>
 
