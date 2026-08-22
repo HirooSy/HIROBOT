@@ -15,7 +15,6 @@
         "axios": "^1.18.1",
         "baileys": "npm:@whiskeysockets/baileys",
         "cheerio": "^1.2.0",
-        "pureimage": "^0.4.20",
         "wrtc": "npm:@roamhq/wrtc"
     },
     "allowScripts": {

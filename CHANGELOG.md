@@ -1,3 +1,17 @@
+<h3>22/August/2026</h3>
+<sub>
+
+```diff
+• Replace 'pureimage' with direct font parsing and Sharp in lib/scrapers/src/brat.js for improved performance
+• Remove unused dependency 'pureimage' from package.json
+
+________________________
+
+* Edit "lib/scrapers/src/brat.js"
+* Edit "package.json"
+```
+</sub>
+
 <h3>21/August/2026</h3>
 <sub>
 
