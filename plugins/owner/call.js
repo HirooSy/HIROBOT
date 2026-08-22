@@ -101,18 +101,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     call.on('connected', () => {
       conn.sendMessage(m.chat, { text: '✦ Call connected! Use .voipend to end.', edit: key })
     })
-    // DIAGNOSTIC: prints any call-related event WhatsApp's native stack
-    // reports that this bot doesn't otherwise recognize — this is where
-    // "someone else in the call added a new participant" is expected to
-    // show up while testing, since there's no dedicated
-    // 'participantJoined' event wired up yet (see lib/package/voip/index.js
-    // #handleCallEvent and lib/package/voip/modules/signaling.js). Once a real
-    // add-by-someone-else is captured here, its eventType/tag can be
-    // promoted to a proper named event instead of this raw dump.
-    call.on('unknownCallEvent', ({ eventType, eventData }) => {
-      const preview = JSON.stringify(eventData)
-      conn.sendMessage(m.chat, { text: `🔍 [diag] call event ${eventType}: ${preview?.slice(0, 500) ?? 'null'}` })
-    })
     call.on('ended', (reason) => {
       activeCalls.delete(m.chat)
       const friendlyText = reason === 'declined'
