@@ -1,7 +1,7 @@
 {
     "name": "HIRO-BOT",
-    "version": "1.0.0",
-    "description": "Simple Whatsapp Bot",
+    "version": "1.1.0",
+    "description": "Simple Whatsapp Bot made by HirooSy",
     "main": "lib/start.js",
     "type": "module",
     "license": "SEE LICENSE IN LICENSE",
@@ -12,10 +12,11 @@
         "node": ">=24.x"
     },
     "dependencies": {
+        "@roamhq/wrtc": "^0.10.0",
         "axios": "^1.18.1",
         "baileys": "npm:@whiskeysockets/baileys",
         "cheerio": "^1.2.0",
-        "wrtc": "npm:@roamhq/wrtc"
+        "libmlow-wasm": "^0.1.1"
     },
     "allowScripts": {
         "@whiskeysockets/baileys": true,

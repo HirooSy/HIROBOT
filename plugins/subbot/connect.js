@@ -181,7 +181,7 @@ export async function startSubBot(jid, opts = {}) {
     let connGeneration = 0
 
     function buildSocketOptions() {
-        const customPairing = sanitizeCustomPairingCode(process.env.CUSTOM_PAIRING)
+        const customPairing = sanitizeCustomPairingCode(global.settings?.connection?.subbot?.paircode)
         if (customPairing) state.creds.pairingCode = customPairing
 
         return {
@@ -326,7 +326,7 @@ export async function startSubBot(jid, opts = {}) {
         get subConn() { return subConn },
         requestPairingCode: (phone, customCode) => subConn.requestPairingCode(
             phone,
-            sanitizeCustomPairingCode(customCode ?? process.env.CUSTOM_PAIRING) || undefined
+            sanitizeCustomPairingCode(customCode ?? global.settings?.connection?.subbot?.paircode) || undefined
         )
     }
 }

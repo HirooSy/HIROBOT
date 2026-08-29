@@ -13,7 +13,7 @@ let handler = async (m, { conn, text, participants, usedPrefix, command, isAdmin
 		throw false
 	}
 	if (!text && m.quoted) text = m.quoted.sender.split('@')[0]
-	else if (!text) throw `_Masukan nomor!_\nContoh:\n\n${usedPrefix + command} ${global.settings.owner[0]}`
+	else if (!text) throw `_Masukan nomor!_\nContoh:\n\n${usedPrefix + command} ${global.settings.owner[0]?.[0] || ''}`
     let _participants = participants.map(user => user.id)
     let users = (await Promise.all(
         text.split(',')

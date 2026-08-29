@@ -1,50 +1,65 @@
-<div>
-<a href="#"><img align=left height="100" src="https://i.ibb.co.com/qPn4dND/Untitled61-20260717233557.png"/></a> 
+<div align=center>
+<a href="#"><img src="https://files.catbox.moe/tl36qw.png"/></a> 
 
-<h3 align=right>H I R O - B O T :dependabot:</h3>
-
-<div align=right width="100%">
-  <a href="https://github.com/whiskeysockets/baileys"><img height="25" src="https://img.shields.io/badge/Baileys-000000?style=for-the-badge&logo=whatsapp&logoColor=green"/></a>
-  <a href="#"><img height="25" src="https://img.shields.io/badge/NodeJS-000000.svg?&style=for-the-badge&logo=node.js&logoColor=green"/></a></br>
-  <a href="https://gemini.google.com"><img height="25" src="https://img.shields.io/badge/Gemini-000000?style=for-the-badge&logo=googlegemini&logoColor=blue"/></a>
-  <a href="https://cloudflare.com"><img height="25" src="https://img.shields.io/badge/Cloudflare-000000?style=for-the-badge&logo=Cloudflare&logoColor=orange"/></a>
-</div><br>
+  <a href="https://github.com/whiskeysockets/baileys"><img height="25" src="https://img.shields.io/badge/Baileys-000000?style=for-the-badge&logo=whatsapp&logoColor=green"/></a><a href="#"><img height="25" src="https://img.shields.io/badge/NodeJS-000000.svg?&style=for-the-badge&logo=node.js&logoColor=green"/></a><a href="https://gemini.google.com"><img height="25" src="https://img.shields.io/badge/Gemini-000000?style=for-the-badge&logo=googlegemini&logoColor=blue"/></a><a href="https://cloudflare.com"><img height="25" src="https://img.shields.io/badge/Cloudflare-000000?style=for-the-badge&logo=Cloudflare&logoColor=orange"/></a>
 </div>
 
----
-  
-> [!TIP]
-> <div align=center><sub>`+. Hirobot is a Lightweight Whatsapp bot using Baileys with AI Agent using Gemini that can help you maintain your project. With minimal depedencies and baileys.</sub><br><br>
-> ──────────────</div>
-> <div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="22" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a><a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="22" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div>
->
-> - [x] <sub> AI Agent Using Gemini. </sub>
-> - [x] <sub> Voice & Video Call. </sub>
-> - [x] <sub> Multi Sessions. </sub> 
-> - [x] <sub> Database Node:Sqlite / Mongodb / MySQL.</sub>
-> - [x] <sub> Support AI Rich and Button message.</sub>
-> - [x] <sub> Fast & Free Website.</sub>
-> - [x] <sub> No Encrypted File.</sub>
-      
-> [!IMPORTANT]
-> <div align=center><b><sub>CALL FEATURE</sub></b><br>
-> ──────────────</div>
-> <sub><b>Currently Beta</b>, im planning to make the process lighter and faster. If you found any issues, <a href="https://github.com/HirooSy/HIROBOT/issues">please let me know.</a></sub><br><br>
-> 
-> - [x] <sub>240p 12fps Video Calls (costumizable)</sub>
-> - [x] <sub>Stream Video and Audio from local files</sub>
-> - [x] <sub>Outbound video and voice calls</sub>
-> - [ ] <sub>Group Calls</sub>
-> - [ ] <sub>Inbound Calls</sub><br>
-> - [ ] <sub>Mid-call upgrade audio-video</sub>
-> - [ ] <sub>Reusable link call</sub>
-> - [ ] <sub>Send and receive call emoji reactions</sub>
-> <div align=center><sub align=<sub>Original: <a href="https://github.com/SheIITear/baileys-caller">ShellTear/Baileys-caller</a></sub></sub></div>
+<p align=center><sub><sub>· ✦ ·</sub></sub></p>
 
-<p align=center>✦</p>
+<p align=center><sub>Hirobot is A Lightweight WhatsApp bot that integrates an AI agent, VoIP calling capabilities, and a dedicated web portal for users. Built with Baileys and NodeJS v24+.</sub></p>
+
+#### Features: 
+- [x] <sub> AI Agent Using Gemini.</sub>
+- [x] <sub> 1:1 Voice & Video Call. </sub>
+- [x] <sub> Multi Sessions. </sub> 
+- [x] <sub> Database Node:Sqlite / Mongodb / MySQL.</sub>
+- [x] <sub> Support AI Rich and Button Message.</sub>
+- [x] <sub> Cloudflared Tunnel Website.</sub>
+
+---
+
+<table align=center height=100>
+  <td>
+  <sub>
+  <sub>
+    
+```env
+                      ---Project Structure---
+HIROBOT
+├── 📁lib
+│   ├── 📁package
+│   │   ├── 📁ai            
+│   │   ├── 📁voip           # Call
+│   │   └── 📁website
+│   │       ├── 📁views      # HTML folder
+│   │       └── 📄server.js
+│   ├── 📁scrapers
+│   ├── 📁utils
+│   ├── 📄config.js        # set your bot's preference here
+│   ├── 📄main.js
+│   └── 📄start.js
+├── 📁data
+│   ├── 📁sessions
+│   ├── 📁tunnel
+│   └── 📁tmp
+├── 📁plugins
+├── 📄.env                 # Set your tokens here
+├── 📄CHANGELOG.md
+├── 📄LICENSE
+├── 📄package.json
+└── 📄README.md
+```
+</sub>
+</sub>
+  </td>
+</table>
+
+<div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="17" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a>
+  <a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="17" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div><br>
+
 
 <details> 
-  <summary align=center><b>About AI Agent</b></summary>
+  <summary align=left><b>About AI Agent</b></summary>
 <p align=center>──────────────</p>
 
 <h4 align=center >How AutoHeal Works?</h4>
@@ -188,7 +203,7 @@ export default [
 </details>
 
 <details>
-   <summary align=center><b>Message types</b></summary>
+   <summary align=left><b>Message types</b></summary>
    <p align=center>──────────────</p>
 
 <details> <summary><sub>📖 Basic</sub></summary>
@@ -382,49 +397,40 @@ const call = await conn.call('628123456789', Audio, {
 </sub></details>
 </details>
   
----
+<details>
+   <summary><b>Install and Run</b></summary><br>
 
-<table align=center height=100>
-  <td>
-  <sub>
-  <sub>
-    
-```env
-                      ---Project Structure---
-HIROBOT
-├── 📁lib
-│   ├── 📁package
-│   │   ├── 📁ai            
-│   │   ├── 📁voip           # Call
-│   │   └── 📁website
-│   │       ├── 📁views      # HTML folder
-│   │       └── 📄server.js
-│   ├── 📁scrapers
-│   ├── 📁utils
-│   ├── 📄config.js        # set your bot's preference here
-│   ├── 📄main.js
-│   └── 📄start.js
-├── 📁data
-│   ├── 📁sessions
-│   ├── 📁tunnel
-│   └── 📁tmp
-├── 📁plugins
-├── 📄.env                 # Set your tokens here
-├── 📄CHANGELOG.md
-├── 📄LICENSE
-├── 📄package.json
-└── 📄README.md
-```
-</sub>
-</sub>
-  </td>
-</table>
+   <table height="100" align=center>
+       <tr>
+         <td>REQUIREMENT</td>
+         <td>Detail</td>
+         <td>Install</td>
+       </tr>
+     <tr>
+     <td><b>Server</b></td>
+     <td><sub>500MB RAM, 1GB Storage, Support IP:Port</sub></td>
+     <td>-</td>
+   </tr>
+     <tr>
+     <td><b>NodeJS</b></td>
+     <td><sub>24 or higher</sub></td>
+     <td><sub><code>pkg install nodejs</code></sub></td>
+     </tr>
+     <tr>
+       <td><b>Python</b></td>
+       <td><sub>Python 3.10+</sub></td>
+       <td><sub><code>pkg install python</code></sub></td>
+     </tr>
+     <tr>
+       <td><b>FFMPEG</b></td>
+       <td><sub>latest</sub></td>
+       <td><sub><code>pkg install ffmpeg</code></sub></td>
+     </tr>
+   </table>
 
 <sub align=left>
-  
-```diff
-- REQUIRE : NODEJS V24+, RAM 1GB+, SERVER WITH IP+PORT
 
+```bash
 $ git clone https://github.com/HirooSy/HIROBOT.git
 $ mv .env.example .env
 $ nano .env
@@ -439,3 +445,5 @@ $ node .
   <a href="https://replit.com"><img height="22" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=replit"/></a>
 
 </div>
+
+</details>
