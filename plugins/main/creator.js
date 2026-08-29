@@ -1,7 +1,7 @@
 let handler = async(m, { conn }) => {
 
-  const data = global.settings.owner.filter(([id, isCreator]) => id && isCreator)
-  conn.sendContact(m.chat, data.map(([id, name]) => [id, name]), m)
+  const [id] = global.settings.owner[0] || []
+  conn.sendContact(m.chat, [[id, "OWNER"]], m)
 
 }
 handler.help = ['owner', 'creator']

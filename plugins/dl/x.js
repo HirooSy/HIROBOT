@@ -1,4 +1,4 @@
-const { twitter, gifToMp4, isLink } = global.scraper.x;
+const { twitter, gifToMp4, fixVideoMetadata, isLink } = global.scraper.x;
 import * as fs from 'fs';
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
@@ -47,7 +47,12 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         if (mp4Entries.length >= 1 && twitterData.type !== 'gif') {
             const best = mp4Entries[0]; // scraper lists qualities in page order, highest first
             for (const i of best.link) {
-                await conn.sendMessage(m.chat, { video: { url: i }, caption: `- *Caption :* \n${twitterData.description}` }, { quoted: m });
+                const tmpPath = await fixVideoMetadata(i);
+                try {
+                    await conn.sendMessage(m.chat, { video: fs.readFileSync(tmpPath), caption: `- *Caption :* \n${twitterData.description}` }, { quoted: m });
+                } finally {
+                    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+                }
             }
             return;
         }
@@ -117,7 +122,12 @@ handler.before = async (m, { conn }) => {
                 } else if (ext === 'jpg') {
                     await conn.sendMessage(m.chat, { image: { url: i }, caption: `` }, { quoted: m });
                 } else {
-                    await conn.sendMessage(m.chat, { video: { url: i }, caption: `` }, { quoted: m });
+                    const tmpPath = await fixVideoMetadata(i);
+                    try {
+                        await conn.sendMessage(m.chat, { video: fs.readFileSync(tmpPath), caption: `` }, { quoted: m });
+                    } finally {
+                        if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+                    }
                 }
             }
         }

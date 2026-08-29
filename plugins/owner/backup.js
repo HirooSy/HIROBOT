@@ -35,9 +35,11 @@ let handler = async (m, { conn }) => {
     join(cwd, 'data/reminder.json'),
     join(cwd, 'data/tunnel'),
     join(cwd, 'data/tmp'),
+    //join(cwd, 'data'),
     join(cwd, '.npm'),
     join(cwd, '.agents'),
     join(cwd, '.config'),
+    join(cwd, '.git'),
   ]
 
   await addFolderRecursively(zipAll, cwd, cwd, excludePaths)

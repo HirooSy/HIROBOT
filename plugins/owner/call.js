@@ -14,7 +14,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 
     const { key } = await m.reply('✦ Starting VOIP device pairing...')
     try {
-      const result = await voipPair(conn, process.env.CUSTOM_PAIRING || undefined)
+      const result = await voipPair(conn, global.settings?.connection?.caller?.paircode || undefined)
       if (result.alreadyLinked) {
         return void conn.sendMessage(m.chat, { text: '✦ VOIP device was already linked. Use `.voippair force` to re-link.', edit: key })
       }

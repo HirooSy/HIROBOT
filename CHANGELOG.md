@@ -1,3 +1,63 @@
+<h3>29/August/2026</h3>
+<sub>
+
+```diff
+• Massive refactor of VoIP subsystem: migrated from legacy modules (wasm, feeders, signaling) to a modern, structured modular architecture in lib/package/voip/
+• Update scrapers for Brat and X modules
+• Enhance utility modules including connection handler, converter, and simple message serialization
+• Update various plugins to ensure compatibility with new architecture
+• Add new utilities for canvas manipulation and hot-reload functionality
+• Maintain project dependencies and documentation alignment
+
+________________________
+
+* Edit ".env.example"
+* Edit "README.md"
+* Edit "lib/config.js"
+* Edit "lib/main.js"
+* Edit "lib/package/voip/index.js"
+- Delete "lib/package/voip/loader.js"
+- Delete "lib/package/voip/modules/audio-feeder.js"
+- Delete "lib/package/voip/modules/relay-transport.js"
+- Delete "lib/package/voip/modules/signaling.js"
+- Delete "lib/package/voip/modules/types.js"
+- Delete "lib/package/voip/modules/video-feeder.js"
+- Delete "lib/package/voip/modules/wasm-engine.js"
+- Delete "lib/package/voip/modules/whatsapp.wasm"
+- Delete "lib/package/voip/modules/worker-bootstrap.js"
+- Delete "lib/package/voip/modules/worker-modules.js"
+- Delete "lib/package/voip/modules/worker.js"
+- Delete "lib/package/voip/voip.js"
+* Edit "lib/scrapers/src/brat.js"
+* Edit "lib/scrapers/src/x.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/converter.js"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/plugins.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/dl/x.js"
+* Edit "plugins/group/add.js"
+* Edit "plugins/main/creator.js"
+* Edit "plugins/owner/backup.js"
+* Edit "plugins/owner/call.js"
+* Edit "plugins/subbot/connect.js"
++ Add "lib/package/voip/WaVoipCoordinator.js"
++ Add "lib/package/voip/bytes.js"
++ Add "lib/package/voip/call/"
++ Add "lib/package/voip/crypto/"
++ Add "lib/package/voip/media/"
++ Add "lib/package/voip/relay/"
++ Add "lib/package/voip/shim/"
++ Add "lib/package/voip/signaling/"
++ Add "lib/package/voip/types.js"
++ Add "lib/package/voip/voip-deps.js"
++ Add "lib/package/voip/worker.js"
++ Add "lib/utils/canvas.js"
++ Add "lib/utils/reload.js"
+```
+</sub>
+
 <h3>22/August/2026</h3>
 <sub>
 
