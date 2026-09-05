@@ -43,7 +43,7 @@ const defaultMenu = {
     const premium   = db.data.users[m.sender].premiumTime
     const prems     = premium > 0 ? 'Premium' : 'Free'
     const platform  = os.platform()
-    const dev       = global.settings.owner.filter(([id, isCreator]) => id && isCreator).map(([id]) => id)[0]
+    const dev       = global.settings.owner.filter(([id, name, isCreator]) => id && isCreator).map(([id]) => id)[0]
 
     // ===========================[ QUOTED ]=========================
     const allQuoted = {

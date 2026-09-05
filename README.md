@@ -1,7 +1,7 @@
 <div align=center>
 <a href="#"><img src="https://files.catbox.moe/tl36qw.png"/></a> 
 
-  <a href="https://github.com/whiskeysockets/baileys"><img height="25" src="https://img.shields.io/badge/Baileys-000000?style=for-the-badge&logo=whatsapp&logoColor=green"/></a><a href="#"><img height="25" src="https://img.shields.io/badge/NodeJS-000000.svg?&style=for-the-badge&logo=node.js&logoColor=green"/></a><a href="https://gemini.google.com"><img height="25" src="https://img.shields.io/badge/Gemini-000000?style=for-the-badge&logo=googlegemini&logoColor=blue"/></a><a href="https://cloudflare.com"><img height="25" src="https://img.shields.io/badge/Cloudflare-000000?style=for-the-badge&logo=Cloudflare&logoColor=orange"/></a>
+  <a href="https://github.com/whiskeysockets/baileys"><img height="22" src="https://img.shields.io/badge/Baileys-000000?style=for-the-badge&logo=whatsapp&logoColor=green"/></a><a href="#"><img height="22" src="https://img.shields.io/badge/NodeJS-000000.svg?&style=for-the-badge&logo=node.js&logoColor=green"/></a><a href="https://gemini.google.com"><img height="22" src="https://img.shields.io/badge/Gemini-000000?style=for-the-badge&logo=googlegemini&logoColor=blue"/></a><a href="https://cloudflare.com"><img height="22" src="https://img.shields.io/badge/Cloudflare-000000?style=for-the-badge&logo=Cloudflare&logoColor=orange"/></a>
 </div>
 
 <p align=center><sub><sub>· ✦ ·</sub></sub></p>
@@ -402,9 +402,9 @@ const call = await conn.call('628123456789', Audio, {
 
    <table height="100" align=center>
        <tr>
-         <td>REQUIREMENT</td>
-         <td>Detail</td>
-         <td>Install</td>
+         <td><b>REQUIREMENT</b></td>
+         <td><b>DETAIL</b></td>
+         <td><b>INSTALL</b></td>
        </tr>
      <tr>
      <td><b>Server</b></td>
