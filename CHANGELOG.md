@@ -6,6 +6,7 @@
 • Implement WaManualRelay for better control over media flow
 • Integrate core handlers and utility functions with the new VoIP relay infrastructure
 • Clean up e621 scraper and refine menu plugin options
+• Switch YouTube downloader scraper from Epsilon API to SaveTube API for improved stability and reliability
 
 ________________________
 
@@ -26,6 +27,7 @@ ________________________
 * Edit "lib/package/voip/types.js"
 * Edit "lib/package/voip/worker.js"
 * Edit "lib/scrapers/src/e621.js"
+* Edit "lib/scrapers/src/ytdl.js"
 * Edit "lib/utils/connection.js"
 * Edit "lib/utils/handler.js"
 * Edit "lib/utils/simple.js"
