@@ -53,7 +53,7 @@ if (/^yt(a|v|audio|video)$/i.test(command)) {
                                     [(!isAudio ? 'video': 'audio')]: data.buffer,
 						            mimetype: data.mime,
 						            asDocument: db.data.chats[m.chat].useDocument,
-						            fileName: filename }, {})
+						            fileName: filename }, { quoted: m })
        } catch(e) { console.log(e); return m.reply("Failed to download, Scrape trouble") }
   }
 
