@@ -12,7 +12,6 @@
         "node": ">=24.x"
     },
     "dependencies": {
-        "@roamhq/wrtc": "^0.10.0",
         "axios": "^1.18.1",
         "baileys": "npm:@whiskeysockets/baileys",
         "cheerio": "^1.2.0",
