@@ -331,6 +331,7 @@ await conn.aiRich()
     .addText('[HyperLink](https://example.com)\nCitation [](https://example.com)'\n[x^2+y^2=r^2|100|100](https://example.com/latex.png))
     .addImage('https://example.com/image.png')
     .addCode('javascript', `console.log('Hello World')`)
+    .html(["<html>Hello world</html>", "Tab 1"], ["<html>Hi twin</html>", "Tab 2"]),
     .addTable([
         ['Name', 'HirooSy'],
         ['Bio', 'Im developer'],
