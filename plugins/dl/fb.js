@@ -52,7 +52,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             return;
         }
 
-        await conn.sendMessage(m.chat, { video: { url: best.url }, mimetype: 'video/mp4', caption: metadata.title || '' }, { quoted: m });
+        await conn.sendMessage(m.chat, { video: { url: best.url }, mimetype: 'video/mp4', caption: '' }, { quoted: m });
         await m.react('✅');
 
     } catch (err) {

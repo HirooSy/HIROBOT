@@ -2,14 +2,19 @@
 <sub>
 
 ```diff
-• Implement .html() method in AIRich builder to support single HTML payloads and tabbed multi-screen embedded responses
-• Extend AIRich .build() process to handle and encode embedded screens configuration in unifiedResponse.data
-• Add documentation for the new .html() method to README.md
+• Implement .addHtml() method in AIRich builder (replacing the previous .html() method) to support single HTML payloads and tabbed multi-screen embedded responses
+• Add .addProcess() method in AIRich builder to display animated primitive progress statuses (GenAIBotProgressStatusPrimitive)
+• Add comprehensive documentation and examples for both .addHtml() and .addProcess() to README.md
+• Strip default text caption from facebook downloader output to deliver clean media results
+• Redesign pinterest downloader: implement asynchronous downscaling and JPEG recompression of images using Sharp under a 2MB total base64 limit to prevent Baileys websocket write EPIPE connection drops from oversized payloads
+• Embed an interactive swipeable HTML photo gallery within an AIRich container via .addHtml() for multi-image Pinterest searches
 
 ________________________
 
 * Edit "README.md"
 * Edit "lib/utils/simple.js"
+* Edit "plugins/dl/fb.js"
+* Edit "plugins/dl/pinterest.js"
 * Edit "CHANGELOG.md"
 ```
 </sub>
