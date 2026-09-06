@@ -170,6 +170,32 @@ let handler = async (m, { conn, args }) => {
     allSources.push(['https://www.pinterest.com/favicon.ico', pin.pin_url, pin.title || 'Pinterest'])
   }
 
+  // ─── Download Images & Build HTML Gallery ───────────────────────────────
+  // Downscale + recompress before embedding: full-resolution Pinterest images
+  // as raw base64 can easily blow the message payload past what Baileys'
+  // websocket write can handle in one shot (was causing write EPIPE /
+  // connection drops on the whole session, not just this one message).
+  const sharp = (await import('sharp')).default
+  const galleryImages = []
+  const MAX_TOTAL_BASE64_CHARS = 2_000_000
+  let totalChars = 0
+  for (const url of imageUrls) {
+    if (totalChars >= MAX_TOTAL_BASE64_CHARS) break
+    try {
+      const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 })
+      const resized = await sharp(Buffer.from(res.data))
+        .resize({ width: 640, height: 640, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 65 })
+        .toBuffer()
+      const dataUri = `data:image/jpeg;base64,${resized.toString('base64')}`
+      if (totalChars + dataUri.length > MAX_TOTAL_BASE64_CHARS) break
+      galleryImages.push(dataUri)
+      totalChars += dataUri.length
+    } catch (err) {
+      console.error('Image download error:', err)
+    }
+  }
+
   // ─── Kirim dengan AiRich ──────────────────────────────────────────────
   try {
     const rich = conn.aiRich()
@@ -182,7 +208,7 @@ let handler = async (m, { conn, args }) => {
       ])
       .addSource(allSources)
 
-    if (imageUrls.length) rich.addImage(imageUrls)
+    if (galleryImages.length) rich.addHtml(buildGalleryHtml(galleryImages, query))
     if (videoUrls.length) rich.addVideo(videoUrls)
 
     await rich.send(m.chat, { quoted:m })
@@ -202,6 +228,48 @@ let handler = async (m, { conn, args }) => {
     }
     throw e.message
   }
+}
+
+function buildGalleryHtml(images, query) {
+  return `<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff;touch-action:manipulation}
+.wrap{width:100%;max-width:620px;margin:auto;padding:14px}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:18px;overflow:hidden;box-shadow:0 10px 35px rgba(0,0,0,.35)}
+.head{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.head small{display:block;font-size:10px;letter-spacing:2px;color:#888}
+.head b{font-size:18px}
+.stage{position:relative;background:#000;aspect-ratio:1/1}
+.stage img{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.nav.prev{left:10px}
+.nav.next{right:10px}
+.counter{padding:10px 18px;text-align:center;font-size:12px;color:#999}
+</style>
+<div class="wrap">
+  <div class="card">
+    <div class="head"><small>PINTEREST</small><b>${query.replace(/[<>&]/g, '')}</b></div>
+    <div class="stage">
+      <img id="img" src="">
+      <div class="nav prev" id="prev">&lsaquo;</div>
+      <div class="nav next" id="next">&rsaquo;</div>
+    </div>
+    <div class="counter" id="counter"></div>
+  </div>
+</div>
+<script>
+const images = ${JSON.stringify(images)};
+let idx = 0;
+const imgEl = document.getElementById('img');
+const counterEl = document.getElementById('counter');
+function render(){
+  imgEl.src = images[idx];
+  counterEl.textContent = (idx + 1) + ' / ' + images.length;
+}
+document.getElementById('prev').addEventListener('click', () => { idx = (idx - 1 + images.length) % images.length; render(); });
+document.getElementById('next').addEventListener('click', () => { idx = (idx + 1) % images.length; render(); });
+render();
+</script>`
 }
 
 // ─── Quality Selection Handler ────────────────────────────────────────────
