@@ -1,3 +1,19 @@
+<h3>06/September/2026</h3>
+<sub>
+
+```diff
+• Implement .html() method in AIRich builder to support single HTML payloads and tabbed multi-screen embedded responses
+• Extend AIRich .build() process to handle and encode embedded screens configuration in unifiedResponse.data
+• Add documentation for the new .html() method to README.md
+
+________________________
+
+* Edit "README.md"
+* Edit "lib/utils/simple.js"
+* Edit "CHANGELOG.md"
+```
+</sub>
+
 <h3>05/September/2026</h3>
 <sub>
 
