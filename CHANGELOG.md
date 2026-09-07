@@ -1,3 +1,37 @@
+<h3>08/September/2026</h3>
+<sub>
+
+```diff
+• Support video content in Pinterest downloader and extract the first video frame as a preview thumbnail using ffmpeg for the interactive HTML gallery
+• Enhance HTML action payload handling in the web dashboard server to support explicit item types and map appropriate filenames (e.g., .mp4 for video, .jpg for image) when files are requested
+
+________________________
+
+* Edit "lib/package/website/server.js"
+* Edit "plugins/dl/pinterest.js"
+```
+</sub>
+
+<h3>07/September/2026</h3>
+<sub>
+
+```diff
+• Update pinterest downloader and server modules to implement and test WebSocket HTML capabilities
+• Redesign README.md features layout, update visual structure representation, and document supported AI models usage
+• Refactor web dashboard to extract performHtmlAction and implement explicit CORS headers for /api/aiRich/action to support sandboxed WhatsApp webview calls
+• Refactor AIRich addHtml builder method to support dynamic server URLs and customizable trusted sources options
+• Optimize Pinterest image downloader to fetch and resize images in parallel, and pass secure dashboard domains as trusted HTML sources
+
+________________________
+
+* Edit "README.md"
+* Edit "lib/package/website/server.js"
+* Edit "lib/utils/simple.js"
+* Edit "plugins/dl/pinterest.js"
+* Edit "CHANGELOG.md"
+```
+</sub>
+
 <h3>06/September/2026</h3>
 <sub>
 
@@ -103,7 +137,7 @@ ________________________
 • Remove unused dependency 'pureimage' from package.json
 • Clean up redundant diagnostic logs and unused unknownCallEvent event listeners from VOIP modules
 • Improve safety of worker process communication by catching IPC channel closure errors before calling process.send
-• Optimize project root path discovery in loadVoip using an iterative parent-directory node_modules check
+• Optimize project root path estimation in loadVoip using an iterative parent-directory node_modules check
 
 ________________________
 
