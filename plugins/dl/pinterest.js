@@ -1,5 +1,8 @@
 import axios from 'axios'
 import fs from 'fs'
+import { spawn } from 'child_process'
+import { tmpdir } from 'os'
+import { join } from 'path'
 const upload = global.scraper.upload.default
 const {
   pinterest,
@@ -11,6 +14,20 @@ const {
   detectMode,
   extractMediaFromPin
 } = global.scraper.pinterest
+
+async function extractFirstFrame(videoUrl) {
+  const outPath = join(tmpdir(), `pin_frame_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`)
+  await new Promise((resolve, reject) => {
+    const proc = spawn('ffmpeg', ['-y', '-i', videoUrl, '-vframes', '1', '-q:v', '4', outPath])
+    let stderr = ''
+    proc.stderr.on('data', d => { stderr += d })
+    proc.on('close', code => code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}: ${stderr.slice(-300)}`)))
+    proc.on('error', reject)
+  })
+  const buf = await fs.promises.readFile(outPath)
+  fs.promises.unlink(outPath).catch(() => {})
+  return buf
+}
 
 // ─── Main Handler ────────────────────────────────────────────────────────────
 let handler = async (m, { conn, args }) => {
@@ -170,30 +187,57 @@ let handler = async (m, { conn, args }) => {
     allSources.push(['https://www.pinterest.com/favicon.ico', pin.pin_url, pin.title || 'Pinterest'])
   }
 
-  // ─── Download Images & Build HTML Gallery ───────────────────────────────
-  // Downscale + recompress before embedding: full-resolution Pinterest images
+  // ─── Download Media & Build HTML Gallery ────────────────────────────────
+  // Downscale + recompress previews before embedding: full-resolution media
   // as raw base64 can easily blow the message payload past what Baileys'
   // websocket write can handle in one shot (was causing write EPIPE /
   // connection drops on the whole session, not just this one message).
+  // The full-resolution/original media URL is kept separately for the
+  // "Download" button, since the embedded copy is a deliberately small
+  // preview. Videos are represented by their first frame in the gallery;
+  // "Download" on a video item still sends the actual video file.
+  //
+  // Downloaded in parallel (not one-by-one) since these are independent
+  // network+CPU operations - was a big chunk of why search felt slow.
   const sharp = (await import('sharp')).default
-  const galleryImages = []
   const MAX_TOTAL_BASE64_CHARS = 2_000_000
-  let totalChars = 0
-  for (const url of imageUrls) {
-    if (totalChars >= MAX_TOTAL_BASE64_CHARS) break
+
+  const mediaItems = [
+    ...imageUrls.map(url => ({ type: 'image', url })),
+    ...videoUrls.map(url => ({ type: 'video', url }))
+  ]
+
+  const downloaded = await Promise.all(mediaItems.map(async (item) => {
     try {
-      const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 })
-      const resized = await sharp(Buffer.from(res.data))
+      let rawBuffer
+      if (item.type === 'video') {
+        rawBuffer = await extractFirstFrame(item.url)
+      } else {
+        const res = await axios.get(item.url, { responseType: 'arraybuffer', timeout: 15000 })
+        rawBuffer = Buffer.from(res.data)
+      }
+      const resized = await sharp(rawBuffer)
         .resize({ width: 640, height: 640, fit: 'inside', withoutEnlargement: true })
         .jpeg({ quality: 65 })
         .toBuffer()
-      const dataUri = `data:image/jpeg;base64,${resized.toString('base64')}`
-      if (totalChars + dataUri.length > MAX_TOTAL_BASE64_CHARS) break
-      galleryImages.push(dataUri)
-      totalChars += dataUri.length
+      return { type: item.type, url: item.url, dataUri: `data:image/jpeg;base64,${resized.toString('base64')}` }
     } catch (err) {
-      console.error('Image download error:', err)
+      console.error(`${item.type} preview error:`, err.message)
+      return null
     }
+  }))
+
+  const galleryImages = []
+  const galleryFullUrls = []
+  const galleryTypes = []
+  let totalChars = 0
+  for (const item of downloaded) {
+    if (!item) continue
+    if (totalChars + item.dataUri.length > MAX_TOTAL_BASE64_CHARS) break
+    galleryImages.push(item.dataUri)
+    galleryFullUrls.push(item.url)
+    galleryTypes.push(item.type)
+    totalChars += item.dataUri.length
   }
 
   // ─── Kirim dengan AiRich ──────────────────────────────────────────────
@@ -208,8 +252,18 @@ let handler = async (m, { conn, args }) => {
       ])
       .addSource(allSources)
 
-    if (galleryImages.length) rich.addHtml(buildGalleryHtml(galleryImages, query))
-    if (videoUrls.length) rich.addVideo(videoUrls)
+    if (galleryImages.length) {
+      const token = global.registerHtmlAction({
+        chatId: m.chat,
+        action: 'sendFile',
+        payload: { urls: galleryFullUrls, types: galleryTypes, caption: `Pinterest — ${query}` },
+        singleUse: false
+      })
+      const rawServer = typeof global.opts?.server === 'string' ? global.opts.server : ''
+      const apiBase = rawServer.replace(/\/$/, '')
+      const apiHost = apiBase.replace(/^https?:\/\//, '')
+      rich.addHtml(buildGalleryHtml(galleryImages, galleryTypes, query, token, apiBase), { trustedSources: apiHost ? [apiHost] : [] })
+    }
 
     await rich.send(m.chat, { quoted:m })
   } catch (e) {
@@ -230,7 +284,8 @@ let handler = async (m, { conn, args }) => {
   }
 }
 
-function buildGalleryHtml(images, query) {
+function buildGalleryHtml(images, types, query, token, apiBase) {
+  const httpsApiBase = apiBase ? apiBase.replace(/^http:\/\//, 'https://') : ''
   return `<style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 body{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff;touch-action:manipulation}
@@ -241,33 +296,114 @@ body{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff;tou
 .head b{font-size:18px}
 .stage{position:relative;background:#000;aspect-ratio:1/1}
 .stage img{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.playIcon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:22px;pointer-events:none}
 .nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .nav.prev{left:10px}
 .nav.next{right:10px}
-.counter{padding:10px 18px;text-align:center;font-size:12px;color:#999}
+.bottom{padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.counter{font-size:12px;color:#999}
+.dl{background:#00a884;border:none;border-radius:20px;color:#fff;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer}
+.dl:disabled{opacity:.55}
 </style>
 <div class="wrap">
   <div class="card">
     <div class="head"><small>PINTEREST</small><b>${query.replace(/[<>&]/g, '')}</b></div>
     <div class="stage">
       <img id="img" src="">
+      <div class="playIcon" id="playIcon" style="display:none">&#9654;</div>
       <div class="nav prev" id="prev">&lsaquo;</div>
       <div class="nav next" id="next">&rsaquo;</div>
     </div>
-    <div class="counter" id="counter"></div>
+    <div class="bottom">
+      <span class="counter" id="counter"></span>
+      <button class="dl" id="dl">Download</button>
+    </div>
   </div>
 </div>
 <script>
 const images = ${JSON.stringify(images)};
+const types = ${JSON.stringify(types)};
+const token = ${JSON.stringify(token || '')};
+const apiBase = ${JSON.stringify(httpsApiBase)};
 let idx = 0;
 const imgEl = document.getElementById('img');
 const counterEl = document.getElementById('counter');
+const playIconEl = document.getElementById('playIcon');
+const dlBtn = document.getElementById('dl');
 function render(){
   imgEl.src = images[idx];
-  counterEl.textContent = (idx + 1) + ' / ' + images.length;
+  const typeLabel = types[idx] === 'video' ? 'Video' : 'Image';
+  counterEl.textContent = (idx + 1) + ' / ' + images.length + '  —  ' + typeLabel;
+  playIconEl.style.display = types[idx] === 'video' ? 'flex' : 'none';
 }
 document.getElementById('prev').addEventListener('click', () => { idx = (idx - 1 + images.length) % images.length; render(); });
 document.getElementById('next').addEventListener('click', () => { idx = (idx + 1) % images.length; render(); });
+
+let ws = null;
+let wsReady = false;
+let pingTimer = null;
+const pending = new Map();
+
+function connectWs() {
+  if (!apiBase) return;
+  const wsUrl = apiBase.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:');
+  try {
+    ws = new WebSocket(wsUrl);
+  } catch (e) {
+    wsReady = false;
+    return;
+  }
+
+  ws.onopen = () => {
+    wsReady = true;
+    if (pingTimer) clearInterval(pingTimer);
+    pingTimer = setInterval(() => {
+      if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping' }));
+    }, 20000);
+  };
+
+  ws.onmessage = (e) => {
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }
+    if (msg.type === 'aiRichActionResult' && pending.has(msg.requestId)) {
+      pending.get(msg.requestId)(msg);
+      pending.delete(msg.requestId);
+    }
+  };
+
+  ws.onclose = () => {
+    wsReady = false;
+    if (pingTimer) clearInterval(pingTimer);
+    setTimeout(connectWs, 1500);
+  };
+
+  ws.onerror = () => {
+    wsReady = false;
+  };
+}
+connectWs();
+
+function sendAction(payload, timeoutMs = 10000) {
+  return new Promise((resolve) => {
+    if (!ws || ws.readyState !== 1) return resolve({ success: false, message: 'Not connected' });
+    const requestId = Math.random().toString(36).slice(2);
+    const timer = setTimeout(() => {
+      pending.delete(requestId);
+      resolve({ success: false, message: 'Timed out' });
+    }, timeoutMs);
+    pending.set(requestId, (msg) => { clearTimeout(timer); resolve(msg); });
+    ws.send(JSON.stringify({ ...payload, requestId }));
+  });
+}
+
+dlBtn.addEventListener('click', async () => {
+  if (!token) { dlBtn.textContent = 'Unavailable'; return; }
+  dlBtn.disabled = true;
+  dlBtn.textContent = 'Sending...';
+  const result = await sendAction({ type: 'aiRichAction', token, index: idx });
+  dlBtn.textContent = result.success ? 'Sent!' : ('Failed: ' + (result.message || 'unknown'));
+  setTimeout(() => { dlBtn.disabled = false; dlBtn.textContent = 'Download'; }, 3000);
+});
 render();
 </script>`
 }

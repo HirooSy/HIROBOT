@@ -39,7 +39,7 @@ let handler = async (m, { conn }) => {
     join(cwd, '.npm'),
     join(cwd, '.agents'),
     join(cwd, '.config'),
-    join(cwd, '.git'),
+    //join(cwd, '.git'),
   ]
 
   await addFolderRecursively(zipAll, cwd, cwd, excludePaths)

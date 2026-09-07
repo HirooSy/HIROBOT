@@ -4,27 +4,29 @@
   <a href="https://github.com/whiskeysockets/baileys"><img height="22" src="https://img.shields.io/badge/Baileys-000000?style=for-the-badge&logo=whatsapp&logoColor=green"/></a><a href="#"><img height="22" src="https://img.shields.io/badge/NodeJS-000000.svg?&style=for-the-badge&logo=node.js&logoColor=green"/></a><a href="https://gemini.google.com"><img height="22" src="https://img.shields.io/badge/Gemini-000000?style=for-the-badge&logo=googlegemini&logoColor=blue"/></a><a href="https://cloudflare.com"><img height="22" src="https://img.shields.io/badge/Cloudflare-000000?style=for-the-badge&logo=Cloudflare&logoColor=orange"/></a>
 </div>
 
-<p align=center><sub><sub>· ✦ ·</sub></sub></p>
-
-<p align=center><sub>Hirobot is A Lightweight WhatsApp bot that integrates an AI agent, VoIP calling capabilities, and a dedicated web portal for users. Built with Baileys and NodeJS v24+.</sub></p>
-
-#### Features: 
-- [x] <sub> AI Agent Using Gemini.</sub>
-- [x] <sub> 1:1 Voice & Video Call. </sub>
-- [x] <sub> Multi Sessions. </sub> 
-- [x] <sub> Database Node:Sqlite / Mongodb / MySQL.</sub>
-- [x] <sub> Support AI Rich and Button Message.</sub>
-- [x] <sub> Cloudflared Tunnel Website.</sub>
+> [!NOTE]
+> Hirobot is A Lightweight WhatsApp bot that integrates an AI agent, VoIP calling capabilities, and a dedicated web portal for users. Built with Baileys and NodeJS v24+.
+> 
+> ---
+> 
+> <p align=center><b>Features:</b></p>
+> 
+> - [x] AI Agent Using Gemini.
+> - [x] 1:1 Voice & Video Call.
+> - [x] Multi Sessions.
+> - [x] Database Node:Sqlite / Mongodb.
+> - [x] Support AI Rich and Button Message.
+> - [x] Cloudflared Tunnel Website.
+> - [x] Minimal Depedencies.
 
 ---
 
 <table align=center height=100>
   <td>
   <sub>
-  <sub>
     
 ```env
-                      ---Project Structure---
+         ---Project Structure---
 HIROBOT
 ├── 📁lib
 │   ├── 📁package
@@ -35,7 +37,7 @@ HIROBOT
 │   │       └── 📄server.js
 │   ├── 📁scrapers
 │   ├── 📁utils
-│   ├── 📄config.js        # set your bot's preference here
+│   ├── 📄config.js        # bot's preference
 │   ├── 📄main.js
 │   └── 📄start.js
 ├── 📁data
@@ -43,19 +45,19 @@ HIROBOT
 │   ├── 📁tunnel
 │   └── 📁tmp
 ├── 📁plugins
-├── 📄.env                 # Set your tokens here
+├── 📄.env                 # your tokens
 ├── 📄CHANGELOG.md
 ├── 📄LICENSE
 ├── 📄package.json
 └── 📄README.md
 ```
 </sub>
-</sub>
+
   </td>
 </table>
 
-<div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="17" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a>
-  <a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="17" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div><br>
+<div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="20" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a>
+  <a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="20" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div><br>
 
 
 <details> 
@@ -79,83 +81,216 @@ HIROBOT
 > style Error stroke:#f00
 > ```
 
- | AI Model | Usage |
- |---|---|
- | <sub>Gemini 3.1 Lite-Flash</sub> | <sub>Daily conversation</sub> |
- | <sub>Gemini 3.1 Lite</sub> | <sub>Daily conversation but more complex</sub> |
- | <sub>Gemma-4-31b-it</sub> | <sub>AutoHeal system and coding</sub> |
- | <sub>Gemma-4-26b-a4b-it</sub> | <sub>AutoHeal system and coding</sub> |
+<table align=center>
+  <tr>
+    <td>Gemini 3.1 Lite-Flash</td>
+    <td>Daily Conversation </td>
+  </tr>
+  <tr>
+    <td>Gemini 3.1 Lite</td>
+    <td>Daily conversation but more complex</td>
+  </tr>
+ <tr>
+    <td>Gemma-4-31b-it</td>
+    <td>AutoHeal system and coding</td>
+  </tr>
+  <tr>
+    <td>Gemma-4-26b-a4b-it</td>
+    <td>AutoHeal system and coding</td>
+  </tr>
+</table>
 
 <h4 align=center>How to add a new tool</h4>
   
 <details>
   <summary align=center><sub>All MCP Helper</sub></summary>
-
-  <table align=center height=100>
-  <td>
-<sub>
   
-```
--- Session / chat history --
-getSession(jid)                  get chat history array for a chat
-resetSession(jid)                clear chat history for a chat
-getPinnedNotesReadOnly(jid)      get notes pinned to a chat
-
--- Talking to the AI / agent loop --
-runAgent(conn, m, text, opts)     run a full AI turn, get a reply
-runAgentConfirmed(conn, m, opts)  resume an agent turn awaiting confirmation
-callTool(name, args)             call another registered tool by name
-listTools() / countTools()       list / count registered tools
-
--- Identity & permissions --
-getUserIdentity(jid, db, conn)    get sender's name/number/owner/timezone
-checkGroupAdminOrOwner(groupJid)  check if sender is group admin/owner
-readGroupSettings(groupJid)       read group settings from brain storage
-readOwnerList()                   list registered bot owners
-
--- Persistent storage ("brain") --
-loadBrain() / saveBrain(brain)         read/write ai-brain.json
-ensureBrainGroupSlot(brain, jid)       ensure a group slot exists in brain
-
--- Web & media --
-searchWebGrounded(query)                     grounded web search
-captureWebsiteScreenshot(url)                screenshot a webpage
-fetchWebsiteHtmlFallback(url)                fetch raw HTML of a page
-peekFetchBuffer(url, headers)                peek a file buffer from a URL
-peekfetchVideoBuffer(url, maxBytes, headers) peek a video buffer from a URL
-detectPlatform(url)                          detect platform (YouTube/TikTok/etc)
-peekAnalyzeWithVision(mediaItems, platform, url, context)  analyze media with vision model
-buildMediaPart(m)                            extract image/video/audio from a message
-fetchSocialMulti(url)                         download helper for social media
-downloadUserImageAsUrl(m)                    upload user's image, get back a URL
-
--- File & data tools --
-readFileToolCore(file_path, offset)   core logic behind "read file" tool
-buildSimpleDiff(oldStr, newStr)       build a text diff between two strings
-parseDbKeyPath(key_path)              parse a dotted key path for db access
-
--- Plugin execution (advanced/internal) --
-resolvePlugin(command)                      find which plugin matches a command
-              resolveCustomPrefixPlugin(rawInput)         same, for custom-prefix commands
-execPluginCommand(command, argsStr, opts)   run an existing bot plugin/command
-execEval(code, opts)                        evaluate raw JS code (owner-only, dangerous)
-classifyPluginRisk(name, plugin)            classify a plugin's risk level
-accessLabel(level) / riskBadge(level)       risk-level label/badge helpers
-pluginRequirements(plugin)                  get a plugin's access requirements
-getDangerousDocReason(m)                    check if a message/doc looks risky
-
--- Error handling & internals (rarely needed in tools) --
-handleError(conn, m, err, pluginName)   central error handler/reporter
-isTransientApiError(err)                check if an API error is transient
-getApiKeys() / getNextKey() / rotateKey() / resetRateLimit(jid)  API key pool mgmt
-normalizeApiKeys(input)                 format/clean a raw API key list
-getPersonality()                        get bot's configured personality/system prompt
-MODELS                                  map of available AI models
-setCurrentContext(...) / hasPending() / confirmPending() / cancelPending()
-internal turn/state mgmt (used by mcp.js itself)
-  ```
-</sub>
-</td>
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Function</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>Session &amp; Chat History</strong></td>
+      <td><code>getSession(jid)</code></td>
+      <td>get chat history array for a chat</td>
+    </tr>
+    <tr>
+      <td><code>resetSession(jid)</code></td>
+      <td>clear chat history for a chat</td>
+    </tr>
+    <tr>
+      <td><code>getPinnedNotesReadOnly(jid)</code></td>
+      <td>get notes pinned to a chat</td>
+    </tr>
+    <tr>
+      <td rowspan="4"><strong>Talking to the AI / Agent Loop</strong></td>
+      <td><code>runAgent(conn, m, text, opts)</code></td>
+      <td>run a full AI turn, get a reply</td>
+    </tr>
+    <tr>
+      <td><code>runAgentConfirmed(conn, m, opts)</code></td>
+      <td>resume an agent turn awaiting confirmation</td>
+    </tr>
+    <tr>
+      <td><code>callTool(name, args)</code></td>
+      <td>call another registered tool by name</td>
+    </tr>
+    <tr>
+      <td><code>listTools() / countTools()</code></td>
+      <td>list / count registered tools</td>
+    </tr>
+    <tr>
+      <td rowspan="4"><strong>Identity &amp; Permissions</strong></td>
+      <td><code>getUserIdentity(jid, db, conn)</code></td>
+      <td>get sender's name/number/owner/timezone</td>
+    </tr>
+    <tr>
+      <td><code>checkGroupAdminOrOwner(groupJid)</code></td>
+      <td>check if sender is group admin/owner</td>
+    </tr>
+    <tr>
+      <td><code>readGroupSettings(groupJid)</code></td>
+      <td>read group settings from brain storage</td>
+    </tr>
+    <tr>
+      <td><code>readOwnerList()</code></td>
+      <td>list registered bot owners</td>
+    </tr>
+    <tr>
+      <td rowspan="2"><strong>Persistent Storage (&quot;brain&quot;)</strong></td>
+      <td><code>loadBrain() / saveBrain(brain)</code></td>
+      <td>read/write ai-brain.json</td>
+    </tr>
+    <tr>
+      <td><code>ensureBrainGroupSlot(brain, jid)</code></td>
+      <td>ensure a group slot exists in brain</td>
+    </tr>
+    <tr>
+      <td rowspan="10"><strong>Web &amp; Media</strong></td>
+      <td><code>searchWebGrounded(query)</code></td>
+      <td>grounded web search</td>
+    </tr>
+    <tr>
+      <td><code>captureWebsiteScreenshot(url)</code></td>
+      <td>screenshot a webpage</td>
+    </tr>
+    <tr>
+      <td><code>fetchWebsiteHtmlFallback(url)</code></td>
+      <td>fetch raw HTML of a page</td>
+    </tr>
+    <tr>
+      <td><code>peekFetchBuffer(url, headers)</code></td>
+      <td>peek a file buffer from a URL</td>
+    </tr>
+    <tr>
+      <td><code>peekfetchVideoBuffer(url, maxBytes, headers)</code></td>
+      <td>peek a video buffer from a URL</td>
+    </tr>
+    <tr>
+      <td><code>detectPlatform(url)</code></td>
+      <td>detect platform (YouTube/TikTok/etc)</td>
+    </tr>
+    <tr>
+      <td><code>peekAnalyzeWithVision(mediaItems, platform, url, context)</code></td>
+      <td>analyze media with vision model</td>
+    </tr>
+    <tr>
+      <td><code>buildMediaPart(m)</code></td>
+      <td>extract image/video/audio from a message</td>
+    </tr>
+    <tr>
+      <td><code>fetchSocialMulti(url)</code></td>
+      <td>download helper for social media</td>
+    </tr>
+    <tr>
+      <td><code>downloadUserImageAsUrl(m)</code></td>
+      <td>upload user's image, get back a URL</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><strong>File &amp; Data Tools</strong></td>
+      <td><code>readFileToolCore(file_path, offset)</code></td>
+      <td>core logic behind &quot;read file&quot; tool</td>
+    </tr>
+    <tr>
+      <td><code>buildSimpleDiff(oldStr, newStr)</code></td>
+      <td>build a text diff between two strings</td>
+    </tr>
+    <tr>
+      <td><code>parseDbKeyPath(key_path)</code></td>
+      <td>parse a dotted key path for db access</td>
+    </tr>
+    <tr>
+      <td rowspan="7"><strong>Plugin Execution (Advanced/Internal)</strong></td>
+      <td><code>resolvePlugin(command)</code></td>
+      <td>find which plugin matches a command</td>
+    </tr>
+    <tr>
+      <td><code>resolveCustomPrefixPlugin(rawInput)</code></td>
+      <td>same, for custom-prefix commands</td>
+    </tr>
+    <tr>
+      <td><code>execPluginCommand(command, argsStr, opts)</code></td>
+      <td>run an existing bot plugin/command</td>
+    </tr>
+    <tr>
+      <td><code>execEval(code, opts)</code></td>
+      <td>evaluate raw JS code (owner-only, dangerous)</td>
+    </tr>
+    <tr>
+      <td><code>classifyPluginRisk(name, plugin)</code></td>
+      <td>classify a plugin's risk level</td>
+    </tr>
+    <tr>
+      <td><code>accessLabel(level) / riskBadge(level)</code></td>
+      <td>risk-level label/badge helpers</td>
+    </tr>
+    <tr>
+      <td><code>pluginRequirements(plugin)</code></td>
+      <td>get a plugin's access requirements</td>
+    </tr>
+    <tr>
+      <td><code>getDangerousDocReason(m)</code></td>
+      <td>check if a message/doc looks risky</td>
+    </tr>
+    <tr>
+      <td rowspan="8"><strong>Error Handling &amp; Internals</strong></td>
+      <td><code>handleError(conn, m, err, pluginName)</code></td>
+      <td>central error handler/reporter</td>
+    </tr>
+    <tr>
+      <td><code>isTransientApiError(err)</code></td>
+      <td>check if an API error is transient</td>
+    </tr>
+    <tr>
+      <td><code>getApiKeys() / getNextKey() / rotateKey() / resetRateLimit(jid)</code></td>
+      <td>API key pool management</td>
+    </tr>
+    <tr>
+      <td><code>normalizeApiKeys(input)</code></td>
+      <td>format/clean a raw API key list</td>
+    </tr>
+    <tr>
+      <td><code>getPersonality()</code></td>
+      <td>get bot's configured personality/system prompt</td>
+    </tr>
+    <tr>
+      <td><code>MODELS</code></td>
+      <td>map of available AI models</td>
+    </tr>
+    <tr>
+      <td><code>setCurrentContext(...)</code></td>
+      <td>internal turn/state management (used by mcp.js itself)</td>
+    </tr>
+    <tr>
+      <td><code>hasPending() / confirmPending() / cancelPending()</code></td>
+      <td>internal turn/state management (used by mcp.js itself)</td>
+    </tr>
+  </tbody>
 </table>
 
 </div>
@@ -206,7 +341,7 @@ export default [
    <summary align=left><b>Message types</b></summary>
    <p align=center>──────────────</p>
 
-<details> <summary><sub>📖 Basic</sub></summary>
+<details> <summary>📖 Basic</summary>
   <sub>
     
 ```javascript
@@ -231,7 +366,7 @@ conn.react(m.chat, '👍', m.key)
 ```
 </sub></details>
 
-<details> <summary><sub>📍 Location Interactive</sub></summary>
+<details> <summary>📍 Location Interactive</summary>
   <sub>
   
 ```javascript
@@ -248,7 +383,7 @@ conn.sendLocUrl(
 
 </sub></details>
 
-<details> <summary><sub>🖼️ Url Preview</sub></summary>
+<details> <summary>🖼️ Url Preview</summary>
   <sub>
     
 ```javascript
@@ -264,7 +399,7 @@ conn.sendUrlPreview(
 ```
 </sub></details>
 
-<details> <summary><sub>🛒 Carousel</sub></summary>
+<details> <summary>🛒 Carousel</summary>
   <sub>
     
 ```javascript
@@ -292,7 +427,7 @@ conn.sendButton(m.chat, {
 ```
 </sub></details>
 
-<details> <summary><sub>🔖 NativeFlow Button</sub></summary>
+<details> <summary>🔖 NativeFlow Button</summary>
   <sub>
 
 ```javascript
@@ -322,7 +457,7 @@ conn.sendButton(m.chat, {
 ```
 </sub></details>
 
-<details> <summary><sub>🗓️ AI Rich</sub></summary>
+<details> <summary>🗓️ AI Rich</summary>
   <sub>
 
 ```javascript
@@ -349,7 +484,7 @@ await conn.aiRich()
 ```
 </sub></details>
 
-<details> <summary><sub>📦 Sticker</sub></summary>
+<details> <summary>📦 Sticker</summary>
   <sub>
 
 ```javascript
@@ -375,7 +510,7 @@ conn.sendStickerPack(m.chat, {
 ```
 </sub></details>
 
-<details> <summary><sub>📞 Call</sub></summary>
+<details> <summary>📞 Call</summary>
   <sub>
 
 ```javascript
@@ -406,33 +541,27 @@ const call = await conn.call('628123456789', Audio, {
 <details>
    <summary><b>Install and Run</b></summary><br>
 
-   <table height="100" align=center>
-       <tr>
-         <td><b>REQUIREMENT</b></td>
-         <td><b>DETAIL</b></td>
-         <td><b>INSTALL</b></td>
-       </tr>
-     <tr>
-     <td><b>Server</b></td>
-     <td><sub>500MB RAM, 1GB Storage, Support IP:Port</sub></td>
-     <td>-</td>
-   </tr>
-     <tr>
-     <td><b>NodeJS</b></td>
-     <td><sub>24 or higher</sub></td>
-     <td><sub><code>pkg install nodejs</code></sub></td>
-     </tr>
-     <tr>
-       <td><b>Python</b></td>
-       <td><sub>Python 3.10+</sub></td>
-       <td><sub><code>pkg install python</code></sub></td>
-     </tr>
-     <tr>
-       <td><b>FFMPEG</b></td>
-       <td><sub>latest</sub></td>
-       <td><sub><code>pkg install ffmpeg</code></sub></td>
-     </tr>
-   </table>
+<table align="center">
+  <tbody>
+    <tr>
+      <td rowspan="4"><b>REQUIREMENT</b></td>
+      <td><b>Server</b></td>
+      <td colspan="2">500MB RAM, 1GB Storage, Support IP:Port <br> <code>-</code></td>
+    </tr>
+    <tr>
+      <td><b>NodeJS</b></td>
+      <td colspan="2">24 or higher <br> <code>pkg install nodejs</code></td>
+    </tr>
+    <tr>
+      <td><b>Python</b></td>
+      <td colspan="2">Python 3.10+ <br> <code>pkg install python</code></td>
+    </tr>
+    <tr>
+      <td><b>FFMPEG</b></td>
+      <td colspan="2">latest <br> <code>pkg install ffmpeg</code></td>
+    </tr>
+  </tbody>
+</table>
 
 <sub align=left>
 
@@ -446,9 +575,9 @@ $ node .
 
 <div align=center>
 
-  <a href="#"><img height="22" align=right src="https://img.shields.io/badge/Size-120_MB-black?style=for-the-badge"/> </a>
+  <a href="#"><img height="25" align=right src="https://img.shields.io/badge/Size-100_MB-black?style=for-the-badge"/> </a>
   
-  <a href="https://replit.com"><img height="22" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=replit"/></a>
+  <a href="https://wispbyte.com"><img height="25" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=4chan&logoColor=blue"/></a>
 
 </div>
 
