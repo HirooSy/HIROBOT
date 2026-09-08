@@ -124,15 +124,20 @@ let handler = async (m, { conn, args }) => {
 
   const totalResult = filteredPins.length
 
-  // Hanya ambil 3 untuk GIF agar tidak terlalu berat
-  const maxResults = mode === 'gif' ? 3 : 10
+  // Now shows up to 50 mixed items (image+gif+video), matching e621's
+  // gallery size. Unlike before, gif/video are NOT converted+uploaded here
+  // - that's expensive (ffmpeg + upload) and doing it for up to 50 items
+  // up front would make search painfully slow. Instead we keep the raw
+  // pin reference and only convert+upload when someone actually clicks
+  // Download on that specific item (see the token's run() below).
+  const maxResults = 50
 
   const shuffled = filteredPins
     .sort(() => Math.random() - 0.5)
     .slice(0, maxResults)
 
-  const imageUrls = []
-  const videoUrls = []
+  // Each entry: { type: 'image'|'gif'|'video', rawUrl, pinUrl, title }
+  const items = []
   const allSources = []
 
   for (const pin of shuffled) {
@@ -140,105 +145,36 @@ let handler = async (m, { conn, args }) => {
     if (!medias) continue
 
     for (const media of medias) {
-      // ─── HANDLE GIF ──────────────────────────────────────────────────────
-      if (media.type === 'gif' || media.isGif === true) {
-        if (mode === 'all' || mode === 'gif') {
-          try {
-            // Convert GIF to MP4
-            const videoPath = await gifToMp4(media.url)
-            const videoBuffer = fs.readFileSync(videoPath)
-            fs.unlinkSync(videoPath)
-
-            const uploadedUrl = await upload(videoBuffer, `pinterest_gif_${Date.now()}.mp4`)
-
-            if (uploadedUrl) {
-              videoUrls.push(uploadedUrl)
-            }
-          } catch (err) {
-            console.error('GIF error:', err)
-          }
-        }
-      }
-      // ─── HANDLE IMAGE ────────────────────────────────────────────────────
-      else if (media.type === 'image' && mode !== 'video') {
-        imageUrls.push(media.url)
-      }
-      // ─── HANDLE VIDEO ────────────────────────────────────────────────────
-      else if (media.type === 'video' && mode !== 'image') {
-        try {
-          const hls = await getPinterestHLS(media.url)
-          const best = hls?.qualities?.at(-1)
-          if (!best) continue
-          const output = `/tmp/pin_${Date.now()}.mp4`
-          await mergeVideoAudio(best.url, hls.audio, output)
-          const videoBuffer = fs.readFileSync(output)
-          fs.unlinkSync(output)
-
-          const uploadedUrl = await upload(videoBuffer, `pinterest_video_${Date.now()}.mp4`)
-          if (uploadedUrl) {
-            videoUrls.push(uploadedUrl)
-          }
-        } catch (err) {
-          console.error('Video error:', err)
-        }
+      if ((media.type === 'gif' || media.isGif === true) && (mode === 'all' || mode === 'gif')) {
+        items.push({ type: 'gif', rawUrl: media.url, pinUrl: pin.pin_url, title: pin.title });
+      } else if (media.type === 'image' && mode !== 'video') {
+        items.push({ type: 'image', rawUrl: media.url, pinUrl: pin.pin_url, title: pin.title });
+      } else if (media.type === 'video' && mode !== 'image') {
+        items.push({ type: 'video', rawUrl: media.url, pinUrl: pin.pin_url, title: pin.title });
       }
     }
 
     allSources.push(['https://www.pinterest.com/favicon.ico', pin.pin_url, pin.title || 'Pinterest'])
   }
 
-  // ─── Download Media & Build HTML Gallery ────────────────────────────────
-  // Downscale + recompress previews before embedding: full-resolution media
-  // as raw base64 can easily blow the message payload past what Baileys'
-  // websocket write can handle in one shot (was causing write EPIPE /
-  // connection drops on the whole session, not just this one message).
-  // The full-resolution/original media URL is kept separately for the
-  // "Download" button, since the embedded copy is a deliberately small
-  // preview. Videos are represented by their first frame in the gallery;
-  // "Download" on a video item still sends the actual video file.
-  //
-  // Downloaded in parallel (not one-by-one) since these are independent
-  // network+CPU operations - was a big chunk of why search felt slow.
-  const sharp = (await import('sharp')).default
-  const MAX_TOTAL_BASE64_CHARS = 2_000_000
-
-  const mediaItems = [
-    ...imageUrls.map(url => ({ type: 'image', url })),
-    ...videoUrls.map(url => ({ type: 'video', url }))
-  ]
-
-  const downloaded = await Promise.all(mediaItems.map(async (item) => {
+  // ─── Resolve preview thumbnails ─────────────────────────────────────────
+  // Images: previewed through the bot's own /api/proxy-image endpoint (same
+  // fix used for e621) instead of downloading+base64-encoding every item up
+  // front - keeps this fast even at 50 items.
+  // Gif/video: ffmpeg grabs the first frame directly from the raw media URL
+  // (no conversion/upload needed just to preview it) and that gets embedded
+  // as base64, since it's a local file either way once ffmpeg's done with it.
+  async function resolveThumb(item) {
+    if (item.type === 'image') return item.rawUrl; // proxied client-side
     try {
-      let rawBuffer
-      if (item.type === 'video') {
-        rawBuffer = await extractFirstFrame(item.url)
-      } else {
-        const res = await axios.get(item.url, { responseType: 'arraybuffer', timeout: 15000 })
-        rawBuffer = Buffer.from(res.data)
-      }
-      const resized = await sharp(rawBuffer)
-        .resize({ width: 640, height: 640, fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: 65 })
-        .toBuffer()
-      return { type: item.type, url: item.url, dataUri: `data:image/jpeg;base64,${resized.toString('base64')}` }
+      const buf = await extractFirstFrame(item.rawUrl)
+      return `data:image/jpeg;base64,${buf.toString('base64')}`
     } catch (err) {
-      console.error(`${item.type} preview error:`, err.message)
-      return null
+      console.error(`${item.type} first-frame error:`, err.message)
+      return ''
     }
-  }))
-
-  const galleryImages = []
-  const galleryFullUrls = []
-  const galleryTypes = []
-  let totalChars = 0
-  for (const item of downloaded) {
-    if (!item) continue
-    if (totalChars + item.dataUri.length > MAX_TOTAL_BASE64_CHARS) break
-    galleryImages.push(item.dataUri)
-    galleryFullUrls.push(item.url)
-    galleryTypes.push(item.type)
-    totalChars += item.dataUri.length
   }
+  const thumbs = await Promise.all(items.map(resolveThumb))
 
   // ─── Kirim dengan AiRich ──────────────────────────────────────────────
   try {
@@ -252,39 +188,78 @@ let handler = async (m, { conn, args }) => {
       ])
       .addSource(allSources)
 
-    if (galleryImages.length) {
+    if (items.length) {
       const token = global.registerHtmlAction({
         chatId: m.chat,
-        action: 'sendFile',
-        payload: { urls: galleryFullUrls, types: galleryTypes, caption: `Pinterest — ${query}` },
-        singleUse: false
+        singleUse: false,
+        run: async (conn, chatId, args) => {
+          const i = Number(args?.index) || 0
+          const item = items[i]
+          if (!item) throw new Error('Nothing to send.')
+          const caption = item.title ? `Pinterest — ${item.title}` : `Pinterest — ${query}`
+
+          if (item.type === 'image') {
+            await conn.sendFile(chatId, item.rawUrl, 'pinterest.jpg', caption, null)
+            return { message: 'Sent to chat.' }
+          }
+
+          if (item.type === 'gif') {
+            // Convert+upload only happens now, on click - not for all 50
+            // items up front.
+            const videoPath = await gifToMp4(item.rawUrl)
+            try {
+              const videoBuffer = fs.readFileSync(videoPath)
+              await conn.sendFile(chatId, videoBuffer, 'pinterest.mp4', caption, null)
+            } finally {
+              fs.unlinkSync(videoPath)
+            }
+            return { message: 'Sent to chat.' }
+          }
+
+          if (item.type === 'video') {
+            const hls = await getPinterestHLS(item.rawUrl)
+            const best = hls?.qualities?.at(-1)
+            if (!best) throw new Error('No video quality available.')
+            const output = join(tmpdir(), `pin_dl_${Date.now()}.mp4`)
+            try {
+              await mergeVideoAudio(best.url, hls.audio, output)
+              const videoBuffer = fs.readFileSync(output)
+              await conn.sendFile(chatId, videoBuffer, 'pinterest.mp4', caption, null)
+            } finally {
+              if (fs.existsSync(output)) fs.unlinkSync(output)
+            }
+            return { message: 'Sent to chat.' }
+          }
+
+          throw new Error('Unknown item type.')
+        }
+      })
+      const thumbToken = global.registerHtmlAction({
+        chatId: m.chat,
+        singleUse: false,
+        run: async (conn, chatId, args) => {
+          const url = args?.url
+          if (!url || typeof url !== 'string') throw new Error('Missing url.')
+          const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 8000 })
+          const mime = url.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg'
+          return { dataUri: `data:${mime};base64,${Buffer.from(res.data).toString('base64')}` }
+        }
       })
       const rawServer = typeof global.opts?.server === 'string' ? global.opts.server : ''
       const apiBase = rawServer.replace(/\/$/, '')
       const apiHost = apiBase.replace(/^https?:\/\//, '')
-      rich.addHtml(buildGalleryHtml(galleryImages, galleryTypes, query, token, apiBase), { trustedSources: apiHost ? [apiHost] : [] })
+      const types = items.map(it => it.type)
+      rich.addHtml(buildGalleryHtml(thumbs, types, query, token, thumbToken, apiBase), { trustedSources: apiHost ? [apiHost] : [] })
     }
 
     await rich.send(m.chat, { quoted:m })
   } catch (e) {
     console.error('AiRich error:', e)
-
-    // Fallback: kirim satu per satu jika AiRich gagal
-    if (videoUrls.length > 0) {
-      for (const url of videoUrls) {
-        try {
-          const response = await axios.get(url, { responseType: 'arraybuffer' })
-          await conn.sendFile(m.chat, Buffer.from(response.data), 'video.mp4', '🎬 Pinterest GIF', m)
-        } catch (err) {
-          console.error('Fallback send error:', err)
-        }
-      }
-    }
     throw e.message
   }
 }
 
-function buildGalleryHtml(images, types, query, token, apiBase) {
+function buildGalleryHtml(thumbs, types, query, token, thumbToken, apiBase) {
   const httpsApiBase = apiBase ? apiBase.replace(/^http:\/\//, 'https://') : ''
   return `<style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -296,6 +271,8 @@ body{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff;tou
 .head b{font-size:18px}
 .stage{position:relative;background:#000;aspect-ratio:1/1}
 .stage img{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.spinner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 .playIcon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:22px;pointer-events:none}
 .nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .nav.prev{left:10px}
@@ -310,6 +287,7 @@ body{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff;tou
     <div class="head"><small>PINTEREST</small><b>${query.replace(/[<>&]/g, '')}</b></div>
     <div class="stage">
       <img id="img" src="">
+      <div class="spinner" id="spinner"></div>
       <div class="playIcon" id="playIcon" style="display:none">&#9654;</div>
       <div class="nav prev" id="prev">&lsaquo;</div>
       <div class="nav next" id="next">&rsaquo;</div>
@@ -321,23 +299,57 @@ body{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff;tou
   </div>
 </div>
 <script>
-const images = ${JSON.stringify(images)};
+const thumbs = ${JSON.stringify(thumbs)};
 const types = ${JSON.stringify(types)};
 const token = ${JSON.stringify(token || '')};
+const thumbToken = ${JSON.stringify(thumbToken || '')};
 const apiBase = ${JSON.stringify(httpsApiBase)};
 let idx = 0;
+
+function proxify(url) {
+  if (!url) return '';
+  if (url.startsWith('data:')) return url;
+  return apiBase ? apiBase + '/api/proxy-image?url=' + encodeURIComponent(url) : url;
+}
+
 const imgEl = document.getElementById('img');
+const spinnerEl = document.getElementById('spinner');
 const counterEl = document.getElementById('counter');
 const playIconEl = document.getElementById('playIcon');
 const dlBtn = document.getElementById('dl');
+
 function render(){
-  imgEl.src = images[idx];
-  const typeLabel = types[idx] === 'video' ? 'Video' : 'Image';
-  counterEl.textContent = (idx + 1) + ' / ' + images.length + '  —  ' + typeLabel;
-  playIconEl.style.display = types[idx] === 'video' ? 'flex' : 'none';
+  const raw = thumbs[idx];
+  const src = proxify(raw);
+  let retried = false;
+  imgEl.style.visibility = 'hidden';
+  spinnerEl.style.display = 'block';
+  imgEl.onload = () => {
+    spinnerEl.style.display = 'none';
+    imgEl.style.visibility = 'visible';
+  };
+  imgEl.onerror = async () => {
+    if (!retried) {
+      retried = true;
+      setTimeout(() => {
+        imgEl.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
+      }, 800);
+      return;
+    }
+    if (thumbToken && raw && !raw.startsWith('data:')) {
+      const result = await sendAction({ type: 'aiRichAction', token: thumbToken, url: raw });
+      if (result.success && result.dataUri) { imgEl.src = result.dataUri; return; }
+    }
+    spinnerEl.style.display = 'none';
+    imgEl.style.visibility = 'visible';
+  };
+  imgEl.src = src;
+  const typeLabel = types[idx] === 'video' ? 'Video' : (types[idx] === 'gif' ? 'GIF' : 'Image');
+  counterEl.textContent = (idx + 1) + ' / ' + thumbs.length + '  —  ' + typeLabel;
+  playIconEl.style.display = (types[idx] === 'video' || types[idx] === 'gif') ? 'flex' : 'none';
 }
-document.getElementById('prev').addEventListener('click', () => { idx = (idx - 1 + images.length) % images.length; render(); });
-document.getElementById('next').addEventListener('click', () => { idx = (idx + 1) % images.length; render(); });
+document.getElementById('prev').addEventListener('click', () => { idx = (idx - 1 + thumbs.length) % thumbs.length; render(); });
+document.getElementById('next').addEventListener('click', () => { idx = (idx + 1) % thumbs.length; render(); });
 
 let ws = null;
 let wsReady = false;

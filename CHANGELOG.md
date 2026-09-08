@@ -2,13 +2,18 @@
 <sub>
 
 ```diff
-• Support video content in Pinterest downloader and extract the first video frame as a preview thumbnail using ffmpeg for the interactive HTML gallery
-• Enhance HTML action payload handling in the web dashboard server to support explicit item types and map appropriate filenames (e.g., .mp4 for video, .jpg for image) when files are requested
+• Remove image resizing in Pinterest search results to allow previewing in full resolution
+• Refactor e621 plugin for enhanced scraper stability and data parsing
+• Update e621 scraper module and minor adjustments to owner call plugin
+• Refactor interactive HTML action handling in the web dashboard server to replace per-feature string dispatch with functional token-based closures
 
 ________________________
 
 * Edit "lib/package/website/server.js"
+* Edit "lib/scrapers/src/e621.js"
+* Edit "plugins/dl/e621.js"
 * Edit "plugins/dl/pinterest.js"
+* Edit "plugins/owner/call.js"
 ```
 </sub>
 
