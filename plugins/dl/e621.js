@@ -475,8 +475,6 @@ let handler = async (m, { conn, text }) => {
         const rich = conn.aiRich()
             .setTitle('e621 Search')
             .addSuggest([
-                `Query: ${keywords}`,
-                `Page: ${page}`,
                 `Showing: ${posts.length}`
             ]);
 
