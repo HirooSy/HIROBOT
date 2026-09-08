@@ -122,7 +122,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   }
 }
 
-handler.help = ['voippair (one-time device setup)', 'voipcall <number> [audio_url] [video_url] [video] (reply to audio/video or provide URL(s))', 'voipend']
+handler.help = ['voippair', 'voipcall <number> <url/reply media>)', 'voipend']
 handler.tags = ['owner']
 handler.command = /^(voippair|voipcall|voipend)$/i
 handler.rowner = true
