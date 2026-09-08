@@ -9,16 +9,28 @@ function buildGameHtml(scoreToken, apiBase) {
 <div style="text-align:right"><div id="score" style="font-size:18px;font-weight:bold;color:#fff;text-shadow:0 0 10px rgba(108,92,231,.85);transition:transform .15s">00000</div><div id="best" style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">BEST 00000</div></div>
 </div>
 <div style="padding:18px">
+<div style="position:relative">
 <canvas id="game" width="560" height="190" style="width:100%;height:auto;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);border-radius:12px;display:block"></canvas>
+<div id="startOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,15,.55);border-radius:12px">
+<button id="startBtn" style="background:#6c5ce7;border:none;border-radius:24px;color:#fff;font-size:15px;font-weight:bold;padding:12px 28px;cursor:pointer;box-shadow:0 4px 14px rgba(108,92,231,.5)">Start</button>
+<div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.5)">Tap layar untuk lompat</div>
+</div>
+<div id="retryOverlay" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:16px">
+<button id="retryBtn" style="background:#6c5ce7;border:none;border-radius:24px;color:#fff;font-size:14px;font-weight:bold;padding:10px 24px;cursor:pointer;box-shadow:0 4px 14px rgba(108,92,231,.5)">Retry</button>
+</div>
+</div>
 <div id="status" style="text-align:center;margin-top:10px;font-size:12px;color:rgba(255,255,255,.55)">Speed 5.0x</div>
 <div id="gemMsg" style="text-align:center;margin-top:6px;font-size:12px;color:#6c5ce7;min-height:16px"></div>
 </div></div></div>
 <script>
 const c=document.getElementById('game'),x=c.getContext('2d'),scoreEl=document.getElementById('score'),bestEl=document.getElementById('best'),statusEl=document.getElementById('status'),gemMsgEl=document.getElementById('gemMsg');
+const startOverlay=document.getElementById('startOverlay'),startBtn=document.getElementById('startBtn');
+const retryOverlay=document.getElementById('retryOverlay'),retryBtn=document.getElementById('retryBtn');
 const scoreToken=${JSON.stringify(scoreToken || '')};
 const apiBase=${JSON.stringify(httpsApiBase)};
 const GY=170;
 let d,o,clouds,particles,ambient,trail,score,best=0,speed,gameOver,last,shake,flash,runT,spawnTimer,milestone,squash,reported=false;
+let started=false;
 
 let ws=null,pending=new Map();
 function connectWs(){
@@ -40,14 +52,22 @@ function sendAction(payload,timeoutMs=10000){
     ws.send(JSON.stringify({...payload,requestId}));
   });
 }
+let lastGemResult=null;
 async function reportScore(finalScore){
   if(reported||!scoreToken)return;
   reported=true;
+  gemMsgEl.textContent='Menghitung hadiah...';
   const result=await sendAction({type:'aiRichAction',token:scoreToken,score:Math.floor(finalScore)});
-  if(result.success&&result.gems>0){
-    gemMsgEl.textContent='+'+result.gems+' gem'+(result.gems>1?'s':'')+' earned!';
-  }else if(result.success){
-    gemMsgEl.textContent='';
+  if(result.success){
+    lastGemResult={gems:result.gems||0,score:result.score||Math.floor(finalScore)};
+    if(result.gems>0){
+      gemMsgEl.textContent='+'+result.gems+' gem'+(result.gems>1?'s':'')+' earned! (score '+result.score+')';
+    }else{
+      const toNext=1000-(result.score%1000);
+      gemMsgEl.textContent='Skor '+result.score+' — butuh '+toNext+' lagi untuk 1 gem';
+    }
+  }else{
+    gemMsgEl.textContent='Gagal menyimpan skor: '+(result.message||'unknown error');
   }
 }
 
@@ -61,15 +81,21 @@ clouds=[{x:120,y:32,w:44,s:.35},{x:300,y:52,w:60,s:.22},{x:460,y:26,w:36,s:.4},{
 particles=[];
 trail=[];
 if(!ambient){ambient=[];for(let i=0;i<18;i++)ambient.push({x:Math.random()*c.width,y:Math.random()*c.height,r:.5+Math.random()*1.5,vx:.1+Math.random()*.3,ph:Math.random()*10})}
-score=0;speed=5;gameOver=false;last=0;shake=0;flash=0;runT=0;milestone=0;squash=1;reported=false;
+score=0;speed=5;gameOver=false;last=0;shake=0;flash=0;runT=0;milestone=0;squash=1;reported=false;lastGemResult=null;
 spawnTimer=70+Math.random()*30;
 bestEl.textContent='BEST '+String(Math.floor(best)).padStart(5,'0');
 statusEl.textContent='Speed 5.0x';
-gemMsgEl.textContent=''
+gemMsgEl.textContent='';
+retryOverlay.style.display='none'
+}
+function startGame(){
+started=true;
+startOverlay.style.display='none';
+reset()
 }
 function burst(px,py,n,col,spd){for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:(Math.random()-.5)*spd,vy:-Math.random()*spd,life:1,col,size:2+Math.random()*2})}
 function jumpDino(){
-if(gameOver){reset();return}
+if(!started||gameOver)return;
 if(!d.jumping){d.jumping=true;d.vy=-13;squash=.7;burst(d.x+13,d.y+30,10,'255,255,255',4)}
 }
 function cactus(){
@@ -137,8 +163,24 @@ x.restore();
 if(gameOver){
 x.fillStyle='rgba(15,15,25,.55)';x.fillRect(0,0,c.width,c.height);
 x.fillStyle='#fff';x.textAlign='center';
-x.font='bold 24px Arial';x.fillText('GAME OVER',c.width/2,85);
-x.font='14px Arial';x.fillText('Tap layar untuk main lagi',c.width/2,112);
+x.font='bold 24px Arial';x.fillText('GAME OVER',c.width/2,80);
+if(lastGemResult){
+x.font='13px Arial';x.fillStyle='rgba(255,255,255,.85)';
+x.fillText('Skor akhir: '+lastGemResult.score,c.width/2,104);
+if(lastGemResult.gems>0){
+x.fillStyle='#c9b8ff';
+x.font='bold 15px Arial';
+x.fillText('+'+lastGemResult.gems+' gem'+(lastGemResult.gems>1?'s':'')+' didapat!',c.width/2,126);
+}else{
+x.fillStyle='rgba(255,255,255,.55)';
+x.font='12px Arial';
+x.fillText('Belum cukup untuk 1 gem (butuh 1000 skor)',c.width/2,126);
+}
+x.fillStyle='rgba(255,255,255,.5)';x.font='12px Arial';
+x.fillText('Tap layar untuk main lagi',c.width/2,148);
+}else{
+x.font='14px Arial';x.fillText('Menghitung hadiah...',c.width/2,112);
+}
 x.textAlign='left'
 }
 }
@@ -147,7 +189,7 @@ if(!last)last=t;
 let dt=Math.min((t-last)/16.67,2);
 last=t;
 runT+=dt;
-if(!gameOver){
+if(started && !gameOver){
 d.y+=d.vy*dt;d.vy+=.75*dt;
 if(d.y>=132){
 if(d.jumping){burst(d.x+13,GY,10,'255,255,255',3.5);squash=1.35}
@@ -180,7 +222,8 @@ statusEl.textContent='Speed '+speed.toFixed(1)+'x';
 for(const q of o)if(hit(d,q)){
 gameOver=true;shake=14;flash=1;
 burst(d.x+13,d.y+15,18,'255,90,90',5);
-reportScore(score)
+reportScore(score);
+setTimeout(()=>{ if(gameOver) retryOverlay.style.display='flex' },900)
 }
 }
 if(shake>0)shake=Math.max(0,shake-.6*dt);
@@ -188,8 +231,15 @@ if(flash>0)flash=Math.max(0,flash-.05*dt);
 draw();
 requestAnimationFrame(loop)
 }
-document.addEventListener('pointerdown',e=>{e.preventDefault();jumpDino()});
+document.addEventListener('pointerdown',e=>{
+  if(e.target===startBtn||e.target===retryBtn)return;
+  e.preventDefault();jumpDino()
+});
 document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();jumpDino()}});
+startBtn.addEventListener('pointerdown',e=>{e.stopPropagation()});
+startBtn.addEventListener('click',e=>{e.stopPropagation();startGame()});
+retryBtn.addEventListener('pointerdown',e=>{e.stopPropagation()});
+retryBtn.addEventListener('click',e=>{e.stopPropagation();reset()});
 reset();
 requestAnimationFrame(loop);
 </script></body>`;
@@ -201,11 +251,9 @@ let handler = async (m, { conn }) => {
     const apiHost = apiBase.replace(/^https?:\/\//, '');
     const trustedSources = apiHost ? [apiHost] : [];
 
-    const rich = conn.aiRich().setTitle('Dino Runner');
+     const playerName = global.db.data.users[m.sender]?.name || m.pushName || 'Player';
+    const rich = conn.aiRich().setTitle(`Single player — only ${playerName} earns rewards here`);
 
-    // Every 1000 points earns 1 gem. Reported once, on game-over, from the
-    // client - not per-milestone, so there's exactly one write per session
-    // instead of a websocket call every time the score ticks past 1000.
     const scoreToken = global.registerHtmlAction({
         chatId: m.chat,
         singleUse: false,
