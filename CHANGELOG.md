@@ -2,6 +2,8 @@
 <sub>
 
 ```diff
+• Add Dino Runner HTML mini-game plugin under a new 'game' category that rewards players with virtual gems based on score milestones
+• Update menu category definitions to support and display the new 'game' tag
 • Remove image resizing in Pinterest search results to allow previewing in full resolution
 • Refactor e621 plugin for enhanced scraper stability and data parsing
 • Update e621 scraper module and minor adjustments to owner call plugin
@@ -9,10 +11,12 @@
 
 ________________________
 
++ Add "plugins/game/dino.js"
 * Edit "lib/package/website/server.js"
 * Edit "lib/scrapers/src/e621.js"
 * Edit "plugins/dl/e621.js"
 * Edit "plugins/dl/pinterest.js"
+* Edit "plugins/main/menu.js"
 * Edit "plugins/owner/call.js"
 ```
 </sub>

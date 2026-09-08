@@ -12,13 +12,14 @@ const defaultMenu = {
   footer: '',
   after: '',
 }
-  const arrayTags = ['all', 'main', 'group', 'sticker', 'ai', 'internet', 'adult', 'subbot', 'tools', 'downloader', 'owner', 'info']
+  const arrayTags = ['all', 'main', 'game', 'group', 'sticker', 'ai', 'internet', 'adult', 'subbot', 'tools', 'downloader', 'owner', 'info']
   let teks = `${args[0]}`.toLowerCase()
   if (!arrayTags.includes(teks)) teks = '404'
 
   const tagMap = {
-    all:        { main: 'Main', group: 'Grup', internet: 'Internet', adult:'Adult', downloader: 'Downloader', database: 'Database', sticker: 'Stiker', tools: 'Tools', subbot:'Sub-bot', ai: 'Artificial Intelligence', owner: 'Owner', info: 'Info' },
+    all:        { main: 'Main', game:'Game', group: 'Grup', internet: 'Internet', adult:'Adult', downloader: 'Downloader', database: 'Database', sticker: 'Stiker', tools: 'Tools', subbot:'Sub-bot', ai: 'Artificial Intelligence', owner: 'Owner', info: 'Info' },
     main:       { main: 'Main' },
+    game:       { game: 'Game' },
     ai:         { ai: 'Artificial Intelligence' },
     sticker:    { sticker: 'Stiker' },
     group:      { group: 'Group', admin: `Admin ${global.opts['restrict'] ? '' : '(Disabled)'}` },
