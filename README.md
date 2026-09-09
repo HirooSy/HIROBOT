@@ -559,6 +559,7 @@ const call = await conn.call('628123456789', Audio, {
 
 ```bash
 $ git clone https://github.com/HirooSy/HIROBOT.git
+$ cd HIROBOT
 $ mv .env.example .env
 $ nano .env
 $ node .
