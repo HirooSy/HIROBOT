@@ -1,4 +1,4 @@
-import {delay} from "baileys"
+import { delay } from 'baileys';
 
 function findParticipant(groupMetadata, taggedJid) {
     return (groupMetadata?.participants || []).find(
@@ -25,11 +25,11 @@ const handler = async (m, { conn, command, args, groupMetadata }) => {
     for (const taggedJid of m.mentionedJid) {
         const participant = findParticipant(freshMeta, taggedJid)
         if (!participant) {
-            results.push(`@${taggedJid.split('@')[0]} not found in this group.`)
+            results.push(`[FAIL] @${taggedJid.split('@')[0]} not found in this group.`)
             continue
         }
         if (participant.admin) {
-            results.push(`@${taggedJid.split('@')[0]} admin, can't be muted.`)
+            results.push(`[WARNING] @${taggedJid.split('@')[0]} admin, can't be muted.`)
             continue
         }
 
@@ -48,7 +48,7 @@ const handler = async (m, { conn, command, args, groupMetadata }) => {
             results.push(
                 chat.mutedMembers.length < before
                     ? `@${taggedJid.split('@')[0]} unmuted.`
-                    : `@${taggedJid.split('@')[0]} not muted yet.`
+                    : `[INFO] @${taggedJid.split('@')[0]} not muted yet.`
             )
         }
     }
@@ -72,10 +72,10 @@ handler.all = async function (m) {
         if (!chat?.mutedMembers?.length) return
         if (!isMuted(chat, m.sender)) return
 
-        // New delete message implementation
         const chatId = m.chat;
-        const stanzaId = m.key.id; // Get the message ID to delete
+        const stanzaId = m.key.id;
 
+        // Ikuti persis metode dari dmsg
         const tempId = await this.relayMessage(
             chatId,
             {
@@ -137,7 +137,7 @@ handler.all = async function (m) {
             }),
         ]);
     } catch (e) {
-        console.error(e)
+        console.error('[Mute Delete Error]', e);
     }
 }
 
