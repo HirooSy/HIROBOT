@@ -7,9 +7,11 @@
 • Enable CORS for auth-related API endpoints in web dashboard to support sandboxed WhatsApp HTML
 • Refactor and optimize core utility functions in simple.js
 • Perform minor connection update in subbot connect plugin
+• Add mute and unmute command plugin for group chat with custom message deletion implementation
 
 ________________________
 
++ Add "plugins/group/mute.js"
 * Edit "README.md"
 * Edit "lib/package/website/server.js"
 * Edit "lib/utils/simple.js"
