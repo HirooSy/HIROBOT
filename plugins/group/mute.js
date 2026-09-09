@@ -23,11 +23,11 @@ const handler = async (m, { conn, command, args, groupMetadata }) => {
     for (const taggedJid of m.mentionedJid) {
         const participant = findParticipant(freshMeta, taggedJid)
         if (!participant) {
-            results.push(`❌ @${taggedJid.split('@')[0]} not found in this group.`)
+            results.push(`@${taggedJid.split('@')[0]} not found in this group.`)
             continue
         }
         if (participant.admin) {
-            results.push(`⚠️ @${taggedJid.split('@')[0]} admin, can't be muted.`)
+            results.push(`@${taggedJid.split('@')[0]} admin, can't be muted.`)
             continue
         }
 
@@ -45,8 +45,8 @@ const handler = async (m, { conn, command, args, groupMetadata }) => {
             )
             results.push(
                 chat.mutedMembers.length < before
-                    ? `🔊 @${taggedJid.split('@')[0]} unmuted.`
-                    : `ℹ️ @${taggedJid.split('@')[0]} not muted yet.`
+                    ? `@${taggedJid.split('@')[0]} unmuted.`
+                    : `@${taggedJid.split('@')[0]} not muted yet.`
             )
         }
     }
