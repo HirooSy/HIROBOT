@@ -539,7 +539,7 @@ const handler = async (m, context) => {
 }
 
 handler.help = ['pairing', 'reconnect', 'disconnect']
-handler.tags    = ['session']
+handler.tags    = ['subbot']
 handler.command = /^(pairing|connect|reconnect|disconnect)$/i
 handler.ai      = { risk: "blocked", description: "connect, reconnect, or disconnect a WhatsApp sub-bot session" }
 

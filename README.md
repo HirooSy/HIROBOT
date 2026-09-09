@@ -366,19 +366,11 @@ conn.react(m.chat, '👍', m.key)
 ```
 </sub></details>
 
-<details> <summary>📍 Location Interactive</summary>
+<details> <summary>📍 Location</summary>
   <sub>
   
 ```javascript
-conn.sendLocUrl(
-        m.chat,
-        'https://example.com/thumb.jpg',
-        'Title',
-        'Address',
-        'Text',
-        'Footer',
-        'https://example.com',
-         m )
+conn.sendLocation(m.chat, 'https://example.com/thumb.jpg','Title','Address',m)
 ```
 
 </sub></details>

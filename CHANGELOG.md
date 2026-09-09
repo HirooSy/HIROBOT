@@ -1,3 +1,22 @@
+<h3>09/September/2026</h3>
+<sub>
+
+```diff
+• Simplify interactive location documentation in README.md
+• Improve CDN connection resilience in website server by adding a retry mechanism with short timeout for flaky upstream requests
+• Enable CORS for auth-related API endpoints in web dashboard to support sandboxed WhatsApp HTML
+• Refactor and optimize core utility functions in simple.js
+• Perform minor connection update in subbot connect plugin
+
+________________________
+
+* Edit "README.md"
+* Edit "lib/package/website/server.js"
+* Edit "lib/utils/simple.js"
+* Edit "plugins/subbot/connect.js"
+```
+</sub>
+
 <h3>08/September/2026</h3>
 <sub>
 
