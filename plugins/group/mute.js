@@ -1,3 +1,5 @@
+import {delay} from "baileys"
+
 function findParticipant(groupMetadata, taggedJid) {
     return (groupMetadata?.participants || []).find(
         p => p.id === taggedJid || p.phoneNumber === taggedJid
