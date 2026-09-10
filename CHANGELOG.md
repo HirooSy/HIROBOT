@@ -1,3 +1,15 @@
+<h3>10/September/2026</h3>
+<sub>
+
+```diff
+• Add AlightMotion premium activation plugin with magic link support and session-based re-activation capabilities
+
+________________________
+
++ Add "plugins/tools/alightmotion.js"
+```
+</sub>
+
 <h3>09/September/2026</h3>
 <sub>
 
@@ -156,28 +168,5 @@ ________________________
 * Edit "plugins/subbot/connect.js"
 + Add "lib/utils/canvas.js"
 + Add "lib/utils/reload.js"
-```
-</sub>
-
-<h3>22/August/2026</h3>
-<sub>
-
-```diff
-• Replace 'pureimage' with direct font parsing and Sharp in lib/scrapers/src/brat.js for improved performance
-• Remove unused dependency 'pureimage' from package.json
-• Clean up redundant diagnostic logs and unused unknownCallEvent event listeners from VOIP modules
-• Improve safety of worker process communication by catching IPC channel closure errors before calling process.send
-• Optimize project root path estimation in loadVoip using an iterative parent-directory node_modules check
-
-________________________
-
-* Edit "lib/package/voip/index.js"
-* Edit "lib/package/voip/modules/signaling.js"
-* Edit "lib/package/voip/modules/worker.js"
-* Edit "lib/package/voip/voip.js"
-* Edit "lib/scrapers/src/brat.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/owner/call.js"
 ```
 </sub>
