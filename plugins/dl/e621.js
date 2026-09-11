@@ -110,6 +110,8 @@ async function extractFirstFramePreview(mediaUrl) {
 async function resolveThumbs(posts) {
     return Promise.all(posts.map(async (p) => {
         if (p.previewUrl) return p.previewUrl;
+        // p.url is null when e621 doesn't expose a file URL for this post
+        // (see mapPostData) - nothing to extract a frame from in that case.
         if (['gif', 'webm', 'mp4'].includes(p.ext) && p.url) {
             return await extractFirstFramePreview(p.url);
         }
@@ -122,13 +124,25 @@ async function resolveThumbs(posts) {
 // retrying - keeps the common case (proxy works) fast while still
 // recovering from persistent per-item failures.
 async function fetchThumbAsBase64(url) {
-    const res = await axios.get(url, {
-        responseType: 'arraybuffer',
-        headers: e621.getHeaders ? e621.getHeaders() : undefined,
-        timeout: 8000
-    });
-    const mime = url.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg';
-    return `data:${mime};base64,${Buffer.from(res.data).toString('base64')}`;
+    // VPS-to-CDN connectivity has been intermittently slow (see the
+    // /api/proxy-image retry logic for the same issue) - retry once more
+    // here with a longer timeout, since this fallback only runs for the
+    // handful of thumbnails that already failed the proxy twice.
+    let lastErr;
+    for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+            const res = await axios.get(url, {
+                responseType: 'arraybuffer',
+                headers: e621.getHeaders ? e621.getHeaders() : undefined,
+                timeout: 10000
+            });
+            const mime = url.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg';
+            return `data:${mime};base64,${Buffer.from(res.data).toString('base64')}`;
+        } catch (err) {
+            lastErr = err;
+        }
+    }
+    throw lastErr;
 }
 
 function buildPostCaption(post) {
@@ -141,6 +155,13 @@ ${post.favCount} Favorites • ${ratingMap[post.rating] || post.rating}${(post.t
 }
 
 async function sende621Post(conn, chat, post, quoted) {
+    if (!post.url) {
+        const caption = buildPostCaption(post);
+        return conn.sendMessage(chat, {
+            text: `⚠️ Media file for this post isn't available (e621 didn't expose a direct file URL - it may be restricted or deleted).\n\n${caption}\n${post.pageUrl || ''}`
+        }, quoted ? { quoted } : {});
+    }
+
     const caption = buildPostCaption(post);
 
     if (post.ext === 'gif') {
@@ -354,7 +375,7 @@ function connectWs() {
     if (pingTimer) clearInterval(pingTimer);
     pingTimer = setInterval(() => {
       if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping' }));
-    }, 20000);
+    }, 10000);
   };
   ws.onmessage = (e) => {
     let msg;
@@ -447,10 +468,10 @@ let handler = async (m, { conn, text }) => {
     try {
         if (/^(https?:\/\/[^\s]+)$/i.test(text)) {
             const post = await e621.getPost(text);
-            if (!post || !post.url) return m.reply('Post not found or invalid URL.');
+            if (!post) return m.reply('Post not found or invalid URL.');
 
             if (post.size > 300 * 1024 * 1024) {
-                return m.reply(`File is too large (${(post.size / 1024 / 1024).toFixed(1)} MB), maximum 300MB.\n${post.url}`);
+                return m.reply(`File is too large (${(post.size / 1024 / 1024).toFixed(1)} MB), maximum 300MB.\n${post.pageUrl || text}`);
             }
 
             return sende621Post(conn, m.chat, post, m);
@@ -475,6 +496,8 @@ let handler = async (m, { conn, text }) => {
         const rich = conn.aiRich()
             .setTitle('e621 Search')
             .addSuggest([
+                `Query: ${keywords}`,
+                `Page: ${page}`,
                 `Showing: ${posts.length}`
             ]);
 
@@ -489,7 +512,7 @@ let handler = async (m, { conn, text }) => {
             run: async (conn, chatId, args) => {
                 const idx = Number(args?.index) || 0;
                 const post = state.posts[idx];
-                if (!post || !post.url) throw new Error('Post not found.');
+                if (!post) throw new Error('Post not found.');
                 await sende621Post(conn, chatId, post, null);
                 return { message: 'Sent to chat.' };
             }
@@ -541,7 +564,7 @@ let handler = async (m, { conn, text }) => {
 };
 
 handler.help = handler.command = ['e621'];
-handler.tags = ["adult", "downloader"]
+handler.tags = ["downloader"]
 handler.limit = 1;
 handler.ai = { risk: "low", description: "search e621 posts using keywords, download post using post id" }
 

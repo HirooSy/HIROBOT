@@ -1,3 +1,22 @@
+<h3>11/September/2026</h3>
+<sub>
+
+```diff
+• Implement WebSocket broadcasting support in web dashboard server to enable cross-client communication
+• Enhance e621 scraper stability and refine data parsing in scraper and plugin modules
+• Improve connection utility resilience and handler management
+• Minor stability improvements and refactoring for Pinterest downloader plugin
+
+________________________
+
+* Edit "lib/package/website/server.js"
+* Edit "lib/scrapers/src/e621.js"
+* Edit "lib/utils/connection.js"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/dl/pinterest.js"
+```
+</sub>
+
 <h3>10/September/2026</h3>
 <sub>
 
@@ -131,42 +150,5 @@ ________________________
 * Edit "package.json"
 * Edit "plugins/main/menu.js"
 * Edit "CHANGELOG.md"
-```
-</sub>
-
-<h3>29/August/2026</h3>
-<sub>
-
-```diff
-• Massive refactor of VoIP subsystem: migrated from legacy modules (wasm, feeders, signaling) to a modern, structured modular architecture in lib/package/voip/
-• Update scrapers for Brat and X modules
-• Enhance utility modules including connection handler, converter, and simple message serialization
-• Update various plugins to ensure compatibility with new architecture
-• Add new utilities for canvas manipulation and hot-reload functionality
-• Maintain project dependencies and documentation alignment
-
-________________________
-
-* Edit ".env.example"
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/main.js"
-* Edit "lib/package/voip/*.js"
-* Edit "lib/scrapers/src/brat.js"
-* Edit "lib/scrapers/src/x.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/converter.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/plugins.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/dl/x.js"
-* Edit "plugins/group/add.js"
-* Edit "plugins/main/creator.js"
-* Edit "plugins/owner/backup.js"
-* Edit "plugins/owner/call.js"
-* Edit "plugins/subbot/connect.js"
-+ Add "lib/utils/canvas.js"
-+ Add "lib/utils/reload.js"
 ```
 </sub>

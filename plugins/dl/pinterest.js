@@ -240,9 +240,19 @@ let handler = async (m, { conn, args }) => {
         run: async (conn, chatId, args) => {
           const url = args?.url
           if (!url || typeof url !== 'string') throw new Error('Missing url.')
-          const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 8000 })
-          const mime = url.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg'
-          return { dataUri: `data:${mime};base64,${Buffer.from(res.data).toString('base64')}` }
+          // Same VPS-to-CDN flakiness as e621's fallback - retry once more
+          // with a longer timeout before giving up.
+          let lastErr
+          for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+              const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 10000 })
+              const mime = url.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg'
+              return { dataUri: `data:${mime};base64,${Buffer.from(res.data).toString('base64')}` }
+            } catch (err) {
+              lastErr = err
+            }
+          }
+          throw lastErr
         }
       })
       const rawServer = typeof global.opts?.server === 'string' ? global.opts.server : ''
@@ -274,9 +284,9 @@ body{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff;tou
 .spinner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none}
 @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 .playIcon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:22px;pointer-events:none}
-.nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.nav.prev{left:10px}
-.nav.next{right:10px}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:18px;border:1px solid rgba(255,255,255,.25);background:rgba(20,20,20,.55);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1}
+.nav.prev{left:12px}
+.nav.next{right:12px}
 .bottom{padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .counter{font-size:12px;color:#999}
 .dl{background:#00a884;border:none;border-radius:20px;color:#fff;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer}
@@ -371,7 +381,7 @@ function connectWs() {
     if (pingTimer) clearInterval(pingTimer);
     pingTimer = setInterval(() => {
       if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping' }));
-    }, 20000);
+    }, 10000);
   };
 
   ws.onmessage = (e) => {
