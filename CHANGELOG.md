@@ -8,9 +8,11 @@
 • Minor stability improvements and refactoring for Pinterest downloader plugin
 • Replace MLowCodec with AudioCodec for streamlined VoIP audio handling
 • Clean up redundant dependencies by removing libmlow-wasm
+• Add a URL shortener utility plugin powered by TinyURL's create API
 
 ________________________
 
++ Add "plugins/tools/tinyurl.js"
 + Add "lib/package/voip/media/audio-codec.js"
 - Delete "lib/package/voip/media/mlow-codec.js"
 * Edit "lib/package/voip/call/WaCallMediaSession.js"
