@@ -6,12 +6,20 @@
 • Enhance e621 scraper stability and refine data parsing in scraper and plugin modules
 • Improve connection utility resilience and handler management
 • Minor stability improvements and refactoring for Pinterest downloader plugin
+• Replace MLowCodec with AudioCodec for streamlined VoIP audio handling
+• Clean up redundant dependencies by removing libmlow-wasm
 
 ________________________
 
++ Add "lib/package/voip/media/audio-codec.js"
+- Delete "lib/package/voip/media/mlow-codec.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/media/h264.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
 * Edit "lib/package/website/server.js"
 * Edit "lib/scrapers/src/e621.js"
 * Edit "lib/utils/connection.js"
+* Edit "package.json"
 * Edit "plugins/dl/e621.js"
 * Edit "plugins/dl/pinterest.js"
 ```
