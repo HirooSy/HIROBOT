@@ -14,8 +14,7 @@
     "dependencies": {
         "axios": "^1.18.1",
         "baileys": "npm:@whiskeysockets/baileys",
-        "cheerio": "^1.2.0",
-        "libmlow-wasm": "^0.1.1"
+        "cheerio": "^1.2.0"
     },
     "allowScripts": {
         "@whiskeysockets/baileys": true,
