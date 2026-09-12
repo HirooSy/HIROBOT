@@ -4,10 +4,21 @@
 ```diff
 • Implement product sending feature via conn.sendProduct in lib/utils/simple.js
 • Add product sending documentation in README.md
+• Major refactor of VoIP modules (WaCallMediaSession, h264, simple.js) for improved signaling, audio-video synchronization, and performance
+• Significant cleanup of handler.js by removing legacy and unused utility functions
 
 ________________________
 
+* Edit ".env.example"
 * Edit "README.md"
+* Edit "lib/package/voip/call/WaCallManager.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/package/voip/media/h264.js"
+* Edit "lib/package/voip/signaling/bridge.js"
+* Edit "lib/package/voip/signaling/signaling.js"
+* Edit "lib/package/voip/worker.js"
+* Edit "lib/utils/handler.js"
 * Edit "lib/utils/simple.js"
 ```
 </sub>
