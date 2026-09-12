@@ -375,6 +375,25 @@ conn.sendLocation(m.chat, 'https://example.com/thumb.jpg','Title','Address',m)
 
 </sub></details>
 
+<details> <summary>🧾 Product</summary>
+  <sub>
+ 
+```javascript
+/**@Media
+   String: "https://example.com/img.png" / "./image.png"
+   Array: [ "https://example.com/", "./img.png" ]
+**/
+      
+conn.sendProduct(m.chat, media, 'Title', 'Description, m, {
+    businessOwnerJid: "0@s.whatsapp.net",
+    currencyCode: 'USD',
+    priceAmount1000: 20,
+    retailerId: 'Code Promo',
+})
+```
+
+</sub></details>
+
 <details> <summary>🖼️ Url Preview</summary>
   <sub>
     
