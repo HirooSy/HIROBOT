@@ -1,3 +1,17 @@
+<h3>12/September/2026</h3>
+<sub>
+
+```diff
+• Implement product sending feature via conn.sendProduct in lib/utils/simple.js
+• Add product sending documentation in README.md
+
+________________________
+
+* Edit "README.md"
+* Edit "lib/utils/simple.js"
+```
+</sub>
+
 <h3>11/September/2026</h3>
 <sub>
 
@@ -120,45 +134,6 @@ ________________________
 * Edit "lib/utils/simple.js"
 * Edit "plugins/dl/fb.js"
 * Edit "plugins/dl/pinterest.js"
-* Edit "CHANGELOG.md"
-```
-</sub>
-
-<h3>05/September/2026</h3>
-<sub>
-
-```diff
-• Massive expansion of VoIP subsystem: implemented custom RTCP handling, advanced WaCallMediaSession management, and foundational support for data channels, DTLS, and SCTP
-• Implement WaManualRelay for better control over media flow
-• Integrate core handlers and utility functions with the new VoIP relay infrastructure
-• Clean up e621 scraper and refine menu plugin options
-• Switch YouTube downloader scraper from Epsilon API to SaveTube API for improved stability and reliability
-
-________________________
-
-+ Add "lib/package/voip/crypto/rtcp.js"
-+ Add "lib/package/voip/media/rtcp.js"
-+ Add "lib/package/voip/relay/WaManualRelay.js"
-+ Add "lib/package/voip/relay/datachannel/"
-+ Add "lib/package/voip/relay/dtls/"
-+ Add "lib/package/voip/relay/sctp/"
-* Edit "README.md"
-* Edit "lib/package/voip/call/WaCallManager.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/crypto/ssrc.js"
-* Edit "lib/package/voip/media/WaAudioEngine.js"
-* Edit "lib/package/voip/media/WaVideoEngine.js"
-* Edit "lib/package/voip/relay/stun.js"
-* Edit "lib/package/voip/shim/core.js"
-* Edit "lib/package/voip/types.js"
-* Edit "lib/package/voip/worker.js"
-* Edit "lib/scrapers/src/e621.js"
-* Edit "lib/scrapers/src/ytdl.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/main/menu.js"
 * Edit "CHANGELOG.md"
 ```
 </sub>
