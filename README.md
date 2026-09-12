@@ -380,7 +380,7 @@ conn.sendLocation(m.chat, 'https://example.com/thumb.jpg','Title','Address',m)
  
 ```javascript
 /**@Media
-   String: "https://example.com/img.png" / "./image.png"
+   String: "https://example.com/img.png" or "./image.png"
    Array: [ "https://example.com/", "./img.png" ]
 **/
       
