@@ -338,6 +338,55 @@ export default [
 </details>
 
 <details>
+   <summary align=left><b>About Website</b></summary>
+   <p align=center>──────────────</p>
+
+<p align=center>The bot's built-in web server (dashboard, health check, etc.) can be exposed publicly in a few different ways depending on your hosting setup. Pick the scenario that matches your situation.</p>
+
+<table align="center">
+  <tbody>
+    <tr>
+      <td rowspan="4"><b>SCENARIO 1</b><br><sub>No public address, using own domain</sub></td>
+      <td colspan="2">Your panel does <b>not</b> give a real public address/IP (e.g. Pterodactyl, where the address is just <code>name:port</code>, internal-only). The bot still runs <code>cloudflared</code> (binary auto-downloaded, no manual install) to open a quick tunnel — your custom domain sits in front of it via a Cloudflare Worker + KV Namespace, instead of a regular DNS record.</td>
+    </tr>
+    <tr>
+      <td><code>CF_KV_TOKEN</code></td>
+      <td>Cloudflare API Token with <b>Account &gt; Workers KV Storage &gt; Edit</b> permission, from <a href="https://dash.cloudflare.com/profile/api-tokens">dash.cloudflare.com/profile/api-tokens</a></td>
+    </tr>
+    <tr>
+      <td><code>CF_ACCOUNT_ID</code></td>
+      <td>Found on the Workers &amp; Pages overview page</td>
+    </tr>
+    <tr>
+      <td><code>CF_KV_NAMESPACE_ID</code></td>
+      <td>Found on your KV Namespace's page</td>
+    </tr>
+    <tr>
+      <td rowspan="2"><b>SCENARIO 2</b><br><sub>DNS-pointable server, using own domain</sub></td>
+      <td colspan="2">Your panel/server <b>can</b> be pointed to via a DNS record (a VPS with a fixed IP, or a panel supporting Cloudflare Named Tunnel / Zero Trust). Requires card verification on Cloudflare Zero Trust (free forever, no charge unless you exceed free-tier limits).</td>
+    </tr>
+    <tr>
+      <td><code>CF_TOKEN</code></td>
+      <td>Named Tunnel token from Cloudflare Zero Trust</td>
+    </tr>
+    <tr>
+      <td colspan="2"><code>CF_HOSTNAME</code></td>
+      <td>Required for <b>Scenario 1</b> or <b>Scenario 2</b> above — the domain that becomes your bot's main address, e.g. <code>bot.yourdomain.com</code></td>
+    </tr>
+    <tr>
+      <td><b>SCENARIO 3</b><br><sub>No own domain, free provider</sub></td>
+      <td colspan="2"><code>HOSTNAME_PUBLIC</code> — you don't own a custom domain, but have a free public address from another provider (e.g. <code>my.zone.id</code>, <code>is.dev</code>) already pointed (A/CNAME) at your panel's real public address. Fill in <b>only</b> this one, leave everything above empty — the bot will not run cloudflared/any tunnel at all.</td>
+    </tr>
+    <tr>
+      <td><b>SCENARIO 4</b><br><sub>Default, nothing configured</sub></td>
+      <td colspan="2">Nothing above is filled in — the bot automatically uses a free <code>trycloudflare.com</code> URL that changes every time it restarts. No setup required.</td>
+    </tr>
+  </tbody>
+</table>
+
+</details>
+
+<details>
    <summary align=left><b>Message types</b></summary>
    <p align=center>──────────────</p>
 
