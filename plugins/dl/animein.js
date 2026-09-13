@@ -222,7 +222,7 @@ let handler = async (m, { conn, text, command }) => {
 
 handler.help = handler.command = ['animein'];
 handler.tags = ['downloader', 'internet'];
-handler.limit = 1;
+handler.limit = 0;
 handler.ai = { risk: 'low', description: "search/download anime" };
 
 export default handler;
