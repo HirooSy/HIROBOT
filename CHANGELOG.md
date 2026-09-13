@@ -1,3 +1,24 @@
+<h3>13/September/2026</h3>
+<sub>
+
+```diff
+• Proactively force reconnection on internal Baileys socket errors to reduce watchdog-triggered restarts
+• Implement row-level locking for the SQLite signal key store to prevent race conditions during concurrent key access
+• Add new AI utility (notrack), manga downloader (shinigami), and image tools (bypass, iloveimg, removebg, wink)
+
+________________________
+
+* Edit "lib/main.js"
+* Edit "lib/utils/connection.js"
++ Add "plugins/ai/notrack.js"
++ Add "plugins/dl/shinigami.js"
++ Add "plugins/tools/bypass.js"
++ Add "plugins/tools/iloveimg.js"
++ Add "plugins/tools/removebg.js"
++ Add "plugins/tools/wink.js"
+```
+</sub>
+
 <h3>12/September/2026</h3>
 <sub>
 
@@ -123,27 +144,6 @@ ________________________
 * Edit "README.md"
 * Edit "lib/package/website/server.js"
 * Edit "lib/utils/simple.js"
-* Edit "plugins/dl/pinterest.js"
-* Edit "CHANGELOG.md"
-```
-</sub>
-
-<h3>06/September/2026</h3>
-<sub>
-
-```diff
-• Implement .addHtml() method in AIRich builder (replacing the previous .html() method) to support single HTML payloads and tabbed multi-screen embedded responses
-• Add .addProcess() method in AIRich builder to display animated primitive progress statuses (GenAIBotProgressStatusPrimitive)
-• Add comprehensive documentation and examples for both .addHtml() and .addProcess() to README.md
-• Strip default text caption from facebook downloader output to deliver clean media results
-• Redesign pinterest downloader: implement asynchronous downscaling and JPEG recompression of images using Sharp under a 2MB total base64 limit to prevent Baileys websocket write EPIPE connection drops from oversized payloads
-• Embed an interactive swipeable HTML photo gallery within an AIRich container via .addHtml() for multi-image Pinterest searches
-
-________________________
-
-* Edit "README.md"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/dl/fb.js"
 * Edit "plugins/dl/pinterest.js"
 * Edit "CHANGELOG.md"
 ```
