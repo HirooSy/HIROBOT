@@ -6,8 +6,6 @@
 • Implement row-level locking for the SQLite signal key store to prevent race conditions during concurrent key access
 • Add new AI utility (notrack), manga downloader (shinigami), and image tools (bypass, iloveimg, removebg, wink)
 • Fix auto save database when sigterm / sigkill
-• Explicitly bind Cloudflared tunnel to 127.0.0.1 loopback to prevent IPv6/IPv4 binding issues in containers and capture raw error logs on spawn failure
-• Automatically delete corrupted or wrong-architecture Cloudflared binary on spawn failure to trigger a clean re-download on next startup
 
 ________________________
 
