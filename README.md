@@ -626,7 +626,7 @@ const call = await conn.call('628123456789', Audio, {
     <tr>
       <td rowspan="4"><b>REQUIREMENT</b></td>
       <td><b>Server</b></td>
-      <td colspan="2">500MB RAM, 1GB Storage, Support IP:Port <br> <code>-</code></td>
+      <td colspan="2">100% CPU Limit, 700MB RAM, 1GB Storage<br> <code>-</code></td>
     </tr>
     <tr>
       <td><b>NodeJS</b></td>
