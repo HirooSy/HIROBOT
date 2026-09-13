@@ -341,6 +341,8 @@ export default [
    <summary align=left><b>About Website</b></summary>
    <p align=center>──────────────</p>
 
+<h4>.env Settings for Website</h4>
+
 <table align="center">
   <tbody>
     <tr>
@@ -365,7 +367,7 @@ export default [
       <td>Found on your KV Namespace's page</td>
     </tr>
     <tr>
-      <td></td><code>CF_HOSTNAME</code></td>
+      <td><code>CF_HOSTNAME</code></td>
       <td>Required for the domain that becomes your bot's main address, e.g. <code>bot.yourdomain.com</code></td>
     </tr>
     <tr>
@@ -381,7 +383,7 @@ export default [
       <td>Named Tunnel token from Cloudflare Zero Trust</td>
     </tr>
     <tr>
-      <td></td><code>CF_HOSTNAME</code></td>
+      <td><code>CF_HOSTNAME</code></td>
       <td>Required for the domain that becomes your bot's main address, e.g. <code>bot.yourdomain.com</code></td>
     </tr>
     <tr>
