@@ -5,6 +5,7 @@
 • Proactively force reconnection on internal Baileys socket errors to reduce watchdog-triggered restarts
 • Implement row-level locking for the SQLite signal key store to prevent race conditions during concurrent key access
 • Add new AI utility (notrack), manga downloader (shinigami), and image tools (bypass, iloveimg, removebg, wink)
+• Fix auto save database when sigterm / sigkill
 
 ________________________
 
@@ -16,6 +17,7 @@ ________________________
 + Add "plugins/tools/iloveimg.js"
 + Add "plugins/tools/removebg.js"
 + Add "plugins/tools/wink.js"
+* Edit "lib/utils/database.js"
 ```
 </sub>
 
