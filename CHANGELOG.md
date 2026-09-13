@@ -6,6 +6,9 @@
 • Implement row-level locking for the SQLite signal key store to prevent race conditions during concurrent key access
 • Add new AI utility (notrack), manga downloader (shinigami), and image tools (bypass, iloveimg, removebg, wink)
 • Fix auto save database when sigterm / sigkill
+• Refactor tunnel token/hostname env vars and implement Workers KV-based tunnel URL synchronization for cross-client communication
+• Add comprehensive documentation in README.md detailing various website exposure scenarios and their required environment configurations
+• Update .env.example with the new Cloudflare KV and Tunnel configuration variables
 
 ________________________
 
@@ -18,6 +21,8 @@ ________________________
 + Add "plugins/tools/removebg.js"
 + Add "plugins/tools/wink.js"
 * Edit "lib/utils/database.js"
+* Edit "README.md"
+* Edit ".env.example"
 ```
 </sub>
 
