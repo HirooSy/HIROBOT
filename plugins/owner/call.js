@@ -1,10 +1,8 @@
+import os from 'os'
 import path from 'path'
 import fs from 'fs'
 import Voip from '../../lib/package/voip/index.js'
 
-// One Voip instance per conn — it already guards against a second
-// concurrent call ("A call is already in progress"), so this map just
-// avoids re-wrapping the same conn on every command.
 const voipInstances = new WeakMap()
 function getVoip(conn) {
     let voip = voipInstances.get(conn)
@@ -15,18 +13,24 @@ function getVoip(conn) {
     return voip
 }
 
-let activeCalls = new Map() // chatId -> { call, key, phoneNumber }
+let activeCalls = new Map()
+
+async function downloadQuotedMedia(quoted) {
+    const mime = quoted?.mimetype || ''
+    const kind = /^video/.test(mime) ? 'video' : /^audio/.test(mime) ? 'audio' : null
+    if (!kind) return null
+
+    const buffer = await quoted.download()
+    if (!buffer) throw `Failed to download the replied ${kind}.`
+
+    const ext = kind === 'video' ? '.mp4' : '.audio'
+    const filePath = path.join(os.tmpdir(), `voip_${kind}_${Date.now()}${ext}`)
+    fs.writeFileSync(filePath, buffer)
+    return filePath
+}
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
     const voip = getVoip(conn)
-
-    if (command === 'voippair') {
-        // VOIP runs on the bot's own main session now - there's no separate
-        // device/file to pair or clear. Kept as a harmless no-op (rather
-        // than removed outright) so existing muscle memory/scripts calling
-        // `.voippair` don't start erroring.
-        return void (await m.reply('✦ VOIP uses the bot\'s main session directly - no pairing needed. You can use .voipcall directly.'))
-    }
 
     if (command === 'voipend') {
         await voip.end(args[0] === 'force')
@@ -41,8 +45,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         return void (await m.reply(nowSilenced ? '✦ Muted mic and paused video.' : '✦ Resumed.'))
     }
 
-    // .voipcall <number> [media ...] [video] [720p/480p/etc] [auto]
-    if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [media_url_or_path ...] [resolution] [auto] (reply to audio/video, or provide one or more URLs — mixing video and audio URLs plays them as a playlist; add "auto" to hang up automatically once the playlist finishes)`
+    if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [media_url_or_path ...] [resolution] [auto] [loop] (reply to audio/video, or provide one or more URLs — mixing video and audio URLs plays them as a playlist; add "auto" to hang up automatically once the playlist finishes, "loop" to replay it from the start instead)`
     if (activeCalls.has(m.chat)) throw 'A call is already in progress in this chat, wait for it to finish (or `.voipend`).'
 
     const phoneNumber = args[0].replace(/\D/g, '')
@@ -53,37 +56,20 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     const resolution = resolutionArg ? resolutionArg.toLowerCase() : undefined
 
     const autoEndCall = args.some((a, i) => i > 0 && /^auto$/i.test(a))
+    const loop = args.some((a, i) => i > 0 && /^loop$/i.test(a))
 
     const urls = args.filter((a, i) => i > 0 && /^https?:\/\//i.test(a))
     let media = [...urls]
-    let tempFiles = []
+    const tempFiles = []
 
-    if (m.quoted) {
-        const mime = m.quoted.mimetype || ''
-        const tmpDir = path.join(process.cwd(), process.env.TMP || 'data/tmp')
-        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
-        if (/^video/.test(mime)) {
-            const buffer = await m.quoted?.download()
-            if (!buffer) throw 'Failed to download the replied video.'
-            const videoPath = path.join(tmpDir, `voipvideo_${Date.now()}.mp4`)
-            fs.writeFileSync(videoPath, buffer)
-            tempFiles.push(videoPath)
-            media.unshift(videoPath)
-        } else if (/^audio/.test(mime)) {
-            const buffer = await m.quoted?.download()
-            if (!buffer) throw 'Failed to download the replied audio.'
-            const audioPath = path.join(tmpDir, `voip_${Date.now()}.audio`)
-            fs.writeFileSync(audioPath, buffer)
-            tempFiles.push(audioPath)
-            media.unshift(audioPath)
-        }
+    const quotedPath = m.quoted ? await downloadQuotedMedia(m.quoted) : null
+    if (quotedPath) {
+        tempFiles.push(quotedPath)
+        media.unshift(quotedPath)
     }
 
     if (media.length === 0) media = 'silence'
     else if (media.length === 1) media = media[0]
-    // else: leave as an array — Voip plays it as a playlist, auto-detecting
-    // video vs audio per item from its extension and upgrading/downgrading
-    // mid-call between them as needed.
 
     const willBeVideo = (Array.isArray(media) ? media : [media]).some((src) =>
         src !== 'silence' && /\.(mp4|mov|webm|mkv|avi|m4v|3gp)(\?|#|$)/i.test(src)
@@ -98,7 +84,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
 
     try {
-        const call = await voip.call(phoneNumber, media, resolution, { autoEndCall })
+        const call = await voip.call(phoneNumber, media, resolution, { autoEndCall, loop })
         activeCalls.set(m.chat, { call, key, phoneNumber })
 
         call.on('ringing', () => {
@@ -108,7 +94,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             conn.sendMessage(m.chat, { text: '✦ Call connected! Use .voipend to end.', edit: key })
         })
         call.on('item', ({ index, kind }) => {
-            if (index === 0) return // first item is already announced above
+            if (index === 0) return
             conn.sendMessage(m.chat, { text: `✦ Now playing item ${index + 1} (${kind}).` })
         })
         call.on('ended', (reason) => {
@@ -132,9 +118,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
 }
 
-handler.help = ['voippair', 'voipcall <number> [media ...] [resolution] [auto]', 'voipend', 'voipsilent']
+handler.help = ['voipcall <number>', 'voipend', 'voipsilent']
 handler.tags = ['owner']
-handler.command = /^(voippair|voipcall|voipend|voipsilent)$/i
+handler.command = /^(voipcall|voipend|voipsilent)$/i
 handler.rowner = true
 
 export default handler
