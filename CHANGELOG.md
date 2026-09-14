@@ -1,3 +1,57 @@
+<h3>14/September/2026</h3>
+<sub>
+
+```diff
+• Major refactoring of VoIP architecture, migrating from worker-based signaling to a streamlined, module-oriented implementation
+• Complete overhaul of media engines (audio, video, signaling, relay) for better synchronization and performance
+• Cleanup of legacy and deprecated code modules across the VoIP package
+• General optimizations in main handler and connection utilities
+• Update of owner call plugin functionality
+
+________________________
+
+* Edit "README.md"
+* Edit "lib/config.js"
+* Edit "lib/main.js"
+* Edit "lib/package/voip/WaVoipCoordinator.js"
+* Edit "lib/package/voip/call/WaCallManager.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/crypto/rtcp.js"
+* Edit "lib/package/voip/crypto/ssrc.js"
+* Edit "lib/package/voip/index.js"
+* Edit "lib/package/voip/media/WaAudioEngine.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/package/voip/media/audio-codec.js"
+* Edit "lib/package/voip/media/h264.js"
+* Edit "lib/package/voip/media/rtcp.js"
+* Edit "lib/package/voip/media/rtp.js"
+* Edit "lib/package/voip/relay/WaManualRelay.js"
+* Edit "lib/package/voip/relay/WaSctpRelay.js"
+* Edit "lib/package/voip/relay/datachannel/pre-negotiated.js"
+* Edit "lib/package/voip/relay/dtls/aead.js"
+* Edit "lib/package/voip/relay/dtls/cert-builder.js"
+* Edit "lib/package/voip/relay/dtls/der.js"
+* Edit "lib/package/voip/relay/dtls/ecdhe.js"
+* Edit "lib/package/voip/relay/dtls/handshake-framing.js"
+* Edit "lib/package/voip/relay/dtls/handshake-messages.js"
+* Edit "lib/package/voip/relay/dtls/handshake.js"
+* Edit "lib/package/voip/relay/dtls/prf.js"
+* Edit "lib/package/voip/relay/dtls/record.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
+* Edit "lib/package/voip/relay/sctp/crc32c.js"
+* Edit "lib/package/voip/relay/sctp/wire.js"
+* Edit "lib/package/voip/relay/stun.js"
+* Edit "lib/package/voip/shim/core.js"
+* Edit "lib/package/voip/signaling/signaling.js"
+* Edit "lib/package/voip/types.js"
+- Delete "lib/package/voip/worker.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/simple.js"
+* Edit "plugins/owner/call.js"
++ Add "lib/package/voip/voipClient.js"
+```
+</sub>
+
 <h3>13/September/2026</h3>
 <sub>
 
@@ -133,25 +187,5 @@ ________________________
 * Edit "plugins/dl/pinterest.js"
 * Edit "plugins/main/menu.js"
 * Edit "plugins/owner/call.js"
-```
-</sub>
-
-<h3>07/September/2026</h3>
-<sub>
-
-```diff
-• Update pinterest downloader and server modules to implement and test WebSocket HTML capabilities
-• Redesign README.md features layout, update visual structure representation, and document supported AI models usage
-• Refactor web dashboard to extract performHtmlAction and implement explicit CORS headers for /api/aiRich/action to support sandboxed WhatsApp webview calls
-• Refactor AIRich addHtml builder method to support dynamic server URLs and customizable trusted sources options
-• Optimize Pinterest image downloader to fetch and resize images in parallel, and pass secure dashboard domains as trusted HTML sources
-
-________________________
-
-* Edit "README.md"
-* Edit "lib/package/website/server.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/dl/pinterest.js"
-* Edit "CHANGELOG.md"
 ```
 </sub>
