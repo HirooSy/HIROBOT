@@ -1,130 +1,140 @@
 import path from 'path'
 import fs from 'fs'
-import { voipPair } from '../../lib/utils/simple.js'
+import Voip from '../../lib/package/voip/index.js'
+
+// One Voip instance per conn — it already guards against a second
+// concurrent call ("A call is already in progress"), so this map just
+// avoids re-wrapping the same conn on every command.
+const voipInstances = new WeakMap()
+function getVoip(conn) {
+    let voip = voipInstances.get(conn)
+    if (!voip) {
+        voip = new Voip(conn)
+        voipInstances.set(conn, voip)
+    }
+    return voip
+}
 
 let activeCalls = new Map() // chatId -> { call, key, phoneNumber }
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
-  if (command === 'voippair') {
-    if (args[0] === 'force') {
-      const authDbFile = path.join(process.cwd(), global.settings.connection.caller.file)
-      try { fs.rmSync(authDbFile, { force: true }) } catch {}
-      return void (await m.reply('✦ VOIP session cleared. Run `.voippair` again to re-link.'))
+    const voip = getVoip(conn)
+
+    if (command === 'voippair') {
+        // VOIP runs on the bot's own main session now - there's no separate
+        // device/file to pair or clear. Kept as a harmless no-op (rather
+        // than removed outright) so existing muscle memory/scripts calling
+        // `.voippair` don't start erroring.
+        return void (await m.reply('✦ VOIP uses the bot\'s main session directly - no pairing needed. You can use .voipcall directly.'))
     }
 
-    const { key } = await m.reply('✦ Starting VOIP device pairing...')
+    if (command === 'voipend') {
+        await voip.end(args[0] === 'force')
+        activeCalls.delete(m.chat)
+        return void (await m.reply(args[0] === 'force' ? '✦ VOIP state force-reset.' : '✦ Hangup requested...'))
+    }
+
+    if (command === 'voipsilent') {
+        const entry = activeCalls.get(m.chat)
+        if (!entry) throw 'No call is currently in progress in this chat.'
+        const nowSilenced = await entry.call.silent()
+        return void (await m.reply(nowSilenced ? '✦ Muted mic and paused video.' : '✦ Resumed.'))
+    }
+
+    // .voipcall <number> [media ...] [video] [720p/480p/etc] [auto]
+    if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [media_url_or_path ...] [resolution] [auto] (reply to audio/video, or provide one or more URLs — mixing video and audio URLs plays them as a playlist; add "auto" to hang up automatically once the playlist finishes)`
+    if (activeCalls.has(m.chat)) throw 'A call is already in progress in this chat, wait for it to finish (or `.voipend`).'
+
+    const phoneNumber = args[0].replace(/\D/g, '')
+    if (!phoneNumber) throw 'Invalid phone number.'
+
+    const RESOLUTION_RE = /^(240p|360p|480p|720p|1080p)$/i
+    const resolutionArg = args.find((a, i) => i > 0 && RESOLUTION_RE.test(a))
+    const resolution = resolutionArg ? resolutionArg.toLowerCase() : undefined
+
+    const autoEndCall = args.some((a, i) => i > 0 && /^auto$/i.test(a))
+
+    const urls = args.filter((a, i) => i > 0 && /^https?:\/\//i.test(a))
+    let media = [...urls]
+    let tempFiles = []
+
+    if (m.quoted) {
+        const mime = m.quoted.mimetype || ''
+        const tmpDir = path.join(process.cwd(), process.env.TMP || 'data/tmp')
+        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
+        if (/^video/.test(mime)) {
+            const buffer = await m.quoted?.download()
+            if (!buffer) throw 'Failed to download the replied video.'
+            const videoPath = path.join(tmpDir, `voipvideo_${Date.now()}.mp4`)
+            fs.writeFileSync(videoPath, buffer)
+            tempFiles.push(videoPath)
+            media.unshift(videoPath)
+        } else if (/^audio/.test(mime)) {
+            const buffer = await m.quoted?.download()
+            if (!buffer) throw 'Failed to download the replied audio.'
+            const audioPath = path.join(tmpDir, `voip_${Date.now()}.audio`)
+            fs.writeFileSync(audioPath, buffer)
+            tempFiles.push(audioPath)
+            media.unshift(audioPath)
+        }
+    }
+
+    if (media.length === 0) media = 'silence'
+    else if (media.length === 1) media = media[0]
+    // else: leave as an array — Voip plays it as a playlist, auto-detecting
+    // video vs audio per item from its extension and upgrading/downgrading
+    // mid-call between them as needed.
+
+    const willBeVideo = (Array.isArray(media) ? media : [media]).some((src) =>
+        src !== 'silence' && /\.(mp4|mov|webm|mkv|avi|m4v|3gp)(\?|#|$)/i.test(src)
+    )
+
+    const { key } = await m.reply(`✦ Calling ${phoneNumber}...${willBeVideo ? ' (video)' : ''} (Use .voipend to end call, .voipsilent to mute/pause)`)
+
+    const cleanupTempFiles = () => {
+        for (const f of tempFiles) {
+            if (fs.existsSync(f)) fs.unlink(f, () => { })
+        }
+    }
+
     try {
-      const result = await voipPair(conn, global.settings?.connection?.caller?.paircode || undefined)
-      if (result.alreadyLinked) {
-        return void conn.sendMessage(m.chat, { text: '✦ VOIP device was already linked. Use `.voippair force` to re-link.', edit: key })
-      }
-      conn.sendMessage(m.chat, { text: '✦ VOIP device linked successfully! You can now use .voipcall.', edit: key })
+        const call = await voip.call(phoneNumber, media, resolution, { autoEndCall })
+        activeCalls.set(m.chat, { call, key, phoneNumber })
+
+        call.on('ringing', () => {
+            conn.sendMessage(m.chat, { text: `✦ Ringing ${phoneNumber}...`, edit: key })
+        })
+        call.on('connected', () => {
+            conn.sendMessage(m.chat, { text: '✦ Call connected! Use .voipend to end.', edit: key })
+        })
+        call.on('item', ({ index, kind }) => {
+            if (index === 0) return // first item is already announced above
+            conn.sendMessage(m.chat, { text: `✦ Now playing item ${index + 1} (${kind}).` })
+        })
+        call.on('ended', (reason) => {
+            activeCalls.delete(m.chat)
+            const friendlyText = reason === 'declined'
+                ? `✦ Call to ${phoneNumber} was declined.`
+                : `✦ Call ended for ${phoneNumber}: ${reason}`
+            conn.sendMessage(m.chat, { text: friendlyText, edit: key })
+            cleanupTempFiles()
+        })
+        call.on('error', (err) => {
+            activeCalls.delete(m.chat)
+            conn.reply(m.chat, `Call error: ${err?.message || err}`, m)
+            cleanupTempFiles()
+        })
     } catch (e) {
-      conn.sendMessage(m.chat, { text: `❌ Pairing failed: ${e?.message || e}`, edit: key })
+        console.error('[ VOIP ] voip.call() threw:', e)
+        activeCalls.delete(m.chat)
+        cleanupTempFiles()
+        throw `Failed to place call: ${e?.message || e}`
     }
-    return
-  }
-
-  if (command === 'voipend') {
-    if (args[0] === 'force' || !activeCalls.has(m.chat)) {
-      await conn.callEnd(true)
-      activeCalls.clear()
-      return void (await m.reply('✦ VOIP state force-reset.'))
-    }
-    await conn.callEnd()
-    return void (await m.reply('✦ Hangup requested...'))
-  }
-
-  // .voipcall
-  if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [audio_url] [video_url] (reply to audio/video or provide URL(s))`
-  if (activeCalls.has(m.chat)) throw 'A call is already in progress in this chat, wait for it to finish (or `.voipend`).'
-
-  const phoneNumber = args[0].replace(/\D/g, '')
-  if (!phoneNumber) throw 'Invalid phone number.'
-
-  const isVideoFlag = args.includes('video')
-  const urls = args.filter((a, i) => i > 0 && /^https?:\/\//i.test(a))
-  // A URL ending in a known video extension is treated as the video source
-  // automatically — no need to also type "video" as a separate arg for the
-  // common case of just pasting an mp4 link.
-  const videoUrl = urls.find((u) => /\.(mp4|mov|webm|mkv|avi)(\?|$)/i.test(u))
-  const audioUrl = urls.find((u) => u !== videoUrl)
-
-  let audioSource = audioUrl || 'silence'
-  let videoSource = videoUrl || null
-  let isTempAudioFile = false
-  let isTempVideoFile = false
-
-  if (m.quoted) {
-    const mime = m.quoted.mimetype || ''
-    const tmpDir = path.join(process.cwd(), process.env.TMP || 'data/tmp')
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
-    if (!videoSource && /^video/.test(mime)) {
-      const buffer = await m.quoted?.download()
-      if (!buffer) throw 'Failed to download the replied video.'
-      videoSource = path.join(tmpDir, `voipvideo_${Date.now()}.mp4`)
-      fs.writeFileSync(videoSource, buffer)
-      isTempVideoFile = true
-      // The replied video's own audio track becomes the call's audio unless
-      // the caller separately supplied an audio URL — without this,
-      // audioSource stays 'silence' even though the video has sound,
-      // because AudioFeeder and VideoFeeder are fed independently and
-      // nothing here previously connected the two.
-      if (!audioUrl) {
-        audioSource = videoSource
-      }
-    } else if (!audioUrl && /^audio/.test(mime)) {
-      const buffer = await m.quoted?.download()
-      if (!buffer) throw 'Failed to download the replied audio.'
-      audioSource = path.join(tmpDir, `voip_${Date.now()}.audio`)
-      fs.writeFileSync(audioSource, buffer)
-      isTempAudioFile = true
-    }
-  }
-
-  const isVideo = isVideoFlag || !!videoSource
-
-  const { key } = await m.reply(`✦ Calling ${phoneNumber}...${isVideo ? ' (video)' : ''} (Use .voipend to end call)`)
-
-  const cleanupTempFiles = () => {
-    if (isTempAudioFile && fs.existsSync(audioSource)) fs.unlink(audioSource, () => {})
-    if (isTempVideoFile && videoSource && fs.existsSync(videoSource)) fs.unlink(videoSource, () => {})
-  }
-
-  try {
-    const call = await conn.call(phoneNumber, audioSource, { isVideo, ...(videoSource ? { videoSource } : {}) })
-    activeCalls.set(m.chat, { call, key, phoneNumber })
-
-    call.on('ringing', () => {
-      conn.sendMessage(m.chat, { text: `✦ Ringing ${phoneNumber}...`, edit: key })
-    })
-    call.on('connected', () => {
-      conn.sendMessage(m.chat, { text: '✦ Call connected! Use .voipend to end.', edit: key })
-    })
-    call.on('ended', (reason) => {
-      activeCalls.delete(m.chat)
-      const friendlyText = reason === 'declined'
-        ? `✦ Call to ${phoneNumber} was declined.`
-        : `✦ Call ended for ${phoneNumber}: ${reason}`
-      conn.sendMessage(m.chat, { text: friendlyText, edit: key })
-      cleanupTempFiles()
-    })
-    call.on('error', (err) => {
-      activeCalls.delete(m.chat)
-      conn.reply(m.chat, `Call error: ${err?.message || err}`, m)
-      cleanupTempFiles()
-    })
-  } catch (e) {
-    console.error('[ VOIP ] conn.call() threw:', e)
-    activeCalls.delete(m.chat)
-    cleanupTempFiles()
-    throw `Failed to place call: ${e?.message || e}`
-  }
 }
 
-handler.help = ['voippair', 'voipcall <number> <url/reply media>)', 'voipend']
+handler.help = ['voippair', 'voipcall <number> [media ...] [resolution] [auto]', 'voipend', 'voipsilent']
 handler.tags = ['owner']
-handler.command = /^(voippair|voipcall|voipend)$/i
+handler.command = /^(voippair|voipcall|voipend|voipsilent)$/i
 handler.rowner = true
 
 export default handler

@@ -4,6 +4,9 @@
   <a href="https://github.com/whiskeysockets/baileys"><img height="22" src="https://img.shields.io/badge/Baileys-000000?style=for-the-badge&logo=whatsapp&logoColor=green"/></a><a href="#"><img height="22" src="https://img.shields.io/badge/NodeJS-000000.svg?&style=for-the-badge&logo=node.js&logoColor=green"/></a><a href="https://gemini.google.com"><img height="22" src="https://img.shields.io/badge/Gemini-000000?style=for-the-badge&logo=googlegemini&logoColor=blue"/></a><a href="https://cloudflare.com"><img height="22" src="https://img.shields.io/badge/Cloudflare-000000?style=for-the-badge&logo=Cloudflare&logoColor=orange"/></a>
 </div>
 
+> [!IMPORTANT]
+> Please read the [<code>LICENSE</code>](https://github.com/HirooSy/HIROBOT/blob/main/LICENSE) before using this project! You're free to recode it, but do not sell or claim this project as your own. <b>Do not change the License.</b> if you modify it, <b>please credit me in your License.</b>
+
 > [!NOTE]
 > Hirobot is A Lightweight WhatsApp bot that integrates an AI agent, VoIP calling capabilities, and a dedicated web portal for users. Built with Baileys and NodeJS v24+.
 > 
@@ -597,23 +600,19 @@ conn.sendStickerPack(m.chat, {
 /** @Media
 URL — 'https://example.com/audio.mp3'
 Local — '/path/to/video.mp4'
+Support Array — [ url, path ]
 **/
 
-// Audio
-const call = await conn.call('628123456789', media)
+import Voip from "../../lib/package/voip/index.js"
+const call = new Voip(conn)
 
-// Video
-const call = await conn.call('628123456789', media, {
-  videoSource: media
-})
+call(m.sender, media, "720p")
+      
+// hang up
+call(m.sender, media, "720p").end()
 
-// Silent
-const call = await conn.call('628123456789', 'silence')
-
-// Audio as video call
-const call = await conn.call('628123456789', Audio, {
-  isVideo: true
-})
+// mute
+call(m.sender, media, "720p").silent()
 ```
 </sub></details>
 </details>
