@@ -1,3 +1,25 @@
+<h3>16/September/2026</h3>
+<sub>
+
+```diff
+• Refactor VoIP media session and video engine for better stability and synchronization
+• Major refactoring of connection utility to enhance resilience
+• Update Telegram sticker plugin and subbot connection logic
+• Core maintenance in main and configuration files
+
+________________________
+
+* Edit "lib/config.js"
+* Edit "lib/main.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/simple.js"
+* Edit "plugins/sticker/telegram.js"
+* Edit "plugins/subbot/connect.js"
+```
+</sub>
+
 <h3>14/September/2026</h3>
 <sub>
 
@@ -164,28 +186,5 @@ ________________________
 * Edit "lib/package/website/server.js"
 * Edit "lib/utils/simple.js"
 * Edit "plugins/subbot/connect.js"
-```
-</sub>
-
-<h3>08/September/2026</h3>
-<sub>
-
-```diff
-• Add Dino Runner HTML mini-game plugin under a new 'game' category that rewards players with virtual gems based on score milestones
-• Update menu category definitions to support and display the new 'game' tag
-• Remove image resizing in Pinterest search results to allow previewing in full resolution
-• Refactor e621 plugin for enhanced scraper stability and data parsing
-• Update e621 scraper module and minor adjustments to owner call plugin
-• Refactor interactive HTML action handling in the web dashboard server to replace per-feature string dispatch with functional token-based closures
-
-________________________
-
-+ Add "plugins/game/dino.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/scrapers/src/e621.js"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/dl/pinterest.js"
-* Edit "plugins/main/menu.js"
-* Edit "plugins/owner/call.js"
 ```
 </sub>
