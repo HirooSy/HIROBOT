@@ -5,91 +5,14 @@ const {
     DisconnectReason,
     Browsers,
     areJidsSameUser,
-    BufferJSON,
-    initAuthCreds
 } = await import("baileys")
 
 import fs from 'fs'
 import path from 'path'
-import { DatabaseSync } from 'node:sqlite'
 import P from 'pino'
 import Connection from '../../lib/utils/connection.js'
 import { HelperConnection } from '../../lib/utils/simple.js'
 import db, { loadDatabase, getUserAutoReconnect as dbGetUserAutoReconnect, setUserAutoReconnect as dbSetUserAutoReconnect } from '../../lib/utils/database.js'
-
-const KEY_MAP = {
-    'pre-key': 'preKeys',
-    'session': 'sessions',
-    'sender-key': 'senderKeys',
-    'app-state-sync-key': 'appStateSyncKeys',
-    'app-state-sync-version': 'appStateVersions',
-    'sender-key-memory': 'senderKeyMemory',
-    'lid-mapping': 'lidMappings',
-    'device-list': 'deviceLists',
-    'tctoken': 'tcTokens'
-}
-
-function useSQLiteAuthState(dbPath) {
-    fs.mkdirSync(path.dirname(dbPath), { recursive: true })
-    const db = new DatabaseSync(dbPath)
-
-    db.exec(`
-        CREATE TABLE IF NOT EXISTS creds (
-            id INTEGER PRIMARY KEY CHECK (id = 1),
-            data TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS keys (
-            type TEXT NOT NULL,
-            id TEXT NOT NULL,
-            data TEXT NOT NULL,
-            PRIMARY KEY (type, id)
-        );
-    `)
-
-    const replacer = (key, value) => value == null ? undefined : BufferJSON.replacer(key, value)
-
-    const readCreds = () => {
-        const row = db.prepare('SELECT data FROM creds WHERE id = 1').get()
-        return row ? JSON.parse(row.data, BufferJSON.reviver) : initAuthCreds()
-    }
-    const writeCreds = (creds) => {
-        db.prepare('INSERT INTO creds (id, data) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data')
-            .run(JSON.stringify(creds, replacer))
-    }
-
-    const creds = readCreds()
-    const getStmt = db.prepare('SELECT data FROM keys WHERE type = ? AND id = ?')
-    const setStmt = db.prepare('INSERT INTO keys (type, id, data) VALUES (?, ?, ?) ON CONFLICT(type, id) DO UPDATE SET data = excluded.data')
-    const delStmt = db.prepare('DELETE FROM keys WHERE type = ? AND id = ?')
-
-    return {
-        state: {
-            creds,
-            keys: {
-                get: async (type, ids) => {
-                    const dbType = Object.keys(KEY_MAP).find(k => KEY_MAP[k] === type) || type
-                    const result = {}
-                    for (const id of ids) {
-                        const row = getStmt.get(dbType, id)
-                        if (row) result[id] = JSON.parse(row.data, BufferJSON.reviver)
-                    }
-                    return result
-                },
-                set: async (data) => {
-                    for (const category in data) {
-                        const dbType = Object.keys(KEY_MAP).find(k => KEY_MAP[k] === category) || category
-                        for (const id in data[category]) {
-                            const value = data[category][id]
-                            if (value) setStmt.run(dbType, id, JSON.stringify(value, replacer))
-                            else delStmt.run(dbType, id)
-                        }
-                    }
-                }
-            }
-        },
-        saveCreds: async () => writeCreds(creds)
-    }
-}
 
 const CROCKFORD_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ' // kept for reference only, no longer enforced
 
@@ -118,10 +41,8 @@ async function fetchVersionWithTimeout(timeoutMs = 8000) {
 
 export function getSubbotConfig() {
     const cfg = global.settings?.connection?.subbot || {}
-    const template = cfg.file || 'data/sessions/subbot/[number].session'
     return {
-        base: path.dirname(template),
-        template,
+        type: cfg.type || 'sql',
         max: cfg.maxConnect ?? 3,
         autoConnect: cfg.autoConnect ?? true,
     }
@@ -135,45 +56,46 @@ function getUserAutoReconnect(jid) {
     return dbGetUserAutoReconnect(jid, getSubbotConfig().autoConnect)
 }
 
-export function sessionPath(jid) {
+function subbotRelativePath(jid) {
     const number = String(jid).replace(/@(s\.whatsapp\.net|lid)$/i, '')
-    return getSubbotConfig().template.replace('[number]', number)
+    return `subbot/${number}`
+}
+
+export function sessionPath(jid) {
+    const { type } = getSubbotConfig()
+    return Connection.sessionStoragePath(type, subbotRelativePath(jid))
 }
 
 export function hasSavedSession(jid) {
-    const dbPath = sessionPath(jid)
-    if (!fs.existsSync(dbPath)) return false
-    try {
-        const db = new DatabaseSync(dbPath, { readOnly: true })
-        const row = db.prepare('SELECT data FROM creds WHERE id = 1').get()
-        db.close()
-        if (!row) return false
-        return !!JSON.parse(row.data)?.registered
-    } catch {
-        return false
-    }
+    const { type } = getSubbotConfig()
+    return Connection.hasSavedAuthState(type, subbotRelativePath(jid))
 }
 
 export function listSavedSessionJids() {
-    const { base, template } = getSubbotConfig()
+    const { type } = getSubbotConfig()
+    const base = path.join(process.cwd(), 'data', 'sessions', 'subbot')
     if (!fs.existsSync(base)) return []
-    const ext = path.extname(template)
-    return fs.readdirSync(base)
-        .filter(name => name.endsWith(ext))
-        .map(name => name.slice(0, -ext.length) + '@s.whatsapp.net')
+    // 'multi' sessions are folders (one per number) rather than files -
+    // list directory names instead of stripping a file extension.
+    const entries = type === 'multi'
+        ? fs.readdirSync(base, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name)
+        : fs.readdirSync(base)
+            .filter(name => name.endsWith(type === 'single' ? '.json' : '.session'))
+            .map(name => name.slice(0, -(type === 'single' ? 5 : 8)))
+    return entries
+        .map(number => number + '@s.whatsapp.net')
         .filter(jid => hasSavedSession(jid))
 }
 
 export function removeSavedSession(jid) {
-    const dbPath = sessionPath(jid)
-    if (fs.existsSync(dbPath)) fs.rmSync(dbPath, { force: true })
+    const { type } = getSubbotConfig()
+    Connection.removeSavedAuthState(type, subbotRelativePath(jid))
 }
 
-export async function startSubBot(jid, opts = {}) {
-    const dbPath = sessionPath(jid)
-    fs.mkdirSync(path.dirname(dbPath), { recursive: true })
 
-    const { state, saveCreds } = useSQLiteAuthState(dbPath)
+export async function startSubBot(jid, opts = {}) {
+    const { type } = getSubbotConfig()
+    const { state, saveCreds } = await Connection.resolveAuthState(type, subbotRelativePath(jid))
     const { version } = await fetchVersionWithTimeout()
     const logger = P({ level: 'silent' })
 
@@ -297,7 +219,7 @@ export async function startSubBot(jid, opts = {}) {
             const loggedOut = statusCode === DisconnectReason.loggedOut
 
             if (loggedOut) {
-                fs.rmSync(dbPath, { force: true })
+                Connection.removeSavedAuthState(type, subbotRelativePath(jid))
                 await opts.onClose?.(subConn, statusCode, true)
                 return
             }
@@ -439,28 +361,14 @@ async function doReconnect(m, { conn, args, usedPrefix, isPrems }) {
         return conn.reply(m.chat, `❌ Slots are full (max ${max}).\nPlease wait for a slot to be available.`, m)
     }
 
-    const dbPath = sessionPath(m.sender)
+    const { type } = getSubbotConfig()
 
     if (args[0]) {
         try {
             const credsJson = JSON.parse(Buffer.from(args[0], 'base64').toString('utf-8'))
-            fs.mkdirSync(path.dirname(dbPath), { recursive: true })
-            const db = new DatabaseSync(dbPath)
-            db.exec(`
-                CREATE TABLE IF NOT EXISTS creds (
-                    id INTEGER PRIMARY KEY CHECK (id = 1),
-                    data TEXT NOT NULL
-                );
-                CREATE TABLE IF NOT EXISTS keys (
-                    type TEXT NOT NULL,
-                    id TEXT NOT NULL,
-                    data TEXT NOT NULL,
-                    PRIMARY KEY (type, id)
-                );
-            `)
-            db.prepare('INSERT INTO creds (id, data) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data')
-                .run(JSON.stringify(credsJson))
-            db.close()
+            const { state, saveCreds } = await Connection.resolveAuthState(type, subbotRelativePath(m.sender))
+            Object.assign(state.creds, credsJson)
+            await saveCreds()
         } catch {
             return conn.reply(m.chat, `❌ *Invalid Session ID.*\nMake sure you send the correct Session ID from *${usedPrefix}pairing*.`, m)
         }
