@@ -37,14 +37,14 @@
     }
 
     :root {
-      --bg:        #080808;
-      --surface:   #111111;
-      --surface2:  #181818;
-      --border:    #242424;
-      --border2:   #303030;
+      --bg:        #0a0a0a;
+      --surface:   rgba(255, 255, 255, 0.055);
+      --surface2:  rgba(255, 255, 255, 0.085);
+      --border:    rgba(255, 255, 255, 0.12);
+      --border2:   rgba(255, 255, 255, 0.22);
       --accent:    #ffffff;
       --text:      #e8e8e8;
-      --muted:     #555555;
+      --muted:     #666666;
       --muted2:    #888888;
       --error:     #ff5555;
       --success:   #55cc77;
@@ -52,15 +52,11 @@
       --font:      'IBM Plex Mono', monospace;
       --health:    #ff4444;
       --gem:       #ffd700;
+      --glass-blur: blur(16px);
     }
 
     body {
-      background:
-        radial-gradient(ellipse 650px 380px at 8% -8%, rgba(200,40,60,0.20), transparent 60%),
-        radial-gradient(ellipse 700px 400px at 40% -5%, rgba(76,60,180,0.16), transparent 60%),
-        radial-gradient(ellipse 600px 350px at 100% 0%, rgba(30,50,140,0.18), transparent 55%),
-        var(--bg);
-      background-attachment: fixed;
+      background: var(--bg);
       color: var(--text);
       font-family: var(--font);
       min-height: 100vh;
@@ -118,10 +114,10 @@
     .bell-wrap { position: relative; }
     .bell-btn {
       position: relative;
-      width: 26px;
-      height: 26px;
-      background: var(--surface2);
-      border: none;
+      width: 30px;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 50%;
       font-size: 9px;
       cursor: pointer;
@@ -129,6 +125,8 @@
       align-items: center;
       justify-content: center;
       transition: border-color 0.15s;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
     }
     .bell-btn svg { width: 12px; height: 12px; stroke: var(--text); fill: none; }
     .bell-btn:hover { border-color: var(--border); }
@@ -150,18 +148,20 @@
       max-height: 320px;
       overflow-y: auto;
       background: var(--surface2);
-      border: none;
+      border: 1px solid var(--border2);
       color: var(--text);
       font-size: 9px;
       line-height: 1.5;
       padding: 12px 14px;
-      border-radius: 8px;
+      border-radius: 12px;
       opacity: 0;
       visibility: hidden;
       transform: translateY(-6px);
       transition: opacity 0.15s ease, transform 0.15s ease;
       z-index: 30;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.5);
     }
     .bell-tooltip.open { opacity: 1; visibility: visible; transform: translateY(0); }
     .bell-tooltip::after {
@@ -179,29 +179,40 @@
 
     /* Navigation */
     .nav-tabs {
+      position: relative;
       display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
+      gap: 2px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      padding: 4px;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
 
     .nav-btn {
-      background: var(--surface2);
+      background: transparent;
       border: none;
-      border-radius: 6px;
-      padding: 7px 13px;
-      font-size: 8px;
-      font-weight: 700;
+      border-radius: 999px;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: var(--font);
-      letter-spacing: 1px;
-      text-transform: none;
       color: var(--muted2);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.18s ease;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    .nav-btn.active { background: var(--accent); color: #080808; border-color: var(--accent); }
-    .nav-btn:not(.active):hover { background: var(--surface); border-color: var(--border); color: var(--text); }
+    .nav-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .nav-btn.active { background: #ffffff; color: #080808; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .nav-btn:not(.active):hover { background: rgba(255,255,255,0.08); color: var(--text); }
 
     .tab-panel { display: none; animation: fadeUp 0.25s ease; }
     .tab-panel.active-panel { display: block; }
@@ -209,10 +220,13 @@
     /* Cards */
     .card {
       background: var(--surface);
-      border: none;
-      border-radius: 7px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 16px;
       margin-bottom: 10px;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 24px rgba(0,0,0,0.35);
     }
 
     .card-title {
@@ -226,12 +240,50 @@
 
     .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
+    /* Account tab: Gift Code (square) + plain red Logout button, side by side */
+    .account-row {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .gift-code-card {
+      flex: 1;
+      aspect-ratio: 1 / 1;
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .logout-btn-plain {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      aspect-ratio: 1 / 1;
+      background: transparent;
+      border: none;
+      color: var(--error);
+      font-family: var(--font);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s ease;
+    }
+    .logout-btn-plain svg { stroke: var(--error); }
+    .logout-btn-plain:hover { opacity: 0.75; }
+    .logout-btn-plain:active { opacity: 0.55; }
+
     /* Profile */
     .profile-card {
       position: relative;
       overflow: hidden;
-      background: linear-gradient(155deg, #141414 0%, #0d0d0d 100%);
-      border: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
       padding: 0;
     }
     .profile-card::before {
@@ -244,6 +296,50 @@
       background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
       pointer-events: none;
     }
+
+    /* ============ PREMIUM BORDER SWEEP (SVG stroke, constant speed incl. corners) ============ */
+    .profile-glow-wrap {
+      position: relative;
+      border-radius: 12px;
+    }
+
+    .profile-glow-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 2;
+    }
+
+    .profile-glow-wrap.premium-glow .profile-glow-svg {
+      opacity: 1;
+    }
+
+    .profile-glow-svg .glow-trail {
+      fill: none;
+      stroke: var(--glow-c1, #ffffff);
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      stroke-dasharray: 3 97;
+      animation: glow-dash 9s linear infinite;
+    }
+    .glow-trail.t1 { opacity: 1;    filter: blur(0px);   animation-delay: 0s; }
+    .glow-trail.t2 { opacity: 0.55; filter: blur(0.6px); animation-delay: 0.12s; }
+    .glow-trail.t3 { opacity: 0.28; filter: blur(1.2px); animation-delay: 0.24s; }
+    .glow-trail.t4 { opacity: 0.12; filter: blur(2px);   animation-delay: 0.36s; }
+
+    @keyframes glow-dash {
+      from { stroke-dashoffset: 0; }
+      to   { stroke-dashoffset: -100; }
+    }
+
+    /* tier colors, matched to the shimmer classes used elsewhere */
+    .profile-glow-wrap.glow-diamond { --glow-c1: #4fc3f7; }
+    .profile-glow-wrap.glow-gold    { --glow-c1: #f9a825; }
+    .profile-glow-wrap.glow-white   { --glow-c1: #ffffff; }
+
 
     .profile-hero {
       display: flex;
@@ -264,7 +360,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(90deg, transparent 55%, #0d0d0d 100%);
+      background: linear-gradient(90deg, transparent 55%, rgba(10,10,10,0.6) 100%);
       z-index: 2;
       pointer-events: none;
     }
@@ -336,18 +432,21 @@
       left: 50%;
       transform: translateX(-50%) translateY(4px);
       background: var(--surface2);
+      border: 1px solid var(--border2);
       color: var(--text);
       font-size: 8px;
       font-weight: 400;
       letter-spacing: 0.5px;
       padding: 7px 12px;
-      border-radius: 6px;
+      border-radius: 10px;
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.15s ease, transform 0.15s ease;
       z-index: 25;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 6px 20px rgba(0,0,0,0.5);
     }
     .badge-tooltip::after {
       content: '';
@@ -417,19 +516,21 @@
       right: 0;
       transform: translateY(-100%);
       background: var(--surface2);
-      border: none;
+      border: 1px solid var(--border2);
       color: var(--text);
       font-size: 8px;
       font-weight: 600;
       letter-spacing: 0.5px;
       padding: 9px 13px;
-      border-radius: 7px;
+      border-radius: 10px;
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.15s ease;
       z-index: 20;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 6px 20px rgba(0,0,0,0.5);
     }
     .premium-tooltip::after {
       content: '';
@@ -538,25 +639,46 @@
     .tierup-btn:active:not(:disabled) { transform: scale(0.98); }
     .tierup-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    /* Menu buttons (Gacha/Shop/Info) */
-    .menu-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+    /* Menu buttons (Gacha/Shop/Info) — vertical sliding pill */
+    .menu-list {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .menu-highlight {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 6px;
+      transition: transform 0.25s ease, opacity 0.2s ease;
+      opacity: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .menu-list.has-active .menu-highlight { opacity: 1; }
     .menu-btn {
+      position: relative;
+      z-index: 1;
       width: 100%;
       padding: 8px;
-      background: var(--accent);
-      border: none;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 6px;
-      color: #080808;
+      color: var(--muted);
       font-family: var(--font);
       font-size: 8px;
       font-weight: 700;
       letter-spacing: 2.5px;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+      transition: color 0.2s ease;
     }
-    .menu-btn:hover { opacity: 0.85; }
-    .menu-btn.active { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+    .menu-btn:hover { color: var(--muted2); }
+    .menu-btn.active { color: #080808; }
 
     .search-box {
       position: relative;
@@ -580,13 +702,15 @@
       width: 100%;
       padding: 8px 10px 8px 30px;
       background: var(--surface);
-      border: none;
-      border-radius: 6px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
       color: var(--text);
       font-size: 8px;
       font-family: var(--font);
       outline: none;
       transition: border-color 0.15s;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .search-input:focus { border-color: var(--border2); }
     .search-input::placeholder { color: var(--muted); }
@@ -642,14 +766,16 @@
     .search-results-label { font-size: 8px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin: 4px 0 8px; }
     .search-result-card {
       background: var(--surface);
-      border: none;
-      border-radius: 7px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
       padding: 0;
       margin-bottom: 8px;
       display: flex;
       align-items: stretch;
       min-height: 76px;
       overflow: hidden;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
     }
     .sr-avatar-wrap {
       width: 30%;
@@ -662,7 +788,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(90deg, transparent 55%, var(--surface) 100%);
+      background: linear-gradient(90deg, transparent 55%, rgba(10,10,10,0.55) 100%);
       pointer-events: none;
     }
     .sr-avatar {
@@ -695,13 +821,15 @@
       height: 26px;
       border-radius: 50%;
       background: var(--surface2);
-      border: none;
+      border: 1px solid var(--border);
       color: var(--text);
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.15s ease;
       flex-shrink: 0;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .qty-btn:hover { background: var(--surface); border-color: var(--border2); }
     .qty-btn:active { transform: scale(0.92); }
@@ -722,7 +850,7 @@
       background: var(--accent);
       color: #080808;
       border: none;
-      border-radius: 5px;
+      border-radius: 999px;
       font-size: 8px;
       font-weight: 700;
       font-family: var(--font);
@@ -737,31 +865,64 @@
     .btn.loading .btn-text { display: none; }
     .btn.loading .spinner { display: block; }
 
-    .btn-secondary { background: transparent; border: none; color: var(--text); }
-    .btn-secondary:hover:not(:disabled) { background: var(--surface2); border-color: var(--border); }
-    .btn-success { background: var(--success); color: #080808; }
-    .btn-success:hover:not(:disabled) { background: #44bb66; }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--text);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+    }
+    .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: var(--border2); }
+    .btn-success { background: #ffffff; color: #080808; }
+    .btn-success:hover:not(:disabled) { background: #cccccc; }
     .btn-danger { background: var(--error); color: #080808; }
     .btn-danger:hover:not(:disabled) { background: #dd4444; }
     .btn-flat { background: #ffffff; color: #080808; }
     .btn-flat:hover:not(:disabled) { background: #e6e6e6; }
     .btn-small { padding: 6px 12px; font-size: 7px; width: auto; display: inline-block; }
 
-    .btn-success.ready { background: var(--success); color: #080808; }
+    .btn-circle-row { display: flex; justify-content: flex-end; }
+    .btn-circle {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border-radius: 50%;
+      background: transparent;
+      border: 0.7px solid #ffffff;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s, transform 0.1s;
+      flex: none;
+    }
+    .btn-circle svg { width: 12px; height: 12px; stroke: #ffffff; stroke-width: 2.6; }
+    .btn-circle:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+    .btn-circle:active:not(:disabled) { transform: scale(0.93); }
+    .btn-circle:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-circle .spinner { display: none; width: 10px; height: 10px; border: 1.5px solid rgba(255,255,255,0.2); border-top-color: #ffffff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    .btn-circle .check-icon { display: flex; }
+    .btn-circle.loading .check-icon { display: none; }
+    .btn-circle.loading .spinner { display: block; }
+
+    .btn-success.ready { background: #ffffff; color: #080808; }
     .btn-success.claimed { background: var(--surface2); color: var(--muted); border: none; cursor: not-allowed; }
     .btn.claimed { background: var(--surface2); color: var(--muted); border: none; cursor: not-allowed; }
 
     .input-field {
       width: 100%;
-      padding: 8px 10px;
+      padding: 8px 14px;
       background: var(--surface2);
-      border: none;
-      border-radius: 5px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
       color: var(--text);
       font-size: 10px;
       font-family: var(--font);
       outline: none;
       transition: border-color 0.15s;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .input-field:focus { border-color: var(--border2); }
     .input-field::placeholder { color: var(--muted); }
@@ -889,13 +1050,15 @@
       right: 16px;
       transform: translateY(-50%) translateX(120%);
       width: 260px;
-      background: var(--surface);
-      border: none;
-      border-radius: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
       z-index: 300;
       transition: transform 0.3s ease;
       padding: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.5);
     }
     .prize-modal.open { transform: translateY(-50%) translateX(0); }
     .prize-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: none; }
@@ -923,10 +1086,68 @@
     /* ============ ACCOUNT ============ */
     .db-user-item {
       background: var(--surface2);
-      border: none;
-      border-radius: 6px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
       margin-bottom: 8px;
       overflow: hidden;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .db-user-item.in-view {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Animated scroll list */
+    .scroll-list-container {
+      position: relative;
+    }
+    .scroll-list {
+      max-height: 420px;
+      overflow-y: auto;
+      padding: 2px 4px 2px 2px;
+    }
+    .scroll-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .scroll-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scroll-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+    }
+    .scroll-list.no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .scroll-list.no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .top-gradient,
+    .bottom-gradient {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 44px;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 2;
+      opacity: 0;
+    }
+    .top-gradient {
+      top: 0;
+      background: linear-gradient(to bottom, rgba(10,10,10,0.9), transparent);
+      border-radius: 12px 12px 0 0;
+    }
+    .bottom-gradient {
+      bottom: 0;
+      background: linear-gradient(to top, rgba(10,10,10,0.9), transparent);
+      opacity: 1;
+      border-radius: 0 0 12px 12px;
     }
 
     .db-user-header {
@@ -950,7 +1171,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(90deg, transparent 45%, var(--surface2) 100%);
+      background: linear-gradient(90deg, transparent 45%, rgba(10,10,10,0.55) 100%);
       pointer-events: none;
     }
     .db-avatar {
@@ -992,24 +1213,26 @@
     .db-field-input {
       height: 28px;
       background: var(--surface);
-      border: none;
-      border-radius: 4px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
       color: var(--text);
       font-family: var(--font);
       font-size: 8px;
       text-align: center;
       outline: none;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .db-field-input:focus { border-color: var(--border2); }
     .db-field-input.number { width: 70px; }
     .db-field-input.string { width: 120px; }
 
     .db-save-btn {
-      background: var(--success);
+      background: #ffffff;
       color: #080808;
       border: none;
-      border-radius: 4px;
-      padding: 4px 10px;
+      border-radius: 999px;
+      padding: 4px 12px;
       font-size: 6px;
       font-weight: 700;
       font-family: var(--font);
@@ -1025,10 +1248,10 @@
       bottom: 22px; left: 50%;
       transform: translateX(-50%) translateY(16px);
       background: var(--surface2);
-      border: none;
+      border: 1px solid var(--border);
       color: var(--text);
       padding: 10px 18px;
-      border-radius: 5px;
+      border-radius: 999px;
       font-size: 9px;
       white-space: nowrap;
       opacity: 0;
@@ -1037,6 +1260,9 @@
       max-width: 90%;
       overflow: hidden;
       text-overflow: ellipsis;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4);
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .toast.success { border-color: rgba(85,204,119,0.3); color: var(--success); }
@@ -1056,14 +1282,17 @@
     .modal-overlay.show { opacity: 1; pointer-events: all; }
 
     .modal {
-      background: var(--surface);
-      border: none;
-      border-radius: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
       padding: 28px 22px;
       max-width: 360px;
       width: 100%;
       text-align: center;
       animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 32px rgba(0,0,0,0.45);
     }
     @keyframes popIn {
       from { transform: scale(0.88); opacity: 0; }
@@ -1110,9 +1339,11 @@
       justify-content: space-between;
       gap: 8px;
       padding: 8px 10px;
-      background: rgba(0,0,0,0.2);
-      border: none;
-      border-radius: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .gc-item-code { font-size: 9px; font-weight: 700; color: var(--text); letter-spacing: 1px; }
     .gc-item-reward { font-size: 8px; color: var(--muted2); }
@@ -1120,7 +1351,7 @@
     .gc-del-btn {
       background: transparent;
       border: none;
-      border-radius: 4px;
+      border-radius: 999px;
       color: var(--error);
       font-size: 10px;
       width: 24px;
@@ -1136,11 +1367,10 @@
 
     @media (max-width: 420px) {
       .stats-grid { flex-wrap: wrap; gap: 14px 22px; }
-      .nav-btn { font-size: 8px; padding: 9px 14px; letter-spacing: 1px; }
       .logo-text { font-size: 12px; letter-spacing: 3px; }
       .profile-hero { flex-direction: column; }
       .avatar-wrap { width: 100%; aspect-ratio: 16 / 9; max-height: 160px; }
-      .avatar-wrap::after { background: linear-gradient(180deg, transparent 45%, #0d0d0d 100%); }
+      .avatar-wrap::after { background: linear-gradient(180deg, transparent 45%, rgba(10,10,10,0.6) 100%); }
       .avatar { font-size: 27px; }
       .profile-hero-bottom { flex-direction: column; align-items: stretch; }
       .tierup-btn { width: 100%; }
@@ -1173,9 +1403,15 @@
           <div class="bell-tooltip" id="bell-tooltip"></div>
         </div>
         <div class="nav-tabs">
-          <button class="nav-btn active" data-tab="home">Home</button>
-          <button class="nav-btn" data-tab="account">Account</button>
-          <button class="nav-btn" data-tab="database" id="db-tab" style="display:none">DB</button>
+          <button class="nav-btn active" data-tab="home" aria-label="Home" title="Home">
+            <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H10v-5.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V20h3.5a1 1 0 0 0 1-1v-9"/></svg>
+          </button>
+          <button class="nav-btn" data-tab="account" aria-label="Account" title="Account">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5"/></svg>
+          </button>
+          <button class="nav-btn" data-tab="database" id="db-tab" aria-label="Database" title="Database" style="display:none">
+            <svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v6c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3V6"/><path d="M4.5 12v6c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-6"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -1183,6 +1419,13 @@
     <!-- ==================== TAB: HOME ==================== -->
     <div id="tab-home" class="tab-panel active-panel">
       <!-- Profile Card -->
+      <div class="profile-glow-wrap" id="profile-glow-wrap">
+      <svg class="profile-glow-svg" preserveAspectRatio="none">
+        <rect class="glow-trail t4" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
+        <rect class="glow-trail t3" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
+        <rect class="glow-trail t2" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
+        <rect class="glow-trail t1" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
+      </svg>
       <div class="card profile-card">
         <div class="profile-hero">
           <div class="avatar-wrap">
@@ -1242,6 +1485,7 @@
           </div>
         </div>
       </div>
+      </div>
 
       <div class="divider-lg"></div>
 
@@ -1255,7 +1499,8 @@
 
         <!-- Menu -->
         <div class="menu-col">
-          <div class="menu-list">
+          <div class="menu-list" id="menu-list">
+            <div class="menu-highlight" id="menu-highlight"></div>
             <button class="menu-btn" id="menu-gacha" onclick="toggleSection('gacha')">Gacha</button>
             <button class="menu-btn" id="menu-shop" onclick="toggleSection('shop')">Shop</button>
             <button class="menu-btn" id="menu-info" onclick="toggleSection('info')">Info</button>
@@ -1370,10 +1615,12 @@
       <div class="card">
         <div class="card-title">Change Name</div>
         <input type="text" id="rename-input" class="input-field" placeholder="New display name" maxlength="32">
-        <button class="btn mt-8" id="rename-btn" onclick="doRename()">
-          <span class="btn-text">Save Name</span>
-          <div class="spinner"></div>
-        </button>
+        <div class="btn-circle-row mt-8">
+          <button class="btn-circle" id="rename-btn" onclick="doRename()">
+            <span class="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+            <div class="spinner"></div>
+          </button>
+        </div>
       </div>
 
       <div class="card">
@@ -1381,25 +1628,31 @@
         <input type="password" id="pw-old" class="input-field" placeholder="Current password">
         <input type="password" id="pw-new" class="input-field mt-8" placeholder="New password">
         <input type="password" id="pw-new2" class="input-field mt-8" placeholder="Confirm new password">
-        <button class="btn mt-8" id="pw-btn" onclick="changePassword()">
-          <span class="btn-text">Save Password</span>
-          <div class="spinner"></div>
-        </button>
+        <div class="btn-circle-row mt-8">
+          <button class="btn-circle" id="pw-btn" onclick="changePassword()">
+            <span class="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+            <div class="spinner"></div>
+          </button>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Gift Code</div>
-        <input type="text" id="gc-input" class="input-field" placeholder="Enter gift code" maxlength="32" style="text-transform:uppercase">
-        <button class="btn mt-8" id="gc-btn" onclick="redeemCode()">
-          <span class="btn-text">Redeem</span>
-          <div class="spinner"></div>
-        </button>
-        <div id="gc-result" style="display:none;margin-top:10px;padding:10px;border-radius:5px;text-align:center;font-size: 9px;font-weight:600;"></div>
-      </div>
+      <div class="account-row">
+        <div class="card gift-code-card">
+          <div class="card-title">Gift Code</div>
+          <input type="text" id="gc-input" class="input-field" placeholder="Enter gift code" maxlength="32" style="text-transform:uppercase">
+          <div class="btn-circle-row mt-8">
+            <button class="btn-circle" id="gc-btn" onclick="redeemCode()">
+              <span class="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+              <div class="spinner"></div>
+            </button>
+          </div>
+          <div id="gc-result" style="display:none;margin-top:10px;padding:10px;border-radius:5px;text-align:center;font-size: 9px;font-weight:600;"></div>
+        </div>
 
-      <div class="card">
-        <div class="card-title">Logout</div>
-        <button class="btn btn-secondary mt-8" onclick="logout()">Logout</button>
+        <button class="logout-btn-plain" onclick="logout()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <span>Logout</span>
+        </button>
       </div>
     </div>
 
@@ -1424,8 +1677,12 @@
       <div class="card">
         <div class="card-title">Database Editor</div>
         <button class="btn btn-small btn-secondary" onclick="loadDatabaseData()">⟳ Refresh</button>
-        <div id="db-users-list" class="mt-8">
-          <div class="text-center text-muted2 text-sm">Loading users...</div>
+        <div class="scroll-list-container mt-8">
+          <div id="db-users-list" class="scroll-list">
+            <div class="text-center text-muted2 text-sm">Loading users...</div>
+          </div>
+          <div class="top-gradient" id="db-top-gradient"></div>
+          <div class="bottom-gradient" id="db-bottom-gradient"></div>
         </div>
       </div>
     </div>
@@ -1661,13 +1918,22 @@ function toggleSection(id) {
     document.getElementById('menu-' + s).classList.remove('active')
   })
 
+  const menuList = document.getElementById('menu-list')
+  const highlight = document.getElementById('menu-highlight')
+
   if (!isSame) {
     document.getElementById('section-' + id).classList.add('open')
     document.getElementById('menu-' + id).classList.add('active')
     activeSection = id
     if (id === 'shop') { renderLimitSlider(true); renderPremiumSlider(true) }
+
+    const btn = document.getElementById('menu-' + id)
+    highlight.style.height = btn.offsetHeight + 'px'
+    highlight.style.transform = `translateY(${btn.offsetTop}px)`
+    menuList.classList.add('has-active')
   } else {
     activeSection = null
+    menuList.classList.remove('has-active')
   }
 }
 
@@ -1793,6 +2059,7 @@ async function runUserSearch(q) {
       document.getElementById('menu-' + s).classList.remove('active')
     })
     activeSection = null
+    document.getElementById('menu-list')?.classList.remove('has-active')
 
     const list = document.getElementById('search-results-list')
 
@@ -2008,16 +2275,27 @@ async function loadProfile(silent = false) {
       document.getElementById('avatar-letter').textContent = displayName.slice(0, 2).toUpperCase()
 
       const nameEl = document.getElementById('profile-name')
+      const glowWrap = document.getElementById('profile-glow-wrap')
       if (u.premium && u.premiumTime > Date.now()) {
-        nameEl.className = getPremiumBadgeClass({ premium: u.premium, premiumSince: u.premiumSince }) || 'shimmer-premium-white'
+        const tierClass = getPremiumBadgeClass({ premium: u.premium, premiumSince: u.premiumSince })
+        nameEl.className = tierClass || 'shimmer-premium-white'
         currentPremiumTime = u.premiumTime
         document.getElementById('premium-wrap').style.display = 'block'
+
+        if (glowWrap) {
+          const glowTier = tierClass === 'shimmer-diamond' ? 'glow-diamond'
+            : tierClass === 'shimmer-gold' ? 'glow-gold'
+            : 'glow-white'
+          glowWrap.classList.remove('glow-diamond', 'glow-gold', 'glow-white')
+          glowWrap.classList.add('premium-glow', glowTier)
+        }
       } else {
         nameEl.className = ''
         currentPremiumTime = 0
         document.getElementById('premium-wrap').style.display = 'none'
         document.getElementById('premium-tooltip').classList.remove('open')
         if (premiumTooltipInterval) { clearInterval(premiumTooltipInterval); premiumTooltipInterval = null }
+        if (glowWrap) glowWrap.classList.remove('premium-glow', 'glow-diamond', 'glow-gold', 'glow-white')
       }
       nameEl.textContent = displayName
 
@@ -2369,31 +2647,57 @@ async function loadDatabaseData() {
             <div class="db-field-row">
               <span class="db-field-label">${f}</span>
               <input type="number" id="${f}-${safeKey}" class="db-field-input number" value="${Number(userData[f]) || 0}">
-              <button class="db-save-btn" onclick="saveUserField('${escapeHtml(userKey)}', '${f}')">Save</button>
             </div>
           `).join('')}
           <div class="db-field-row">
             <span class="db-field-label">name</span>
             <input type="text" id="name-${safeKey}" class="db-field-input string" value="${escapeHtml(userData.name || '')}">
-            <button class="db-save-btn" onclick="saveUserField('${escapeHtml(userKey)}', 'name')">Save</button>
           </div>
           <div class="db-field-row">
             <span class="db-field-label">premium</span>
             <input type="checkbox" id="premium-${safeKey}" ${userData.premium ? 'checked' : ''}>
-            <button class="db-save-btn" onclick="saveUserField('${escapeHtml(userKey)}', 'premium')">Save</button>
           </div>
           <div class="db-field-row">
             <span class="db-field-label">premium time</span>
             <input type="datetime-local" id="premiumTime-${safeKey}" class="db-field-input" value="${userData.premiumTime ? toLocalDatetimeValue(userData.premiumTime) : ''}">
-            <button class="db-save-btn" onclick="saveUserField('${escapeHtml(userKey)}', 'premiumTime')">Save</button>
           </div>
+          <button class="db-save-btn" id="save-${safeKey}" style="width:100%;margin-top:6px;" onclick="saveUserFields('${escapeHtml(userKey)}')">Save</button>
         </div>
       `
       container.appendChild(userDiv)
     }
+    initDbScrollAnimations()
   } catch (err) {
     container.innerHTML = `<div class="text-center text-error text-sm">Error: ${escapeHtml(err.message)}</div>`
   }
+}
+
+function initDbScrollAnimations() {
+  const container = document.getElementById('db-users-list')
+  const topG = document.getElementById('db-top-gradient')
+  const bottomG = document.getElementById('db-bottom-gradient')
+  if (!container) return
+
+  if (container._dbScrollHandler) container.removeEventListener('scroll', container._dbScrollHandler)
+  const updateGradients = () => {
+    if (!topG || !bottomG) return
+    const { scrollTop, scrollHeight, clientHeight } = container
+    topG.style.opacity = Math.min(scrollTop / 50, 1)
+    const bottomDistance = scrollHeight - (scrollTop + clientHeight)
+    bottomG.style.opacity = scrollHeight <= clientHeight ? 0 : Math.min(bottomDistance / 50, 1)
+  }
+  container._dbScrollHandler = updateGradients
+  container.addEventListener('scroll', updateGradients)
+  updateGradients()
+
+  if (container._dbObserver) container._dbObserver.disconnect()
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      entry.target.classList.toggle('in-view', entry.isIntersecting)
+    })
+  }, { root: container, threshold: 0.5 })
+  container.querySelectorAll('.db-user-item').forEach(el => observer.observe(el))
+  container._dbObserver = observer
 }
 
 function toLocalDatetimeValue(ts) {
@@ -2412,38 +2716,47 @@ window.toggleUserFields = function(userKey) {
   icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)'
 }
 
-window.saveUserField = async function(userKey, field) {
+window.saveUserFields = async function(userKey) {
   const safeKey = makeSafeId(userKey)
-  let value
+  const btn = document.getElementById(`save-${safeKey}`)
 
-  if (['premium', 'banned', 'registered'].includes(field)) {
-    const cb = document.getElementById(`${field}-${safeKey}`)
-    if (!cb) return
-    value = cb.checked
-  } else {
-    const input = document.getElementById(`${field}-${safeKey}`)
-    if (!input) return
-    if (field === 'premiumTime') {
-      value = input.value ? new Date(input.value).getTime() : 0
-    } else {
-      value = ['exp', 'limit', 'level', 'gems'].includes(field) ? (parseInt(input.value) || 0) : input.value
-    }
-  }
+  const fields = [
+    { field: 'exp', value: parseInt(document.getElementById(`exp-${safeKey}`).value) || 0 },
+    { field: 'limit', value: parseInt(document.getElementById(`limit-${safeKey}`).value) || 0 },
+    { field: 'level', value: parseInt(document.getElementById(`level-${safeKey}`).value) || 0 },
+    { field: 'gems', value: parseInt(document.getElementById(`gems-${safeKey}`).value) || 0 },
+    { field: 'name', value: document.getElementById(`name-${safeKey}`).value },
+    { field: 'premium', value: document.getElementById(`premium-${safeKey}`).checked },
+    { field: 'premiumTime', value: (() => {
+        const v = document.getElementById(`premiumTime-${safeKey}`).value
+        return v ? new Date(v).getTime() : 0
+      })() }
+  ]
+
+  if (btn) { btn.disabled = true; btn.textContent = '...' }
 
   try {
-    const res = await safeFetch('/api/admin/update-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ userKey, field, value })
-    })
-    const data = await res.json()
-    if (data.success) {
-      showToast(`${field} updated!`, 'success')
-      if (['exp', 'limit', 'level', 'gems'].includes(field)) await loadProfile(true)
-    } else {
-      showToast(data.message || 'Update failed', 'error')
+    let anyFailed = false
+    for (const { field, value } of fields) {
+      const res = await safeFetch('/api/admin/update-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ userKey, field, value })
+      })
+      const data = await res.json()
+      if (!data.success) anyFailed = true
     }
-  } catch { showToast('Connection error.', 'error') }
+    if (anyFailed) {
+      showToast('Some fields failed to save.', 'error')
+    } else {
+      showToast('Saved!', 'success')
+      await loadProfile(true)
+    }
+  } catch {
+    showToast('Connection error.', 'error')
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Save' }
 }
 
 // ============ ADMIN: GIFT CODES ============
