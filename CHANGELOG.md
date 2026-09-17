@@ -1,3 +1,17 @@
+<h3>17/September/2026</h3>
+<sub>
+
+```diff
+• Redesign portfolio hero section in website view for a more immersive and modern UI
+• Optimized hero components for responsiveness and performance
+
+________________________
+
+* Edit "lib/package/website/views/index.html"
+* Edit "lib/package/website/views/profile.html"
+```
+</sub>
+
 <h3>16/September/2026</h3>
 <sub>
 
@@ -165,26 +179,5 @@ ________________________
 ________________________
 
 + Add "plugins/tools/alightmotion.js"
-```
-</sub>
-
-<h3>09/September/2026</h3>
-<sub>
-
-```diff
-• Simplify interactive location documentation in README.md
-• Improve CDN connection resilience in website server by adding a retry mechanism with short timeout for flaky upstream requests
-• Enable CORS for auth-related API endpoints in web dashboard to support sandboxed WhatsApp HTML
-• Refactor and optimize core utility functions in simple.js
-• Perform minor connection update in subbot connect plugin
-• Add mute and unmute command plugin for group chat with custom message deletion implementation
-
-________________________
-
-+ Add "plugins/group/mute.js"
-* Edit "README.md"
-* Edit "lib/package/website/server.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/subbot/connect.js"
 ```
 </sub>
