@@ -7,10 +7,13 @@
 • Update web dashboard HTML views and upload scrapers
 • General refactoring and cleanup of core utilities and VoIP package
 • Cleanup legacy and unused modules
+• Optimize tunnel setup by replacing Promise-based connection waiting with a global callback mechanism for improved reliability
+• Implement robust error handling for tunnel initialization on connection open
 
 ________________________
 
 * Edit "lib/main.js"
+* Edit "lib/utils/connection.js"
 - Delete "lib/package/voip/relay/WaSctpRelay.js"
 * Edit "lib/package/website/server.js"
 * Edit "lib/package/website/views/index.html"
