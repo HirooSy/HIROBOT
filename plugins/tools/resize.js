@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import axios from 'axios';
-const { fileTypeFromBuffer } = (await import("file-type"));
+import Helper from '../../lib/utils/helper.js';
+const { fileTypeFromBuffer } = Helper;
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   var towidth = args[0]

@@ -1,3 +1,30 @@
+<h3>20/September/2026</h3>
+<sub>
+
+```diff
+• Replace 'ws' package with a native, RFC 6455-compliant WebSocket server implementation for improved stability and reduced dependency overhead
+• Refactor website server endpoints to support native WebSockets
+• Update web dashboard HTML views and upload scrapers
+• General refactoring and cleanup of core utilities and VoIP package
+• Cleanup legacy and unused modules
+
+________________________
+
+* Edit "lib/main.js"
+- Delete "lib/package/voip/relay/WaSctpRelay.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/package/website/views/index.html"
+* Edit "lib/package/website/views/profile.html"
+* Edit "lib/scrapers/src/upload.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/helper.js"
+* Edit "lib/utils/simple.js"
+* Edit "plugins/subbot/connect.js"
+- Delete "plugins/tools/bypass.js"
+* Edit "plugins/tools/resize.js"
+```
+</sub>
+
 <h3>17/September/2026</h3>
 <sub>
 
@@ -78,7 +105,7 @@ ________________________
 * Edit "lib/package/voip/relay/sctp/wire.js"
 * Edit "lib/package/voip/relay/stun.js"
 * Edit "lib/package/voip/shim/core.js"
-* Edit "lib/package/voip/signaling/signaling.js"
+* Edit "lib/package/voip/relay/signaling/signaling.js"
 * Edit "lib/package/voip/types.js"
 - Delete "lib/package/voip/worker.js"
 * Edit "lib/utils/connection.js"
@@ -138,46 +165,5 @@ ________________________
 * Edit "lib/package/voip/worker.js"
 * Edit "lib/utils/handler.js"
 * Edit "lib/utils/simple.js"
-```
-</sub>
-
-<h3>11/September/2026</h3>
-<sub>
-
-```diff
-• Implement WebSocket broadcasting support in web dashboard server to enable cross-client communication
-• Enhance e621 scraper stability and refine data parsing in scraper and plugin modules
-• Improve connection utility resilience and handler management
-• Minor stability improvements and refactoring for Pinterest downloader plugin
-• Replace MLowCodec with AudioCodec for streamlined VoIP audio handling
-• Clean up redundant dependencies by removing libmlow-wasm
-• Add a URL shortener utility plugin powered by TinyURL's create API
-
-________________________
-
-+ Add "plugins/tools/tinyurl.js"
-+ Add "lib/package/voip/media/audio-codec.js"
-- Delete "lib/package/voip/media/mlow-codec.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/media/h264.js"
-* Edit "lib/package/voip/relay/sctp/association.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/scrapers/src/e621.js"
-* Edit "lib/utils/connection.js"
-* Edit "package.json"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/dl/pinterest.js"
-```
-</sub>
-
-<h3>10/September/2026</h3>
-<sub>
-
-```diff
-• Add AlightMotion premium activation plugin with magic link support and session-based re-activation capabilities
-
-________________________
-
-+ Add "plugins/tools/alightmotion.js"
 ```
 </sub>
