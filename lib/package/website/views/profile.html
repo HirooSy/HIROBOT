@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="icon" type="image/x-icon" href="" id="favicon">
   <title>Profile</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -49,10 +49,10 @@
       --error:     #ff5555;
       --success:   #55cc77;
       --warn:      #ccaa44;
-      --font:      'IBM Plex Mono', monospace;
+      --font:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       --health:    #ff4444;
       --gem:       #ffd700;
-      --glass-blur: blur(16px);
+      --glass-blur: blur(6px);
     }
 
     body {
@@ -218,6 +218,16 @@
     .tab-panel.active-panel { display: block; }
 
     /* Cards */
+    .icon-inline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1em;
+      height: 1em;
+      vertical-align: -0.15em;
+    }
+    .icon-inline svg { width: 100%; height: 100%; }
+
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -319,16 +329,12 @@
 
     .profile-glow-svg .glow-trail {
       fill: none;
-      stroke: var(--glow-c1, #ffffff);
+      stroke: url(#glow-fade-gradient);
       stroke-width: 1.4;
       stroke-linecap: round;
-      stroke-dasharray: 3 97;
+      stroke-dasharray: 22 78;
       animation: glow-dash 9s linear infinite;
     }
-    .glow-trail.t1 { opacity: 1;    filter: blur(0px);   animation-delay: 0s; }
-    .glow-trail.t2 { opacity: 0.55; filter: blur(0.6px); animation-delay: 0.12s; }
-    .glow-trail.t3 { opacity: 0.28; filter: blur(1.2px); animation-delay: 0.24s; }
-    .glow-trail.t4 { opacity: 0.12; filter: blur(2px);   animation-delay: 0.36s; }
 
     @keyframes glow-dash {
       from { stroke-dashoffset: 0; }
@@ -709,8 +715,8 @@
       font-family: var(--font);
       outline: none;
       transition: border-color 0.15s;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
     .search-input:focus { border-color: var(--border2); }
     .search-input::placeholder { color: var(--muted); }
@@ -757,7 +763,10 @@
     /* Badge Info */
     .badge-info-list { display: flex; flex-direction: column; gap: 14px; }
     .badge-info-item { display: flex; align-items: center; gap: 12px; }
-    .badge-info-icon { font-size: 17px; width: 28px; text-align: center; flex-shrink: 0; }
+    .badge-info-icon { width: 28px; height: 17px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--text); }
+    .badge-info-icon svg { width: 17px; height: 17px; }
+    .badge-info-icon.shimmer-gold { color: #f9a825; }
+    .badge-info-icon.shimmer-diamond { color: #4fc3f7; }
     .badge-info-name { font-size: 10px; font-weight: 700; color: var(--text); }
     .badge-info-desc { font-size: 8px; color: var(--muted2); margin-top: 2px; }
     .badge-info-note { font-size: 8px; color: var(--muted2); line-height: 1.5; }
@@ -828,8 +837,8 @@
       cursor: pointer;
       transition: all 0.15s ease;
       flex-shrink: 0;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
     .qty-btn:hover { background: var(--surface); border-color: var(--border2); }
     .qty-btn:active { transform: scale(0.92); }
@@ -921,8 +930,8 @@
       font-family: var(--font);
       outline: none;
       transition: border-color 0.15s;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
     .input-field:focus { border-color: var(--border2); }
     .input-field::placeholder { color: var(--muted); }
@@ -1220,8 +1229,8 @@
       font-size: 8px;
       text-align: center;
       outline: none;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
     .db-field-input:focus { border-color: var(--border2); }
     .db-field-input.number { width: 70px; }
@@ -1342,8 +1351,8 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
     .gc-item-code { font-size: 9px; font-weight: 700; color: var(--text); letter-spacing: 1px; }
     .gc-item-reward { font-size: 8px; color: var(--muted2); }
@@ -1382,7 +1391,7 @@
 <div class="page">
 
   <div id="loading">
-    <span class="dot-anim">✦&nbsp;&nbsp;&nbsp;✦&nbsp;&nbsp;&nbsp;✦</span>
+    <span class="dot-anim"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>&nbsp;&nbsp;&nbsp;<span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>&nbsp;&nbsp;&nbsp;<span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span></span>
   </div>
 
   <div id="content">
@@ -1421,10 +1430,13 @@
       <!-- Profile Card -->
       <div class="profile-glow-wrap" id="profile-glow-wrap">
       <svg class="profile-glow-svg" preserveAspectRatio="none">
-        <rect class="glow-trail t4" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
-        <rect class="glow-trail t3" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
-        <rect class="glow-trail t2" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
-        <rect class="glow-trail t1" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
+        <defs>
+          <linearGradient id="glow-fade-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="var(--glow-c1, #ffffff)" stop-opacity="0"/>
+            <stop offset="100%" stop-color="var(--glow-c1, #ffffff)" stop-opacity="1"/>
+          </linearGradient>
+        </defs>
+        <rect class="glow-trail" x="1" y="1" width="99%" height="99%" rx="11" pathLength="100"></rect>
       </svg>
       <div class="card profile-card">
         <div class="profile-hero">
@@ -1436,7 +1448,7 @@
             <div class="profile-hero-top">
               <div class="profile-name" id="profile-name">-</div>
               <div class="premium-wrap" id="premium-wrap" style="display:none">
-                <button class="premium-badge" id="premium-badge" onclick="togglePremiumTooltip()" style="display:none">⭐</button>
+                <button class="premium-badge" id="premium-badge" onclick="togglePremiumTooltip()" style="display:none"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.7l7.1-.6z"/></svg></span></button>
                 <div class="premium-tooltip" id="premium-tooltip"></div>
               </div>
             </div>
@@ -1444,7 +1456,7 @@
             <!-- Stats -->
             <div class="stats-grid">
               <div class="stat-item">
-                <div class="stat-value" id="stat-tier">✧</div>
+                <div class="stat-value" id="stat-tier"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.7l7.1-.6z"/></svg></span></div>
                 <div class="stat-label">Tier</div>
               </div>
               <div class="stat-item">
@@ -1478,7 +1490,7 @@
                 <div class="badge-icons" id="badge-icons"></div>
               </div>
               <button class="tierup-btn" id="tierup-btn" onclick="doTierUp()">
-                <span class="btn-text">↑ Tier Up</span>
+                <span class="btn-text"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></span> Tier Up</span>
                 <div class="spinner"></div>
               </button>
             </div>
@@ -1518,23 +1530,23 @@
       <div class="section-panel" id="section-gacha">
         <div class="section-heading">GACHA</div>
         <div class="card">
-          <div class="card-title">♣ Slot</div>
+          <div class="card-title"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a3.3 3.3 0 0 0-3 4.9A3.3 3.3 0 1 0 7 13a3.3 3.3 0 0 0 2.3-.9C9 13.6 8 15 6.5 16h11C16 15 15 13.6 14.7 12.1a3.3 3.3 0 0 0 2.3.9 3.3 3.3 0 1 0-2-6.1A3.3 3.3 0 0 0 12 2z"/><rect x="10.5" y="15" width="3" height="6" fill="currentColor"/></svg></span> Slot</div>
           <div class="slot-machine">
             <div class="slot-row">
               <div class="slot-spin-btn">
                 <button class="spin-button" id="slot-btn" onclick="spinSlot()">SPIN</button>
               </div>
               <div class="slot-display">
-                <div class="slot-box" id="slot1">✿</div>
-                <div class="slot-box" id="slot2">♦</div>
+                <div class="slot-box" id="slot1"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="5.5" r="3"/><circle cx="12" cy="18.5" r="3"/><circle cx="5.5" cy="12" r="3"/><circle cx="18.5" cy="12" r="3"/></svg></span></div>
+                <div class="slot-box" id="slot2"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 6-5 14L7 8z"/></svg></span></div>
                 <div class="slot-box" id="slot3">7</div>
               </div>
               <div class="slot-prize-btn">
                 <button class="prize-button" onclick="openPrizeModal()">&lt;</button>
               </div>
             </div>
-            <div class="slot-cost-info">⚡ 200 EXP per spin</div>
-            <div class="slot-cost-info" style="color:var(--muted2);margin-top:-8px">🛡 Pity: <span id="pity-count">0</span>/100 losses</div>
+            <div class="slot-cost-info"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></span> 200 EXP per spin</div>
+            <div class="slot-cost-info" style="color:var(--muted2);margin-top:-8px"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3.5v5.4c0 5-3.4 8.8-8 11-4.6-2.2-8-6-8-11V5.5z"/></svg></span> Pity: <span id="pity-count">0</span>/100 losses</div>
             <div id="slot-result" class="slot-result"></div>
           </div>
         </div>
@@ -1576,21 +1588,21 @@
           <div class="card-title">Badge Info</div>
           <div class="badge-info-list">
             <div class="badge-info-item">
-              <span class="badge-info-icon">✦</span>
+              <span class="badge-info-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
               <div>
                 <div class="badge-info-name">Newcomer</div>
                 <div class="badge-info-desc">0–1 month of continuous premium.</div>
               </div>
             </div>
             <div class="badge-info-item">
-              <span class="badge-info-icon shimmer-gold">✦</span>
+              <span class="badge-info-icon shimmer-gold"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
               <div>
                 <div class="badge-info-name shimmer-gold">Gold Streak</div>
                 <div class="badge-info-desc">2+ months of continuous premium.</div>
               </div>
             </div>
             <div class="badge-info-item">
-              <span class="badge-info-icon shimmer-diamond">✦</span>
+              <span class="badge-info-icon shimmer-diamond"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
               <div>
                 <div class="badge-info-name shimmer-diamond">Diamond Streak</div>
                 <div class="badge-info-desc">4+ months of continuous premium.</div>
@@ -1661,7 +1673,7 @@
       <div class="card">
         <div class="card-title">Gift Code Manager</div>
         <div class="text-xs text-muted2 mb-8">
-          Format: <strong>CODE</strong> → <strong>type:value</strong><br>
+          Format: <strong>CODE</strong> <span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg></span> <strong>type:value</strong><br>
           Types: exp:2000 · limit:5 · premium:2 · level:1 · gems:50
         </div>
         <div class="flex-row gap-4 flex-wrap">
@@ -1692,28 +1704,28 @@
   <div class="modal-overlay-prize" id="prize-overlay" onclick="closePrizeModal()"></div>
   <div class="prize-modal" id="prize-modal">
     <div class="prize-modal-header">
-      <span class="prize-modal-title">♦ PRIZE LIST</span>
+      <span class="prize-modal-title"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 6-5 14L7 8z"/></svg></span> PRIZE LIST</span>
       <button class="prize-modal-close" onclick="closePrizeModal()">×</button>
     </div>
     <div class="prize-list">
-      <div class="prize-item"><div class="prize-icons">✦ ✦ ✦</div><div class="prize-value jackpot"><span class="shimmer-diamond">+200k EXP</span> <span style="font-size: 7px;color:var(--muted2)">0.001%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="sparkle" data-count="3"></div><div class="prize-value jackpot"><span class="shimmer-diamond">+200k EXP</span> <span style="font-size: 7px;color:var(--muted2)">0.001%</span></div></div>
       <div class="prize-item"><div class="prize-icons">7 7 7</div><div class="prize-value jackpot"><span class="shimmer-gold">+77.7k EXP</span> <span style="font-size: 7px;color:var(--muted2)">0.1%</span></div></div>
-      <div class="prize-item"><div class="prize-icons">♦ ♦ ♦</div><div class="prize-value positive">+10k EXP <span style="font-size: 7px;color:var(--muted2)">0.5%</span></div></div>
-      <div class="prize-item"><div class="prize-icons">♣ ♣ ♣</div><div class="prize-value positive">+5k EXP <span style="font-size: 7px;color:var(--muted2)">1%</span></div></div>
-      <div class="prize-item"><div class="prize-icons">♥ ♥ ♥</div><div class="prize-value positive">+3k EXP <span style="font-size: 7px;color:var(--muted2)">1.5%</span></div></div>
-      <div class="prize-item"><div class="prize-icons">♠ ♠ ♠</div><div class="prize-value positive">+2k EXP <span style="font-size: 7px;color:var(--muted2)">2%</span></div></div>
-      <div class="prize-item"><div class="prize-icons">♪ ♪ ♪</div><div class="prize-value positive">+1k EXP <span style="font-size: 7px;color:var(--muted2)">3%</span></div></div>
-      <div class="prize-item"><div class="prize-icons">✿ ✿ ✿</div><div class="prize-value positive">+500 EXP <span style="font-size: 7px;color:var(--muted2)">4%</span></div></div>
-      <div class="prize-item"><div class="prize-icons">× × ×</div><div class="prize-value negative">−300 EXP <span style="font-size: 7px;color:var(--muted2)">~30%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="diamond" data-count="3"></div><div class="prize-value positive">+10k EXP <span style="font-size: 7px;color:var(--muted2)">0.5%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="club" data-count="3"></div><div class="prize-value positive">+5k EXP <span style="font-size: 7px;color:var(--muted2)">1%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="heart" data-count="3"></div><div class="prize-value positive">+3k EXP <span style="font-size: 7px;color:var(--muted2)">1.5%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="spade" data-count="3"></div><div class="prize-value positive">+2k EXP <span style="font-size: 7px;color:var(--muted2)">2%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="note" data-count="3"></div><div class="prize-value positive">+1k EXP <span style="font-size: 7px;color:var(--muted2)">3%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="flower" data-count="3"></div><div class="prize-value positive">+500 EXP <span style="font-size: 7px;color:var(--muted2)">4%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="cross" data-count="3"></div><div class="prize-value negative">−300 EXP <span style="font-size: 7px;color:var(--muted2)">~30%</span></div></div>
       <div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">−200 EXP <span style="font-size: 7px;color:var(--muted2)">~57.9%</span></div></div>
-      <div class="prize-item" style="border-top: none;margin-top:4px;padding-top:8px"><div class="prize-icons" style="font-size: 8px;color:var(--warn)">⭐ PITY</div><div class="prize-value" style="font-size: 8px;color:var(--warn)">Guaranteed ✦/7/♦ every 100 losses</div></div>
+      <div class="prize-item" style="border-top: none;margin-top:4px;padding-top:8px"><div class="prize-icons" style="font-size: 8px;color:var(--warn)"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.7l7.1-.6z"/></svg></span> PITY</div><div class="prize-value" style="font-size: 8px;color:var(--warn)">Guaranteed <span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>/7/<span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 6-5 14L7 8z"/></svg></span> every 100 losses</div></div>
     </div>
   </div>
 
   <!-- Tier Up Modal -->
   <div class="modal-overlay" id="tierup-modal">
     <div class="modal">
-      <div class="modal-icon">★</div>
+      <div class="modal-icon"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.7l7.1-.6z"/></svg></span></div>
       <div class="modal-title" id="modal-title">Tier Up!</div>
       <div class="modal-body" id="modal-body"></div>
       <button class="modal-close" onclick="closeModal()">OK</button>
@@ -1724,6 +1736,57 @@
 </div>
 
 <script>
+// ============ ICON LIBRARY (replaces emoji/symbol glyphs with inline SVG) ============
+const ICONS = {
+  star:      '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.7l7.1-.6z"/></svg>',
+  starOutline: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.7l7.1-.6z"/></svg>',
+  sparkle:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg>',
+  shield:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3.5v5.4c0 5-3.4 8.8-8 11-4.6-2.2-8-6-8-11V5.5z"/></svg>',
+  bolt:      '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>',
+  arrowUp:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>',
+  arrowRight:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>',
+  chevronRight:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>',
+  close:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
+  confetti:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l3.5-1 11-11-2.5-2.5-11 11z"/><circle cx="18" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="20" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="3" r="1" fill="currentColor" stroke="none"/></svg>',
+  sad:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 16c1-1.3 2.2-2 3.5-2s2.5.7 3.5 2"/><line x1="8.5" y1="9.5" x2="8.5" y2="9.51"/><line x1="15.5" y1="9.5" x2="15.5" y2="9.51"/></svg>',
+  diamond:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 6-5 14L7 8z"/></svg>',
+  club:      '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a3.3 3.3 0 0 0-3 4.9A3.3 3.3 0 1 0 7 13a3.3 3.3 0 0 0 2.3-.9C9 13.6 8 15 6.5 16h11C16 15 15 13.6 14.7 12.1a3.3 3.3 0 0 0 2.3.9 3.3 3.3 0 1 0-2-6.1A3.3 3.3 0 0 0 12 2z"/><rect x="10.5" y="15" width="3" height="6" fill="currentColor"/></svg>',
+  heart:     '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.4 2.3 5 5.7 5 8 5 9.7 6.3 12 9c2.3-2.7 4-4 6.3-4 3.4 0 5.2 3.4 3.7 6.7C19.5 16.4 12 21 12 21z"/></svg>',
+  spade:     '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6.5 4 9.5 4 13.5a4 4 0 0 0 6.8 2.9c-.4 2-1.5 3.4-3.3 4.6h9c-1.8-1.2-2.9-2.6-3.3-4.6A4 4 0 0 0 20 13.5C20 9.5 15 6.5 12 2z"/></svg>',
+  note:      '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
+  flower:    '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="5.5" r="3"/><circle cx="12" cy="18.5" r="3"/><circle cx="5.5" cy="12" r="3"/><circle cx="18.5" cy="12" r="3"/></svg>',
+  cross:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>'
+}
+function icon(name, cls) {
+  return `<span class="icon-inline ${cls || ''}">${ICONS[name] || ''}</span>`
+}
+
+// Maps server-sent slot symbol tokens to icon keys used by ICONS above
+const SLOT_SYMBOL_ICON = {
+  '✦': 'sparkle',
+  '♦': 'diamond',
+  '♣': 'club',
+  '♥': 'heart',
+  '♠': 'spade',
+  '♪': 'note',
+  '✿': 'flower',
+  '×': 'cross',
+  '7': null // '7' stays as literal text, not an icon
+}
+function slotSymbolHtml(sym) {
+  const key = SLOT_SYMBOL_ICON[sym]
+  return key ? icon(key) : escapeHtml(sym)
+}
+
+function renderPrizeIconRows() {
+  document.querySelectorAll('[data-icon-row]').forEach(el => {
+    const key = el.getAttribute('data-icon-row')
+    const count = parseInt(el.getAttribute('data-count'), 10) || 1
+    el.innerHTML = Array(count).fill(icon(key)).join(' ')
+  })
+}
+document.addEventListener('DOMContentLoaded', renderPrizeIconRows)
+
 // ============ HELPERS ============
 function safeRedirect(url) { window.location.href = url }
 
@@ -1815,9 +1878,9 @@ function escapeHtml(str) {
 function makeSafeId(key) { return key.replace(/[^a-zA-Z0-9]/g, '_') }
 
 // ============ TOAST ============
-function showToast(msg, type = 'success') {
+function showToast(msg, type = 'success', iconKey = '') {
   const t = document.getElementById('toast')
-  t.textContent = msg
+  t.innerHTML = (iconKey ? icon(iconKey) + ' ' : '') + escapeHtml(msg)
   t.className = 'toast ' + type + ' show'
   setTimeout(() => t.classList.remove('show'), 3000)
 }
@@ -2064,7 +2127,7 @@ async function runUserSearch(q) {
     const list = document.getElementById('search-results-list')
 
     if (data.success === false) {
-      list.innerHTML = `<div class="search-empty">✕ ${escapeHtml(data.message || 'Search failed.')}</div>`
+      list.innerHTML = `<div class="search-empty">${icon('cross')} ${escapeHtml(data.message || 'Search failed.')}</div>`
       document.getElementById('section-search-results').style.display = 'block'
       return
     }
@@ -2115,7 +2178,7 @@ function getBadgeItems(badge) {
     const sinceDate = badge.premium.since
       ? new Date(badge.premium.since).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
       : ''
-    items.push({ type: 'premium', icon: '✦', tooltip: sinceDate ? `Premium since ${sinceDate}` : 'Premium' })
+    items.push({ type: 'premium', icon: 'sparkle', tooltip: sinceDate ? `Premium since ${sinceDate}` : 'Premium' })
   }
   return items
 }
@@ -2125,7 +2188,7 @@ function renderBadgeIcons(badge) {
   const items = getBadgeItems(badge)
   if (items.length === 0) return ''
   return `<div class="sr-badges">${items.map(it =>
-    `<span class="sr-badge-icon sr-badge-${it.type}" title="${escapeHtml(it.tooltip)}">${escapeHtml(it.icon)}</span>`
+    `<span class="sr-badge-icon sr-badge-${it.type}" title="${escapeHtml(it.tooltip)}">${it.type === 'developer' ? escapeHtml(it.icon) : icon(it.icon)}</span>`
   ).join('')}</div>`
 }
 
@@ -2140,7 +2203,7 @@ function renderTopBadgeRow(badge) {
   }
   container.innerHTML = items.map((it, i) => `
     <div class="badge-icon-wrap">
-      <button type="button" class="badge-row-icon clickable badge-active badge-${it.type}" onclick="toggleBadgeTooltip(this)">${escapeHtml(it.icon)}</button>
+      <button type="button" class="badge-row-icon clickable badge-active badge-${it.type}" onclick="toggleBadgeTooltip(this)">${it.type === 'developer' ? escapeHtml(it.icon) : icon(it.icon)}</button>
       <div class="badge-tooltip">${escapeHtml(it.tooltip)}</div>
     </div>
   `).join('')
@@ -2233,18 +2296,18 @@ function updateTierDisplay() {
 
   document.getElementById('exp-bar-fill').style.width = pct + '%'
   document.getElementById('exp-bar-pct').textContent = Math.floor(pct) + '%'
-  document.getElementById('exp-bar-sub').textContent =
-    `${fmtExp(currentExp)} / ${fmtExp(needed)} EXP → ${nextTierName}`
+  document.getElementById('exp-bar-sub').innerHTML =
+    `${fmtExp(currentExp)} / ${fmtExp(needed)} EXP ${icon('arrowRight')} ${escapeHtml(nextTierName)}`
 
   const btn = document.getElementById('tierup-btn')
   btn.style.display = 'block'
   if (currentExp >= needed) {
     btn.disabled = false
-    btn.querySelector('.btn-text').textContent = '↑ Tier Up'
+    btn.querySelector('.btn-text').innerHTML = `${icon('arrowUp')} Tier Up`
     btn.title = `Advance to ${nextTierName}`
   } else {
     btn.disabled = true
-    btn.querySelector('.btn-text').textContent = '↑ Tier Up'
+    btn.querySelector('.btn-text').innerHTML = `${icon('arrowUp')} Tier Up`
     btn.title = `Need ${fmtExp(needed - currentExp)} more EXP`
   }
 }
@@ -2342,8 +2405,8 @@ async function loadProfile(silent = false) {
     if (!silent) {
       const isTimeout = err?.name === 'AbortError'
       document.getElementById('loading').innerHTML = isTimeout
-        ? '// ✕ Request timed out. <a href="#" onclick="location.reload();return false;" style="color:inherit;text-decoration:underline;">Retry</a>'
-        : '// ✕ failed to load data. <a href="#" onclick="location.reload();return false;" style="color:inherit;text-decoration:underline;">Retry</a>'
+        ? `// ${icon('cross')} Request timed out. <a href="#" onclick="location.reload();return false;" style="color:inherit;text-decoration:underline;">Retry</a>`
+        : `// ${icon('cross')} failed to load data. <a href="#" onclick="location.reload();return false;" style="color:inherit;text-decoration:underline;">Retry</a>`
     }
   }
 }
@@ -2386,7 +2449,7 @@ async function claimReward() {
       document.getElementById('stat-gems').textContent = fmtExp(currentGems)
       updateTierDisplay()
       startRewardTimer(data.daily + 86400000)
-      showToast(`🎉 +${data.expReward} EXP, +${data.gemReward} Gems claimed!`, 'success')
+      showToast(`+${data.expReward} EXP, +${data.gemReward} Gems claimed!`, 'success', 'confetti')
     } else {
       showToast(data.message || 'Failed to claim.', 'error')
       btn.disabled = false
@@ -2415,11 +2478,11 @@ async function doTierUp() {
       document.getElementById('stat-limit').textContent = currentLimit
       document.getElementById('stat-tier').textContent = getTierName(currentLevel)
       updateTierDisplay()
-      document.getElementById('modal-title').textContent = `${data.oldTier} → ${data.newTier}`
+      document.getElementById('modal-title').innerHTML = `${escapeHtml(data.oldTier)} ${icon('arrowRight')} ${escapeHtml(data.newTier)}`
       document.getElementById('modal-body').innerHTML =
         `Congratulations! You've reached <strong>${data.newTier}</strong>.<br><br>New limit: <strong>${data.limit}</strong><br>Remaining EXP: <strong>${fmtExp(data.exp)}</strong>`
       document.getElementById('tierup-modal').classList.add('show')
-      showToast(`🎉 Tier Up! ${data.oldTier} → ${data.newTier}`, 'success')
+      showToast(`Tier Up! ${data.oldTier} ${icon('arrowRight')} ${data.newTier}`, 'success', 'confetti')
     } else {
       showToast(data.message || 'Tier up failed.', 'error')
     }
@@ -2473,9 +2536,9 @@ async function spinSlot() {
 
   const icons = ['♣', '♦', '♠', '♥', '♪', '7', '×', '✦', '✿']
   const spinInterval = setInterval(() => {
-    s1.textContent = icons[Math.floor(Math.random() * icons.length)]
-    s2.textContent = icons[Math.floor(Math.random() * icons.length)]
-    s3.textContent = icons[Math.floor(Math.random() * icons.length)]
+    s1.innerHTML = slotSymbolHtml(icons[Math.floor(Math.random() * icons.length)])
+    s2.innerHTML = slotSymbolHtml(icons[Math.floor(Math.random() * icons.length)])
+    s3.innerHTML = slotSymbolHtml(icons[Math.floor(Math.random() * icons.length)])
   }, 40)
   const maxSpinVisual = setTimeout(() => clearInterval(spinInterval), 600)
 
@@ -2486,25 +2549,25 @@ async function spinSlot() {
     clearInterval(spinInterval)
 
     if (data.success) {
-      s1.textContent = data.slots[0]
-      s2.textContent = data.slots[1]
-      s3.textContent = data.slots[2]
+      s1.innerHTML = slotSymbolHtml(data.slots[0])
+      s2.innerHTML = slotSymbolHtml(data.slots[1])
+      s3.innerHTML = slotSymbolHtml(data.slots[2])
       currentExp = data.newExp
       document.getElementById('stat-exp').textContent = fmtExp(currentExp)
       updateTierDisplay()
-      const pityMsg = data.isPity ? ' ⭐ PITY!' : ''
-      resultEl.innerHTML = data.winMessage + pityMsg
+      const pityMsg = data.isPity ? ` ${icon('star')} PITY!` : ''
+      resultEl.innerHTML = escapeHtml(data.winMessage) + pityMsg
       resultEl.classList.add(data.isWin ? 'win' : 'lose')
-      showToast(data.isWin ? `🎉 ${data.winMessage}${pityMsg}` : `😢 ${data.winMessage}`, data.isWin ? 'success' : 'error')
+      showToast(escapeHtml(data.winMessage) + pityMsg, data.isWin ? 'success' : 'error', data.isWin ? 'confetti' : 'sad')
       document.getElementById('pity-count').textContent = data.spinCount ?? 0
     } else {
-      s1.textContent = '♣'; s2.textContent = '♦'; s3.textContent = '7'
+      s1.innerHTML = slotSymbolHtml('♣'); s2.innerHTML = slotSymbolHtml('♦'); s3.textContent = '7'
       showToast(data.message || 'Spin failed!', 'error')
     }
   } catch {
     clearTimeout(maxSpinVisual)
     clearInterval(spinInterval)
-    s1.textContent = '♣'; s2.textContent = '♦'; s3.textContent = '7'
+    s1.innerHTML = slotSymbolHtml('♣'); s2.innerHTML = slotSymbolHtml('♦'); s3.textContent = '7'
     showToast('Connection error!', 'error')
   } finally {
     isSpinning = false
@@ -2595,7 +2658,7 @@ async function redeemCode() {
       resultEl.style.background = 'rgba(255,85,85,0.07)'
       resultEl.style.border = '1px solid rgba(255,85,85,0.2)'
       resultEl.style.color = 'var(--error)'
-      resultEl.textContent = '✕ ' + (data.message || 'Invalid code.')
+      resultEl.innerHTML = icon('cross') + ' ' + escapeHtml(data.message || 'Invalid code.')
       showToast(data.message || 'Invalid code.', 'error')
     }
   } catch { showToast('Connection error.', 'error') }
@@ -2640,7 +2703,7 @@ async function loadDatabaseData() {
         <div class="db-user-header" onclick="toggleUserFields('${escapeHtml(userKey)}')">
           ${avatarHtml}
           <span class="db-user-name">${escapeHtml(displayName)}</span>
-          <span class="db-user-expand" id="expand-${safeKey}">▶</span>
+          <span class="db-user-expand" id="expand-${safeKey}">${icon('chevronRight')}</span>
         </div>
         <div class="db-user-fields" id="fields-${safeKey}">
           ${['exp', 'limit', 'level', 'gems'].map(f => `

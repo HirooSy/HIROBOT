@@ -9,7 +9,7 @@ const {
 
 import fs from 'fs'
 import path from 'path'
-import P from 'pino'
+import Helper from '../../lib/utils/helper.js'
 import Connection from '../../lib/utils/connection.js'
 import { HelperConnection } from '../../lib/utils/simple.js'
 import db, { loadDatabase, getUserAutoReconnect as dbGetUserAutoReconnect, setUserAutoReconnect as dbSetUserAutoReconnect } from '../../lib/utils/database.js'
@@ -97,7 +97,7 @@ export async function startSubBot(jid, opts = {}) {
     const { type } = getSubbotConfig()
     const { state, saveCreds } = await Connection.resolveAuthState(type, subbotRelativePath(jid))
     const { version } = await fetchVersionWithTimeout()
-    const logger = P({ level: 'silent' })
+    const logger = Helper.P({ level: 'silent' })
 
     let isReconnecting = false
     let connGeneration = 0

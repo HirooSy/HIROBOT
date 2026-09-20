@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Login</title>
   <link rel="icon" type="image/x-icon" href="" id="favicon">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -37,7 +37,7 @@
       --warning: #ffaa44;
       --doc-pink: #e79ce0;
       --doc-green: #7fe0c2;
-      --font: 'IBM Plex Mono', monospace;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     body {
@@ -745,7 +745,23 @@
 
     .form-panel.active-panel {
       display: block;
-      animation: fadeUp 0.3s ease;
+    }
+
+    .panels-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panels-wrap.animating .form-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .panels-wrap.animating .form-panel.active-panel {
+      z-index: 2;
     }
 
     .input-group {
@@ -934,7 +950,9 @@
     }
 
     .modal-icon {
-      font-size: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 12px;
     }
 
@@ -1102,6 +1120,7 @@
       }
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
 
@@ -1123,7 +1142,7 @@
       <span class="accent" id="phero-title-b">Bot</span>
     </div>
     <div class="phero-desc" id="phero-desc">
-     Lightweight WhatsApp automation framework with AI agent, VoIP call, and WS Website, Built with Baileys and NodeJS v24+.
+      Lightweight WhatsApp automation framework with AI agent, VoIP call, and WS Website, Built with Baileys and NodeJS v24+.
     </div>
 
     <div class="phero-actions">
@@ -1142,7 +1161,7 @@
     </div>
 
     <div class="doc-footer">
-      <a href="https://github.com/hiroosy" target="_blank" rel="noopener" aria-label="GitHub">
+      <a href="#" data-enc="aHR0cHM6Ly9naXRodWIuY29tL2hpcm9vc3k=" id="gh-link" target="_blank" rel="noopener" aria-label="Source">
         <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       </a>
     </div>
@@ -1171,9 +1190,10 @@
         </div>
       </div>
 
+      <div class="panels-wrap" id="panels-wrap">
       <div id="login-panel" class="form-panel active-panel">
         <div id="login-alert" class="alert"></div>
-        <div class="input-group">
+        <div class="input-group panel-card">
           <label>WhatsApp Number</label>
           <div class="input-wrapper">
             <input type="tel" id="login-phone" placeholder="628123456789" inputmode="numeric">
@@ -1182,7 +1202,7 @@
             </svg>
           </div>
         </div>
-        <div class="input-group">
+        <div class="input-group panel-card">
           <label>Password</label>
           <div class="input-wrapper">
             <input type="password" id="login-password" placeholder="••••••••">
@@ -1196,12 +1216,12 @@
             </svg>
           </div>
         </div>
-        <button class="btn" id="login-btn" onclick="doLogin()">Login</button>
+        <button class="btn panel-card" id="login-btn" onclick="doLogin()">Login</button>
       </div>
 
       <div id="register-panel" class="form-panel">
         <div id="register-alert" class="alert"></div>
-        <div class="input-group">
+        <div class="input-group panel-card">
           <label>WhatsApp Number</label>
           <div class="input-wrapper">
             <input type="tel" id="register-phone" placeholder="628123456789" inputmode="numeric">
@@ -1210,7 +1230,7 @@
             </svg>
           </div>
         </div>
-        <div class="input-group">
+        <div class="input-group panel-card">
           <label>Password</label>
           <div class="input-wrapper">
             <input type="password" id="register-password" placeholder="min. 6 characters">
@@ -1224,7 +1244,7 @@
             </svg>
           </div>
         </div>
-        <div class="input-group">
+        <div class="input-group panel-card">
           <label>Confirm Password</label>
           <div class="input-wrapper">
             <input type="password" id="register-password2" placeholder="••••••••">
@@ -1237,7 +1257,8 @@
             </svg>
           </div>
         </div>
-        <button class="btn" id="register-btn" onclick="doRegister()">Register</button>
+        <button class="btn panel-card" id="register-btn" onclick="doRegister()">Register</button>
+      </div>
       </div>
     </div>
   </div>
@@ -1245,7 +1266,13 @@
 
 <div id="modal" class="modal-overlay" onclick="closeModal()">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-icon">⚠️</div>
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--error, #ff4444)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </div>
     <div class="modal-title">Number Not Found</div>
     <div class="modal-body" id="modal-body">This number is not listed in the database</div>
     <button class="modal-close" onclick="closeModal()">OK</button>
@@ -1430,16 +1457,96 @@
     btn.textContent = loading ? '...' : (btn.id === 'login-btn' ? 'Login' : 'Register')
   }
 
+  // ============ TAB SWITCH (garage-door slide: current panel up & out, new panel down & in) ============
+  let isTabAnimating = false
+
+  function measurePanelHeight(panelEl) {
+    const wasDisplay = panelEl.style.display
+    const wasPosition = panelEl.style.position
+    const wasVisibility = panelEl.style.visibility
+
+    panelEl.style.position = 'absolute'
+    panelEl.style.visibility = 'hidden'
+    panelEl.style.display = 'block'
+
+    const height = panelEl.scrollHeight
+
+    panelEl.style.display = wasDisplay
+    panelEl.style.position = wasPosition
+    panelEl.style.visibility = wasVisibility
+
+    return height
+  }
+
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (isTabAnimating) return
+      const tab = btn.getAttribute('data-tab')
+      const isLogin = tab === 'login'
+      const currentPanel = document.getElementById(isLogin ? 'register-panel' : 'login-panel')
+      const targetPanel = document.getElementById(isLogin ? 'login-panel' : 'register-panel')
+
+      if (targetPanel.classList.contains('active-panel')) return
+      isTabAnimating = true
+
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
       btn.classList.add('active')
-      const tab = btn.getAttribute('data-tab')
-      document.getElementById('tabs-highlight').style.transform = tab === 'register' ? 'translateX(100%)' : 'translateX(0)'
-      document.getElementById('login-panel').classList.toggle('active-panel', tab === 'login')
-      document.getElementById('register-panel').classList.toggle('active-panel', tab === 'register')
+      document.getElementById('tabs-highlight').style.transform = isLogin ? 'translateX(0)' : 'translateX(100%)'
       document.getElementById('login-alert').classList.remove('show')
       document.getElementById('register-alert').classList.remove('show')
+
+      const wrap = document.getElementById('panels-wrap')
+      const currentHeight = wrap.offsetHeight
+      const targetHeight = measurePanelHeight(targetPanel)
+
+      wrap.classList.add('animating')
+
+      gsap.killTweensOf([currentPanel, targetPanel, wrap])
+      gsap.set([currentPanel, targetPanel], { clearProps: 'transform' })
+      gsap.set(wrap, { height: currentHeight })
+      gsap.set(currentPanel, { y: 0 })
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          currentPanel.classList.remove('active-panel')
+          gsap.set(currentPanel, { clearProps: 'transform' })
+          gsap.set(targetPanel, { clearProps: 'transform' })
+          wrap.classList.remove('animating')
+          wrap.style.height = 'auto'
+          isTabAnimating = false
+        }
+      })
+
+      // Phase 1: close — current panel slides up and container collapses using the SAME progress driver
+      const closeState = { p: 0 }
+      tl.to(closeState, {
+        p: 1,
+        duration: 0.55,
+        ease: 'power2.in',
+        onUpdate: () => {
+          wrap.style.height = ((1 - closeState.p) * currentHeight) + 'px'
+          gsap.set(currentPanel, { y: -currentHeight * closeState.p })
+        }
+      })
+
+      // Swap panels at the fully-closed midpoint
+      tl.call(() => {
+        targetPanel.classList.add('active-panel')
+        gsap.set(targetPanel, { y: -targetHeight })
+      })
+
+      // Phase 2: open — new panel slides down and container expands using the SAME progress driver,
+      // so the panel's bottom edge (incl. the button) is never clipped ahead of the container's growth
+      const openState = { p: 0 }
+      tl.to(openState, {
+        p: 1,
+        duration: 0.35,
+        ease: 'power2.out',
+        onUpdate: () => {
+          wrap.style.height = (openState.p * targetHeight) + 'px'
+          gsap.set(targetPanel, { y: -targetHeight * (1 - openState.p) })
+        }
+      })
     })
   })
 
@@ -1952,6 +2059,16 @@
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   requestAnimationFrame(update);
+})();
+</script>
+<script>
+(function(){
+  document.querySelectorAll('a[data-enc]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.preventDefault();
+      window.open(atob(el.getAttribute('data-enc')), '_blank', 'noopener');
+    });
+  });
 })();
 </script>
 </body>
