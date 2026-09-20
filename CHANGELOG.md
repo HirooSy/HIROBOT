@@ -9,6 +9,9 @@
 • Cleanup legacy and unused modules
 • Optimize tunnel setup by replacing Promise-based connection waiting with a global callback mechanism for improved reliability
 • Implement robust error handling for tunnel initialization on connection open
+• Implement group history context in AI agent to improve conversation understanding, utilizing a new `chatlog` module for message unwrapping and context building
+• Add `readchat` tool for browsing group chat history
+• Update system instructions to include Group History guidelines
 
 ________________________
 
@@ -19,12 +22,15 @@ ________________________
 * Edit "lib/package/website/views/index.html"
 * Edit "lib/package/website/views/profile.html"
 * Edit "lib/scrapers/src/upload.js"
-* Edit "lib/utils/connection.js"
 * Edit "lib/utils/helper.js"
 * Edit "lib/utils/simple.js"
 * Edit "plugins/subbot/connect.js"
 - Delete "plugins/tools/bypass.js"
 * Edit "plugins/tools/resize.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/prompt.txt"
++ Add "lib/package/ai/chatlog.js"
++ Add "lib/package/ai/tools/readchat.js"
 ```
 </sub>
 
