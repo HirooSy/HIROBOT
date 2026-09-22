@@ -1,4 +1,5 @@
 const { webp2png } = global.scraper.ezgif
+import { jimp } from '../../lib/utils/canvas.js'
 import { S_WHATSAPP_NET, downloadMediaMessage, areJidsSameUser } from 'baileys'
 import Connection from '../../lib/utils/connection.js'
 
@@ -50,9 +51,5 @@ async function generateProfilePicture(mediaUpload) {
     ? mediaUpload
     : Buffer.from(mediaUpload.stream);
 
-  const sharp = (await import('sharp')).default;
-  return sharp(bufferOrFilePath)
-    .resize(720, 720, { fit: 'inside' })
-    .jpeg()
-    .toBuffer();
+  return jimp.resize(bufferOrFilePath, 720, 720, { fit: 'inside', out: 'jpeg' });
 }

@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import { jimp } from '../../lib/utils/canvas.js';
 import axios from 'axios';
 import Helper from '../../lib/utils/helper.js';
 const { fileTypeFromBuffer } = Helper;
@@ -13,7 +13,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   var media = await q.download()
   var isMedia = /image\/(png|jpe?g)/.test(mime)
   if (!isMedia) throw `- Mime ${mime} not Supported`
-  var sourceMeta = await sharp(media).metadata()
+  var sourceMeta = jimp.metadata(media)
   var size = { before:{ height: sourceMeta.height, width: sourceMeta.width },
                after:{ height: toheight, width: towidth } }
   var compres = await conn.resize(media, towidth - 0, toheight - 0)

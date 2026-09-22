@@ -171,7 +171,6 @@ handler.command = /^migratedb$/i
 handler.tags = ['owner']
 handler.help = ['migratedb <local-cloud/cloud-local>']
 handler.rowner = true
-handler.private = true
 handler.ai = { risk: 'low', description: 'migrate database contents between local sqlite and mongodb/mysq' }
 
 export default handler
