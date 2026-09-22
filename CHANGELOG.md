@@ -7,6 +7,12 @@
 • Refactor brat scraper for improved stability and functional consistency
 • Dependency updates in package.json and configuration sync
 • Cleanup of legacy plugins and minor maintenance across core utilities
+• Implement isolated extra connection update listener and diagnostic logging for Baileys socket disconnects
+• Add periodic diagnostic timer to WaCallMediaSession reporting real-time VoIP performance metrics (SCTP queue, Opus codec, and packet loss stats)
+• Enable RFC 7675-style ICE consent refreshes on WaManualRelay for open connections to prevent random mid-call drops, and defer DTLS initialization until ICE binding is verified
+• Route WhatsApp web-call media channels as unordered SCTP chunks and handle immediate delivery on receipt to bypass stream sequencing issues under packet loss
+• Improve bot process restart sequence on 'reset' signal by deferring restart until the child process has fully exited
+• Update e621 search plugin tags and bump bot version to 1.2.1
 
 ________________________
 
@@ -22,6 +28,13 @@ ________________________
 * Edit ".env.example"
 * Edit "README.md"
 * Edit "plugins/owner/migratedb.js"
+* Edit "lib/main.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/relay/WaManualRelay.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
+* Edit "lib/start.js"
+* Edit "lib/utils/connection.js"
+* Edit "plugins/dl/e621.js"
 ```
 </sub>
 
