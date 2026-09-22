@@ -564,7 +564,7 @@ let handler = async (m, { conn, text }) => {
 };
 
 handler.help = handler.command = ['e621'];
-handler.tags = ["downloader"]
+handler.tags = ["downloader", "adult"]
 handler.limit = 1;
 handler.ai = { risk: "low", description: "search e621 posts using keywords, download post using post id" }
 
