@@ -21,7 +21,7 @@ ________________________
 * Edit "package.json"
 * Edit ".env.example"
 * Edit "README.md"
-- Delete "plugins/owner/migratedb.js"
+* Edit "plugins/owner/migratedb.js"
 ```
 </sub>
 
