@@ -8,7 +8,7 @@
 > Please read the [<code>LICENSE</code>](https://github.com/HirooSy/HIROBOT/blob/main/LICENSE) before using this project! You're free to recode it, but do not sell or claim this project as your own. <b>Do not change the License.</b> if you modify it, <b>please credit me in your License.</b>
 
 > [!NOTE]
-> Hirobot is A Lightweight WhatsApp bot that integrates an AI agent, VoIP calling capabilities, and a dedicated web portal for users. Built with Baileys and NodeJS v24+.
+> High-performance WhatsApp bot with AI agent, VoIP calling capabilities, and a website feature. Built with Baileys and NodeJS v24+.
 > 
 > ---
 > 
@@ -17,10 +17,10 @@
 > - [x] AI Agent Using Gemini.
 > - [x] 1:1 Voice & Video Call.
 > - [x] Multi Sessions.
-> - [x] Database Node:Sqlite / Mongodb.
+> - [x] Database node:sqlite / Mongodb / MySql2.
 > - [x] Support AI Rich and Button Message.
 > - [x] Cloudflared Tunnel Website.
-> - [x] Minimal Depedencies.
+> - [x] Lightweight & High-performance.
 
 ---
 
