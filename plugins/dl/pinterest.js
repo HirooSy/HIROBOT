@@ -146,11 +146,11 @@ let handler = async (m, { conn, args }) => {
 
     for (const media of medias) {
       if ((media.type === 'gif' || media.isGif === true) && (mode === 'all' || mode === 'gif')) {
-        items.push({ type: 'gif', rawUrl: media.url, pinUrl: pin.pin_url, title: pin.title });
+        items.push({ type: 'gif', rawUrl: media.url, thumbUrl: media.thumbnailUrl, pinUrl: pin.pin_url, title: pin.title });
       } else if (media.type === 'image' && mode !== 'video') {
-        items.push({ type: 'image', rawUrl: media.url, pinUrl: pin.pin_url, title: pin.title });
+        items.push({ type: 'image', rawUrl: media.url, thumbUrl: media.thumbnailUrl, pinUrl: pin.pin_url, title: pin.title });
       } else if (media.type === 'video' && mode !== 'image') {
-        items.push({ type: 'video', rawUrl: media.url, pinUrl: pin.pin_url, title: pin.title });
+        items.push({ type: 'video', rawUrl: media.url, thumbUrl: media.thumbnailUrl, pinUrl: pin.pin_url, title: pin.title });
       }
     }
 
@@ -158,23 +158,13 @@ let handler = async (m, { conn, args }) => {
   }
 
   // ─── Resolve preview thumbnails ─────────────────────────────────────────
-  // Images: previewed through the bot's own /api/proxy-image endpoint (same
-  // fix used for e621) instead of downloading+base64-encoding every item up
-  // front - keeps this fast even at 50 items.
-  // Gif/video: ffmpeg grabs the first frame directly from the raw media URL
-  // (no conversion/upload needed just to preview it) and that gets embedded
-  // as base64, since it's a local file either way once ffmpeg's done with it.
-  async function resolveThumb(item) {
-    if (item.type === 'image') return item.rawUrl; // proxied client-side
-    try {
-      const buf = await extractFirstFrame(item.rawUrl)
-      return `data:image/jpeg;base64,${buf.toString('base64')}`
-    } catch (err) {
-      console.error(`${item.type} first-frame error:`, err.message)
-      return ''
-    }
-  }
-  const thumbs = await Promise.all(items.map(resolveThumb))
+  // Sebelumnya: tiap gif/video menjalankan ffmpeg SERENTAK (Promise.all) sebelum pesan
+  // dikirim - sampai 50 proses ffmpeg, inilah yang bikin lama banget. Sekarang semua item
+  // cukup memakai URL preview ringan (474x) dari Pinterest lewat /api/proxy, sama seperti
+  // e621: tidak ada download/ffmpeg di sisi server saat search.
+  // Kalau sebuah gif tidak punya preview statis, ffmpeg dipakai LAZY (hanya saat slide itu
+  // dibuka) lewat thumbToken di bawah, bukan untuk semua item di depan.
+  const thumbs = items.map(item => item.thumbUrl || '')
 
   // ─── Kirim dengan AiRich ──────────────────────────────────────────────
   try {
@@ -239,6 +229,14 @@ let handler = async (m, { conn, args }) => {
         singleUse: false,
         run: async (conn, chatId, args) => {
           const url = args?.url
+          const idxArg = Number(args?.index)
+          // Lazy: item tanpa preview statis (mis. gif) -> ambil frame pertama SEKARANG, 1 item saja.
+          if ((!url || typeof url !== 'string') && Number.isInteger(idxArg) && items[idxArg]) {
+            const it = items[idxArg]
+            if (it.type === 'image') throw new Error('No fallback for image.')
+            const buf = await extractFirstFrame(it.rawUrl)
+            return { dataUri: `data:image/jpeg;base64,${buf.toString('base64')}` }
+          }
           if (!url || typeof url !== 'string') throw new Error('Missing url.')
           // Same VPS-to-CDN flakiness as e621's fallback - retry once more
           // with a longer timeout before giving up.
@@ -319,7 +317,7 @@ let idx = 0;
 function proxify(url) {
   if (!url) return '';
   if (url.startsWith('data:')) return url;
-  return apiBase ? apiBase + '/api/proxy-image?url=' + encodeURIComponent(url) : url;
+  return apiBase ? apiBase + '/api/proxy?url=' + encodeURIComponent(url) : url;
 }
 
 const imgEl = document.getElementById('img');
@@ -327,6 +325,27 @@ const spinnerEl = document.getElementById('spinner');
 const counterEl = document.getElementById('counter');
 const playIconEl = document.getElementById('playIcon');
 const dlBtn = document.getElementById('dl');
+
+const preloaded = new Set();
+function preload(i) {
+  const n = ((i % thumbs.length) + thumbs.length) % thumbs.length;
+  const raw = thumbs[n];
+  if (!raw || raw.startsWith('data:') || preloaded.has(n)) return;
+  preloaded.add(n);
+  const im = new Image();
+  im.decoding = 'async';
+  im.src = proxify(raw);
+}
+
+async function firstFrameFallback() {
+  // Item tanpa preview statis (mis. gif) atau preview gagal dimuat -> minta server ambil
+  // frame pertama untuk SLIDE INI saja (bukan untuk semua item di depan).
+  if (thumbToken) {
+    const r = await sendAction({ type: 'aiRichAction', token: thumbToken, index: idx }, 20000);
+    if (r.success && r.dataUri) { imgEl.src = r.dataUri; return true; }
+  }
+  return false;
+}
 
 function render(){
   const raw = thumbs[idx];
@@ -339,24 +358,32 @@ function render(){
     imgEl.style.visibility = 'visible';
   };
   imgEl.onerror = async () => {
-    if (!retried) {
+    if (!retried && src) {
       retried = true;
       setTimeout(() => {
         imgEl.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
-      }, 800);
+      }, 500);
       return;
     }
-    if (thumbToken && raw && !raw.startsWith('data:')) {
+    if (raw && !raw.startsWith('data:') && thumbToken) {
       const result = await sendAction({ type: 'aiRichAction', token: thumbToken, url: raw });
       if (result.success && result.dataUri) { imgEl.src = result.dataUri; return; }
     }
+    if (await firstFrameFallback()) return;
     spinnerEl.style.display = 'none';
     imgEl.style.visibility = 'visible';
   };
-  imgEl.src = src;
+  if (src) {
+    imgEl.fetchPriority = 'high';
+    imgEl.src = src;
+  } else {
+    firstFrameFallback().then(ok => { if (!ok) { spinnerEl.style.display = 'none'; imgEl.style.visibility = 'visible'; } });
+  }
   const typeLabel = types[idx] === 'video' ? 'Video' : (types[idx] === 'gif' ? 'GIF' : 'Image');
-  counterEl.textContent = (idx + 1) + ' / ' + thumbs.length + '  —  ' + typeLabel;
+  counterEl.textContent = (idx + 1) + ' / ' + thumbs.length + '  \u2014  ' + typeLabel;
   playIconEl.style.display = (types[idx] === 'video' || types[idx] === 'gif') ? 'flex' : 'none';
+  // Preload 2 slide ke depan & 1 ke belakang supaya geser terasa instan.
+  preload(idx + 1); preload(idx + 2); preload(idx - 1);
 }
 document.getElementById('prev').addEventListener('click', () => { idx = (idx - 1 + thumbs.length) % thumbs.length; render(); });
 document.getElementById('next').addEventListener('click', () => { idx = (idx + 1) % thumbs.length; render(); });

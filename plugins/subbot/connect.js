@@ -10,7 +10,7 @@ const {
 import fs from 'fs'
 import path from 'path'
 import Helper from '../../lib/utils/helper.js'
-import Connection from '../../lib/utils/connection.js'
+import Connection, { generateQR } from '../../lib/utils/connection.js'
 import { HelperConnection } from '../../lib/utils/simple.js'
 import db, { loadDatabase, getUserAutoReconnect as dbGetUserAutoReconnect, setUserAutoReconnect as dbSetUserAutoReconnect } from '../../lib/utils/database.js'
 
@@ -201,7 +201,17 @@ export async function startSubBot(jid, opts = {}) {
     }
 
     async function connectionUpdate(update) {
-        const { connection, lastDisconnect } = update
+        const { connection, lastDisconnect, qr } = update
+
+        // Show QR in terminal jika qr: true di config subbot
+        const subbotConn = global.settings.connection.subbot
+        if (qr && subbotConn && subbotConn.qr) {
+            generateQR(qr, { small: true }, (output) => {
+                console.log(`\n[Subbot: ${jid}]`)
+                console.log(output)
+            })
+        }
+
         if (!connection) return
 
         if (connection === 'open') {
@@ -271,23 +281,13 @@ export async function autoConnectSubBots() {
         .slice(0, max)
     if (jids.length === 0) return
 
-    console.log(`[subbot] Auto-reconnecting ${jids.length} saved session(s)...`)
-
     for (const jid of jids) {
         if (Connection.conns.has(jid)) continue
 
         startSubBot(jid, {
-            onOpen: (subConn) => {
-                console.log(`[subbot] Auto-reconnected: ${subConn.user?.id?.split('@')[0] || jid.split('@')[0]}`)
-            },
-            onReconnecting: () => {
-                console.log(`[subbot] Reconnecting: ${jid.split('@')[0]}`)
-            },
-            onClose: (_subConn, statusCode, loggedOut) => {
-                console.log(loggedOut
-                    ? `[Subbot] Session logged out and removed: ${jid.split('@')[0]}`
-                    : `[Subbot] Session closed: ${jid.split('@')[0]}`)
-            },
+            onOpen: () => {},
+            onReconnecting: () => {},
+            onClose: () => {},
         }).catch(err => console.error(`[Subbot] Failed to auto-reconnect ${jid.split('@')[0]}:`, err))
     }
 }

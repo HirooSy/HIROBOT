@@ -1,3 +1,40 @@
+<h3>24/September/2026</h3>
+<sub>
+
+```diff
+• Massive overhaul and cleanup of core AI interactions and MCP utility
+• Comprehensive dashboard update including new styling, refined views, and server optimizations
+• Significant enhancements to VoIP and SCTP relay stability
+• Core utility refactoring for database, connection, and messaging
+• Downloader plugin updates for Spotify, Pinterest, and e621
+• Cleanup of legacy modules and minor general maintenance
+
+________________________
+
+* Edit "README.md"
+* Edit "lib/config.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
+* Edit "lib/package/voip/relay/sctp/wire.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/package/website/views/index.html"
+* Edit "lib/package/website/views/profile.html"
+* Edit "lib/scrapers/src/pinterest.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/database.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+- Delete "plugins/ai/mistral.js"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/dl/pinterest.js"
+* Edit "plugins/dl/spotify.js"
+* Edit "plugins/owner/backup.js"
+* Edit "plugins/subbot/connect.js"
++ Add "lib/package/website/views/style.css"
+```
+</sub>
+
 <h3>22/September/2026</h3>
 <sub>
 
@@ -161,33 +198,5 @@ ________________________
 * Edit "lib/utils/simple.js"
 * Edit "plugins/owner/call.js"
 + Add "lib/package/voip/voipClient.js"
-```
-</sub>
-
-<h3>13/September/2026</h3>
-<sub>
-
-```diff
-• Proactively force reconnection on internal Baileys socket errors to reduce watchdog-triggered restarts
-• Implement row-level locking for the SQLite signal key store to prevent race conditions during concurrent key access
-• Add new AI utility (notrack), manga downloader (shinigami), and image tools (bypass, iloveimg, removebg, wink)
-• Fix auto save database when sigterm / sigkill
-• Refactor tunnel token/hostname env vars and implement Workers KV-based tunnel URL synchronization for cross-client communication
-• Add comprehensive documentation in README.md detailing various website exposure scenarios and their required environment configurations
-• Update .env.example with the new Cloudflare KV and Tunnel configuration variables
-
-________________________
-
-* Edit "lib/main.js"
-* Edit "lib/utils/connection.js"
-+ Add "plugins/ai/notrack.js"
-+ Add "plugins/dl/shinigami.js"
-+ Add "plugins/tools/bypass.js"
-+ Add "plugins/tools/iloveimg.js"
-+ Add "plugins/tools/removebg.js"
-+ Add "plugins/tools/wink.js"
-* Edit "lib/utils/database.js"
-* Edit "README.md"
-* Edit ".env.example"
 ```
 </sub>

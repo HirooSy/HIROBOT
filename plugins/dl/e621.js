@@ -125,7 +125,7 @@ async function resolveThumbs(posts) {
 // recovering from persistent per-item failures.
 async function fetchThumbAsBase64(url) {
     // VPS-to-CDN connectivity has been intermittently slow (see the
-    // /api/proxy-image retry logic for the same issue) - retry once more
+    // /api/proxy retry logic for the same issue) - retry once more
     // here with a longer timeout, since this fallback only runs for the
     // handful of thumbnails that already failed the proxy twice.
     let lastErr;
@@ -212,7 +212,7 @@ function buildGalleryHtml(posts, keywords, page, hasNext, token, pageToken, thum
     const proxify = (url) => {
         if (!url) return '';
         if (url.startsWith('data:')) return url;
-        return httpsApiBase ? `${httpsApiBase}/api/proxy-image?url=${encodeURIComponent(url)}` : url;
+        return httpsApiBase ? `${httpsApiBase}/api/proxy?url=${encodeURIComponent(url)}` : url;
     };
     const cards = posts.map((p, i) => ({
         thumb: proxify((thumbs && thumbs[i]) || ''),
@@ -276,7 +276,7 @@ let hasNext = ${hasNext ? 'true' : 'false'};
 function proxifyClient(url) {
   if (!url) return '';
   if (url.startsWith('data:')) return url;
-  return apiBase ? apiBase + '/api/proxy-image?url=' + encodeURIComponent(url) : url;
+  return apiBase ? apiBase + '/api/proxy?url=' + encodeURIComponent(url) : url;
 }
 
 const grid = document.getElementById('grid');
@@ -547,7 +547,7 @@ let handler = async (m, { conn, text }) => {
         const rawServer = typeof global.opts?.server === 'string' ? global.opts.server : '';
         const apiBase = rawServer.replace(/\/$/, '');
         const apiHost = apiBase.replace(/^https?:\/\//, '');
-        // Thumbnails are loaded through the bot's own /api/proxy-image
+        // Thumbnails are loaded through the bot's own /api/proxy
         // endpoint (server fetches e621's CDN, WebView fetches the bot's
         // own origin) - so only the bot's own host needs to be trusted,
         // both for the proxied images and the WebSocket bridge.
