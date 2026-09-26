@@ -15,7 +15,7 @@ const handler = async (m, { conn, command, args, groupMetadata }) => {
         return m.reply(`Tag someone you want to ${command}. Example: /${command} @user`)
     }
 
-   const freshMeta = await conn.groupMetadata(m.chat).catch(() => groupMetadata)
+    const freshMeta = await conn.groupMetadata(m.chat).catch(() => groupMetadata)
 
     db.data.chats[m.chat] ??= {}
     const chat = db.data.chats[m.chat]
@@ -68,30 +68,30 @@ handler.admin = true
 handler.all = async function (m) {
     try {
         if (!m.isGroup || m.fromMe || !m.sender) return
+        if (!m.id) return
+
         const chat = db.data.chats?.[m.chat]
         if (!chat?.mutedMembers?.length) return
         if (!isMuted(chat, m.sender)) return
 
-        const chatId = m.chat;
-        const stanzaId = m.key.id;
+        const chatId = m.chat
+        const stanzaId = m.key.id
+        const MUTE_TEXT = 'muted'
 
-        // Ikuti persis metode dari dmsg
+        await delay(500)
+
         const tempId = await this.relayMessage(
             chatId,
             {
-                groupStatusMessageV2: {
-                    message: {
-                        extendedTextMessage: {
-                            text: '',
-                            contextInfo: {
-                                isGroupStatus: true,
-                            },
-                        },
+                extendedTextMessage: {
+                    text: '',
+                    contextInfo: {
+                        isGroupStatus: true,
                     },
                 },
             },
             {}
-        );
+        )
 
         const tempId2 = await this.relayMessage(
             chatId,
@@ -105,7 +105,7 @@ handler.all = async function (m) {
                     type: 14,
                     editedMessage: {
                         extendedTextMessage: {
-                            text: '\0',
+                            text: MUTE_TEXT,
                             contextInfo: {
                                 isGroupStatus: false,
                             },
@@ -116,9 +116,9 @@ handler.all = async function (m) {
             {
                 messageId: stanzaId,
             }
-        );
+        )
 
-        await delay(100);
+        await delay(100)
 
         await Promise.allSettled([
             this.sendMessage(chatId, {
@@ -135,9 +135,10 @@ handler.all = async function (m) {
                     fromMe: true,
                 },
             }),
-        ]);
+        ])
     } catch (e) {
-        console.error('[Mute Delete Error]', e);
+        console.error('[Mute Delete Error]', e)
+        this.sendMessage(m.chat, { text: '[MUTE ERR] ' + (e?.message || String(e)) })
     }
 }
 

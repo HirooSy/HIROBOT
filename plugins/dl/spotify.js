@@ -3,11 +3,11 @@ import { URL_REGEX } from 'baileys';
 
 let handler = async(m, { conn, usedPrefix, command, text }) => {
     let chat = db.data.chats[m.chat]
-    if (!text) return m.reply(`> *SEARCH -* [ ${usedPrefix + command} <Music_name> ]\n> *DOWNLOAD -* [ ${usedPrefix + command} <Spotify_link> ]\n> *PLAYER  -* tambahkan *--html* di akhir buat tampilan player interaktif`)
+    if (!text) return m.reply(`> *SEARCH -* [ ${usedPrefix + command} <Music_name> ]\n> *DOWNLOAD -* [ ${usedPrefix + command} <Spotify_link> ]\n> *PLAYER  -* add *--html* at the end for the interactive player view`)
 
     const htmlMode = /(^|\s)--html(\s|$)/i.test(text)
     text = text.replace(/--html/gi, '').trim()
-    if (!text) return m.reply(`> Kasih judul lagu atau link Spotify-nya juga ya.\n> Contoh: ${usedPrefix + command} shape of you --html`)
+    if (!text) return m.reply(`> Please provide a song title or a Spotify link too.\n> Example: ${usedPrefix + command} shape of you --html`)
 
     const pickMatch = text.match(/^--pick\s+(\S+)$/i)
     if (pickMatch) {
@@ -15,7 +15,7 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
         try {
             track = JSON.parse(Buffer.from(pickMatch[1], 'base64').toString('utf8'))
         } catch (err) {
-            return m.reply("- Failed to get song data.\n- Debug: payload tidak valid")
+            return m.reply("- Failed to get song data.\n- Debug: invalid payload")
         }
 
         let result
@@ -91,7 +91,7 @@ let handler = async(m, { conn, usedPrefix, command, text }) => {
         }
 
         if (!result) {
-            return m.reply("- Failed to get song data.\n- Debug: track tidak ditemukan di spotsaver.net")
+            return m.reply("- Failed to get song data.\n- Debug: track not found on spotsaver.net")
         }
 
         return sendTrackResult(m, conn, chat, result)
@@ -106,7 +106,7 @@ async function sendTrackResult(m, conn, chat, result) {
     const audioUrl  = links.mp3
 
     if (!audioUrl) {
-        return m.reply("- Failed to get song data.\n- Debug: link mp3 kosong, cek console log.")
+        return m.reply("- Failed to get song data.\n- Debug: mp3 link is empty, check the console log.")
     }
 
     let thumbBuffer
@@ -174,6 +174,83 @@ const y2mateClient = axios.create({
   transformResponse: [v => v]
 })
 
+
+// ─── Audio over WebSocket ────────────────────────────────────────────────────
+// The rich-message WebView runs in a sandbox (origin=null): fetch() and <audio src=http...>
+// requests TO OUR OWN SERVER ARE BLOCKED (confirmed via .audiotest: fetch/proxy tests failed),
+// while WebSocket works and <audio> with a Blob/data-URI plays fine (data-URI/Blob tests passed).
+// So: the server downloads the mp3 itself, the client pulls it in chunks over WebSocket
+// (the same aiRichAction channel the Download button uses), then feeds it to <audio>.
+const AUDIO_CHUNK_BYTES = 192 * 1024              // 192KB -> ~256KB base64 per WS message
+const AUDIO_CACHE_TTL   = 20 * 60 * 1000
+const AUDIO_CACHE_MAX   = 6
+const AUDIO_MAX_BYTES   = 25 * 1024 * 1024
+const audioCache = new Map()                      // rawUrl -> { buf, mime, expiresAt } or { pending }
+
+function pruneAudioCache() {
+    const now = Date.now()
+    for (const [k, v] of audioCache) if (v.expiresAt && now > v.expiresAt) audioCache.delete(k)
+    while (audioCache.size > AUDIO_CACHE_MAX) audioCache.delete(audioCache.keys().next().value)
+}
+
+async function loadAudioBuffer(rawUrl) {
+    pruneAudioCache()
+    const hit = audioCache.get(rawUrl)
+    if (hit?.buf) { hit.expiresAt = Date.now() + AUDIO_CACHE_TTL; return hit }
+    if (hit?.pending) return hit.pending
+
+    const pending = (async () => {
+        const res = await axios.get(rawUrl, {
+            responseType: 'arraybuffer',
+            timeout: 120000,
+            maxContentLength: AUDIO_MAX_BYTES,
+            maxBodyLength: AUDIO_MAX_BYTES,
+            headers: { 'User-Agent': UA },
+            validateStatus: s => s < 600
+        })
+        if (res.status >= 400) throw new Error('Audio download failed: HTTP ' + res.status)
+        const buf = Buffer.from(res.data)
+        if (!buf.length) throw new Error('Audio download failed: empty file')
+        const head = buf.subarray(0, 64).toString('latin1')
+        if (/^\s*(<!doctype|<html|\{)/i.test(head)) throw new Error('Audio download failed: response is not audio')
+        const entry = { buf, mime: 'audio/mpeg', expiresAt: Date.now() + AUDIO_CACHE_TTL }
+        audioCache.set(rawUrl, entry)
+        return entry
+    })()
+    audioCache.set(rawUrl, { pending })
+    try { return await pending } catch (e) { audioCache.delete(rawUrl); throw e }
+}
+
+// Called by the WS action: { op:'meta' } -> size & chunk count, { op:'chunk', n } -> base64 data
+async function serveAudioChunk(rawUrl, args) {
+    const entry = await loadAudioBuffer(rawUrl)
+    const total = Math.ceil(entry.buf.length / AUDIO_CHUNK_BYTES)
+    if (args?.op === 'chunk') {
+        const n = Number(args.n)
+        if (!Number.isInteger(n) || n < 0 || n >= total) throw new Error('Chunk out of range')
+        const part = entry.buf.subarray(n * AUDIO_CHUNK_BYTES, (n + 1) * AUDIO_CHUNK_BYTES)
+        return { n, total, data: part.toString('base64') }
+    }
+    return { size: entry.buf.length, total, mime: entry.mime }
+}
+
+
+// Album cover: <img src=http> is blocked by the WebView sandbox too -> send it as a data-URI over WS.
+const coverCache = new Map()
+async function fetchCoverDataUri(url) {
+    if (!/^https?:\/\//i.test(url || '')) throw new Error('Invalid cover URL')
+    if (coverCache.has(url)) return coverCache.get(url)
+    const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000, maxContentLength: 3 * 1024 * 1024, headers: { 'User-Agent': UA }, validateStatus: s => s < 600 })
+    if (res.status >= 400) throw new Error('Cover HTTP ' + res.status)
+    const buf = Buffer.from(res.data)
+    const ct = String(res.headers['content-type'] || '').split(';')[0].trim().toLowerCase()
+    const mime = /^image\//.test(ct) ? ct : (/\.png(\?|$)/i.test(url) ? 'image/png' : 'image/jpeg')
+    const uri = `data:${mime};base64,${buf.toString('base64')}`
+    if (coverCache.size >= 40) coverCache.delete(coverCache.keys().next().value)
+    coverCache.set(url, uri)
+    return uri
+}
+
 function parseJson(d) {
   if (typeof d === "string") { try { return JSON.parse(d) } catch (_) { return null } }
   return d
@@ -194,18 +271,18 @@ function pickTrack(t) {
 }
 
 async function spotsaverSearch(q) {
-  if (!q) throw new Error("Query kosong")
+  if (!q) throw new Error("Empty query")
   const r = await client.get(BASE + "/api/spotify", { params: { q } })
   const d = parseJson(r.data)
-  if (r.status >= 400 || !d?.items) throw new Error("Search gagal: HTTP " + r.status)
+  if (r.status >= 400 || !d?.items) throw new Error("Search failed: HTTP " + r.status)
   return { query: q, type: d.type || "search", count: d.items.length, items: d.items.map(pickTrack) }
 }
 
 async function spotsaverInfo(url) {
-  if (!url) throw new Error("URL kosong")
+  if (!url) throw new Error("Empty URL")
   const r = await client.get(BASE + "/api/spotify", { params: { url } })
   const d = parseJson(r.data)
-  if (r.status >= 400 || !d?.items) throw new Error("Info gagal: HTTP " + r.status)
+  if (r.status >= 400 || !d?.items) throw new Error("Info request failed: HTTP " + r.status)
   return { type: d.type, url, count: d.items.length, items: d.items.map(pickTrack) }
 }
 
@@ -267,7 +344,7 @@ async function y2mateAuth() {
     params: { api_key: Y2MATE_KEY, _: Date.now() }
   })
   const d = parseJson(r.data)
-  if (!d?.key) throw new Error("y2mate auth gagal: " + JSON.stringify(d).slice(0, 200))
+  if (!d?.key) throw new Error("y2mate auth failed: " + JSON.stringify(d).slice(0, 200))
   return d.key
 }
 
@@ -277,7 +354,7 @@ async function y2mateInit(key) {
     headers: { Authorization: "Bearer " + key }
   })
   const d = parseJson(r.data)
-  if (!d?.convertURL) throw new Error("y2mate init gagal: " + JSON.stringify(d).slice(0, 200))
+  if (!d?.convertURL) throw new Error("y2mate init failed: " + JSON.stringify(d).slice(0, 200))
   return d
 }
 
@@ -331,7 +408,7 @@ async function y2mateGetMp3(videoId) {
     }
   }
 
-  if (!downloadURL) throw new Error("y2mate: downloadURL tidak ditemukan")
+  if (!downloadURL) throw new Error("y2mate: downloadURL not found")
   return downloadURL + "&v=" + videoId + "&f=mp3&r=y2mate.gs"
 }
 
@@ -343,7 +420,7 @@ async function searchSpotify(query) {
     const normalizedQuery = String(query || "").trim();
 
     if (!normalizedQuery) {
-        return { success: false, message: "Query pencarian tidak boleh kosong" };
+        return { success: false, message: "Search query must not be empty" };
     }
 
     const cacheKey = normalizedQuery.toLowerCase();
@@ -376,7 +453,7 @@ async function searchSpotify(query) {
                 success: results.length > 0,
                 total: results.length,
                 results,
-                message: results.length ? undefined : 'Tidak ada hasil ditemukan'
+                message: results.length ? undefined : 'No results found'
             };
 
             searchCache.set(cacheKey, {
@@ -388,7 +465,7 @@ async function searchSpotify(query) {
         } catch (error) {
             return {
                 success: false,
-                message: error.message || "Gagal mencari lagu"
+                message: error.message || "Failed to search for songs"
             };
         } finally {
             pendingSearches.delete(cacheKey);
@@ -402,7 +479,7 @@ async function searchSpotify(query) {
 async function spotifyDownloadByTrack(title, artist, album, thumbnail) {
     const searchQuery = title + (artist ? ' ' + artist : '');
     const yt = await ytmSearch(searchQuery);
-    if (!yt.length) throw new Error('Tidak ada hasil di YouTube Music');
+    if (!yt.length) throw new Error('No results on YouTube Music');
     const top = yt[0];
 
     const mp3Url = await y2mateGetMp3(top.videoId);
@@ -430,7 +507,7 @@ async function spotifyDownloadByUrl(spotifyUrl) {
 }
 
 async function sendHtmlTrackPlayer(m, conn, spotifyUrl) {
-    await m.reply('🔎 Mengambil data lagu...')
+    await m.reply('🔎 Fetching song data...')
 
     let result
     try {
@@ -438,7 +515,7 @@ async function sendHtmlTrackPlayer(m, conn, spotifyUrl) {
     } catch (err) {
         throw `- Failed to get song data.\n- Debug: ${err.message}`
     }
-    if (!result?.links?.mp3) throw '- Failed to get song data.\n- Debug: link mp3 kosong / track tidak ditemukan.'
+    if (!result?.links?.mp3) throw '- Failed to get song data.\n- Debug: mp3 link is empty / track not found.'
 
     const { metadata, links } = result
     const rawAudioUrl = links.mp3
@@ -453,7 +530,7 @@ async function sendHtmlTrackPlayer(m, conn, spotifyUrl) {
         title: trackTitle,
         artists: metadata.artist ? [metadata.artist] : [],
         album: { cover: proxyUrl(httpsApiBase, rawCoverUrl) },
-        audioUrl: proxyUrl(httpsApiBase, rawAudioUrl, 'https://y2mate.gs/'),
+        audioUrl: 'ws',
     }
 
     const downloadToken = global.registerHtmlAction({
@@ -465,9 +542,21 @@ async function sendHtmlTrackPlayer(m, conn, spotifyUrl) {
         }
     })
 
+    const audioToken = global.registerHtmlAction({
+        chatId: m.chat,
+        singleUse: false,
+        run: async (conn, chatId, args) => serveAudioChunk(rawAudioUrl, args)
+    })
+
+    const coverToken = global.registerHtmlAction({
+        chatId: m.chat,
+        singleUse: false,
+        run: async () => ({ dataUri: await fetchCoverDataUri(rawCoverUrl) })
+    })
+
     const rich = conn.aiRich().setTitle('Spotify Player')
     rich.addHtml(
-        buildSpotifyPlayerHtml({ tracks: [track], downloadToken, resolveToken: null, apiBase: httpsApiBase, single: true }),
+        buildSpotifyPlayerHtml({ tracks: [track], downloadToken, resolveToken: null, audioToken, coverToken, apiBase: httpsApiBase, single: true }),
         { trustedSources: apiHost ? [apiHost] : [] }
     )
     await rich.send(m.chat, { quoted: m })
@@ -475,7 +564,7 @@ async function sendHtmlTrackPlayer(m, conn, spotifyUrl) {
 
 async function sendHtmlSearchPlayer(m, conn, query) {
     const res = await searchSpotify(query)
-    if (!res?.success || !res?.results?.length) throw '- *Error:* ' + (res?.message || 'Tidak ada hasil ditemukan')
+    if (!res?.success || !res?.results?.length) throw '- *Error:* ' + (res?.message || 'No results found')
 
     const apiBase = (typeof global.opts?.server === 'string' ? global.opts.server : '').replace(/\/$/, '')
     const httpsApiBase = apiBase ? apiBase.replace(/^http:\/\//, 'https://') : ''
@@ -513,10 +602,28 @@ async function sendHtmlSearchPlayer(m, conn, query) {
                 rt.rawAudioUrl = result.links.mp3
                 if (!rt.rawCover) rt.rawCover = result.links.cover || result.metadata?.cover || null
             }
-            return {
-                audioUrl: proxyUrl(httpsApiBase, rt.rawAudioUrl, 'https://y2mate.gs/'),
-                cover: proxyUrl(httpsApiBase, rt.rawCover)
-            }
+            return { audioUrl: 'ws', cover: null }
+        }
+    })
+
+    const audioToken = global.registerHtmlAction({
+        chatId: m.chat,
+        singleUse: false,
+        run: async (conn, chatId, args) => {
+            const i = Number(args?.index) || 0
+            const rt = rawTracks[i]
+            if (!rt?.rawAudioUrl) throw new Error('Track is not ready yet, press play first.')
+            return serveAudioChunk(rt.rawAudioUrl, args)
+        }
+    })
+
+    const coverToken = global.registerHtmlAction({
+        chatId: m.chat,
+        singleUse: false,
+        run: async (conn, chatId, args) => {
+            const rt = rawTracks[Number(args?.index) || 0]
+            if (!rt?.rawCover) throw new Error('This track has no cover.')
+            return { dataUri: await fetchCoverDataUri(rt.rawCover) }
         }
     })
 
@@ -526,7 +633,7 @@ async function sendHtmlSearchPlayer(m, conn, query) {
         run: async (conn, chatId, args) => {
             const i = Number(args?.index) || 0
             const rt = rawTracks[i]
-            if (!rt?.rawAudioUrl) throw new Error('Track belum siap, tunggu sebentar lalu coba lagi.')
+            if (!rt?.rawAudioUrl) throw new Error('Track is not ready yet, please wait a moment and try again.')
             await conn.sendFile(chatId, rt.rawAudioUrl, `${rt.title}.mp3`, '', null, false, { mimetype: 'audio/mpeg' })
             return { message: 'Sent to chat.' }
         }
@@ -537,13 +644,13 @@ async function sendHtmlSearchPlayer(m, conn, query) {
         .addSuggest([`Query: ${query}`, `Result: ${tracks.length}`])
 
     rich.addHtml(
-        buildSpotifyPlayerHtml({ tracks, downloadToken, resolveToken, apiBase: httpsApiBase, single: false }),
+        buildSpotifyPlayerHtml({ tracks, downloadToken, resolveToken, audioToken, coverToken, apiBase: httpsApiBase, single: false }),
         { trustedSources: apiHost ? [apiHost] : [] }
     )
     await rich.send(m.chat, { quoted: m })
 }
 
-function buildSpotifyPlayerHtml({ tracks, downloadToken, resolveToken, apiBase, single }) {
+function buildSpotifyPlayerHtml({ tracks, downloadToken, resolveToken, audioToken, coverToken, apiBase, single }) {
     const httpsApiBase = apiBase ? apiBase.replace(/^http:\/\//, 'https://') : ''
     const wsUrl = httpsApiBase ? httpsApiBase.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:') : ''
     const fallbackCover = 'data:image/svg+xml;utf8,' + encodeURIComponent(
@@ -620,17 +727,27 @@ body{margin:0;background:transparent;font-family:-apple-system,Helvetica,Arial,s
 const tracks = ${JSON.stringify(tracks)};
 const downloadToken = ${JSON.stringify(downloadToken || '')};
 const resolveToken = ${JSON.stringify(resolveToken || '')};
+const audioToken = ${JSON.stringify(audioToken || '')};
+const coverToken = ${JSON.stringify(coverToken || '')};
 const apiBase = ${JSON.stringify(httpsApiBase)};
 const single = ${JSON.stringify(!!single)};
 let idx = 0;
 let loading = false;
 
 const coverEl = document.getElementById('cover');
-coverEl.addEventListener('error', () => {
-  const cur = coverEl.getAttribute('src') || '';
-  if (cur.startsWith('data:')) return;
-  coverEl.src = '${fallbackCover}';
-});
+const coverCacheC = new Map();          // index -> data URI
+let coverReq = 0;
+async function loadCover(i){
+  const t = tracks[i];
+  if (!t || !coverToken) return;
+  if (coverCacheC.has(i)) { if (idx === i) coverEl.src = coverCacheC.get(i); return; }
+  const my = ++coverReq;
+  const r = await sendAction({ type:'aiRichAction', token: coverToken, index: i }, 20000);
+  if (r.success && r.dataUri) {
+    coverCacheC.set(i, r.dataUri);
+    if (idx === i && my === coverReq) coverEl.src = r.dataUri;
+  }
+}
 const spinnerEl = document.getElementById('spinner');
 const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
@@ -659,7 +776,8 @@ function renderMeta(){
   titleEl.textContent = t.title;
   artistEl.textContent = (t.artists||[]).join(', ') || ' ';
   counterEl.textContent = single ? '' : ((idx+1) + ' / ' + tracks.length);
-  coverEl.src = t.album?.cover || '${fallbackCover}';
+  coverEl.src = coverCacheC.get(idx) || '${fallbackCover}';
+  loadCover(idx);
 }
 
 let ws = null, wsReady = false, pingTimer = null;
@@ -684,13 +802,27 @@ function connectWs(){
 }
 connectWs();
 
-function sendAction(payload, timeoutMs = 15000){
+// Wait for the WebSocket to be truly OPEN (page just opened / reconnecting) before giving up.
+function waitWsOpen(maxMs){
   return new Promise((resolve) => {
-    if (!ws || ws.readyState !== 1) return resolve({ success:false, message:'Not connected' });
+    const start = Date.now();
+    (function poll(){
+      if (ws && ws.readyState === 1) return resolve(true);
+      if (Date.now() - start >= maxMs) return resolve(false);
+      setTimeout(poll, 100);
+    })();
+  });
+}
+
+async function sendAction(payload, timeoutMs = 15000){
+  if (!(await waitWsOpen(8000))) return { success:false, message:'Not connected to the bot server (WebSocket)' };
+  return new Promise((resolve) => {
+    if (!ws || ws.readyState !== 1) return resolve({ success:false, message:'Connection lost' });
     const requestId = Math.random().toString(36).slice(2);
     const timer = setTimeout(() => { pending.delete(requestId); resolve({success:false,message:'Timed out'}); }, timeoutMs);
     pending.set(requestId, (msg) => { clearTimeout(timer); resolve(msg); });
-    ws.send(JSON.stringify({ ...payload, requestId }));
+    try { ws.send(JSON.stringify({ ...payload, requestId })); }
+    catch (e) { clearTimeout(timer); pending.delete(requestId); resolve({ success:false, message:'Failed to send: ' + (e && e.message) }); }
   });
 }
 
@@ -698,64 +830,226 @@ function showError(msg){
   artistEl.textContent = msg;
 }
 
-// Probe ke URL audio: tampilkan status HTTP + content-type yang benar-benar dilihat WebView.
-async function diagnose(url){
-  try {
-    const r = await fetch(url, { method:'GET', headers:{ Range:'bytes=0-1' } });
-    return 'HTTP ' + r.status + ' ' + (r.headers.get('content-type') || 'no-type');
-  } catch (e) {
-    return 'fetch gagal: ' + (e && e.message ? e.message : e);
-  }
-}
-
 function attemptPlay(){
   const p = audioEl.play();
   if (p && typeof p.catch === 'function') {
-    p.catch(async (err) => {
-      const url = tracks[idx] && tracks[idx].audioUrl;
-      let why = err?.message || err?.name || 'unknown';
-      if (url) why += ' | ' + await diagnose(url);
-      showError('Play blocked: ' + why);
+    p.catch(err => showError('Playback failed: ' + (err?.name || 'unknown') + (err?.message ? ' — ' + err.message : '')));
+  }
+}
+
+// ── Fetch audio over WebSocket, assemble into a Blob URL ────────────────────────────
+// fetch()/<audio src=http> to the server is restricted by the WebView sandbox (origin=null);
+// WebSocket and Blob/data-URI are not. The server splits the mp3 into base64 chunks and the client reassembles them here.
+const blobCache = new Map();          // track index -> blob URL (no need to re-download on prev/next)
+
+function b64ToBytes(b64){
+  const bin = atob(b64), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// Fetch 1 chunk with retries. Returns a Uint8Array or throws an Error.
+async function getChunk(trackIndex, n){
+  let res = null;
+  for (let attempt = 0; attempt < 3 && !(res && res.success); attempt++) {
+    res = await sendAction({ type:'aiRichAction', token: audioToken, index: trackIndex, op:'chunk', n }, 30000);
+  }
+  if (!res || !res.success) throw new Error((res && res.message) || ('Chunk ' + n + ' failed'));
+  return b64ToBytes(res.data);
+}
+
+// Download ALL chunks and turn them into a Blob. Used as a fallback when MSE is unavailable / fails.
+async function fetchAudioBlobUrl(trackIndex, onProgress){
+  if (blobCache.has(trackIndex)) return { ok: true, url: blobCache.get(trackIndex) };
+  if (!audioToken) return { ok: false, message: 'Audio token is not available' };
+
+  const meta = await sendAction({ type:'aiRichAction', token: audioToken, index: trackIndex, op:'meta' }, 100000);
+  if (!meta.success) return { ok: false, message: meta.message || 'Failed to get audio info' };
+
+  const parts = new Array(meta.total);
+  let done = 0, next = 0, failed = null;
+  async function worker(){
+    while (failed === null) {
+      const n = next++;
+      if (n >= meta.total) return;
+      try { parts[n] = await getChunk(trackIndex, n); }
+      catch (e) { failed = e.message; return; }
+      done++;
+      if (onProgress) onProgress(done, meta.total);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(3, meta.total) }, worker));
+  if (failed !== null) return { ok: false, message: failed };
+
+  const url = URL.createObjectURL(new Blob(parts, { type: meta.mime || 'audio/mpeg' }));
+  blobCache.set(trackIndex, url);
+  return { ok: true, url };
+}
+
+// ── STREAMING via MediaSource ────────────────────────────────────────────────────────
+// The song starts playing after the first few chunks; the rest arrive while it plays.
+// Confirmed supported by this WebView (audiotest T4/T5). If anything fails -> fall back to Blob.
+const MSE_START_CHUNKS = 2;             // start playing once 2 chunks (~384 KB) are in
+const MSE_PARALLEL = 3;                 // download 3 chunks at once, but append them IN ORDER
+let streamSession = 0;                  // bumped on every track change -> the old session stops by itself
+
+function mseSupported(){
+  try { return !!(window.MediaSource && MediaSource.isTypeSupported && MediaSource.isTypeSupported('audio/mpeg')); }
+  catch (e) { return false; }
+}
+
+// Returns { ok, url?, stream:true, cancelled?, message?, mseFailed? }.
+// onReady is called as soon as enough chunks are in to start playback.
+async function streamAudio(trackIndex, onProgress, onReady){
+  if (!audioToken) return { ok: false, message: 'Audio token is not available' };
+  const session = ++streamSession;
+  streamBytesIn = 0;
+  const alive = () => session === streamSession;
+
+  const meta = await sendAction({ type:'aiRichAction', token: audioToken, index: trackIndex, op:'meta' }, 100000);
+  if (!meta.success) return { ok: false, message: meta.message || 'Failed to get audio info' };
+  if (!alive()) return { ok: false, cancelled: true };
+
+  const ms = new MediaSource();
+  const url = URL.createObjectURL(ms);
+  try {
+    // src must be set before 'sourceopen' fires
+    audioEl.src = url;
+    await new Promise((res, rej) => {
+      ms.addEventListener('sourceopen', res, { once: true });
+      setTimeout(() => rej(new Error('sourceopen timeout')), 8000);
     });
+    const sb = ms.addSourceBuffer('audio/mpeg');
+
+    // appendBuffer must not be called while the buffer is still 'updating' -> wait for updateend each time
+    const append = (bytes) => new Promise((res, rej) => {
+      const ok = () => { sb.removeEventListener('error', bad); res(); };
+      const bad = () => { sb.removeEventListener('updateend', ok); rej(new Error('appendBuffer error')); };
+      sb.addEventListener('updateend', ok, { once: true });
+      sb.addEventListener('error', bad, { once: true });
+      try { sb.appendBuffer(bytes); } catch (e) { sb.removeEventListener('updateend', ok); sb.removeEventListener('error', bad); rej(e); }
+    });
+
+    // download in parallel, append IN ORDER. Downloads may not run ahead of the append point by more than a fixed window.
+    const got = new Map();               // n -> Uint8Array downloaded but not yet appended
+    let nextFetch = 0, nextAppend = 0, failed = null, readyCalled = false;
+    const waiters = [];
+    const wake = () => { while (waiters.length) waiters.shift()(); };
+
+    async function fetcher(){
+      while (failed === null && alive()) {
+        if (nextFetch >= meta.total) return;
+        if (nextFetch - nextAppend >= MSE_PARALLEL + 1) { await new Promise(r => { waiters.push(r); setTimeout(r, 500); }); continue; }
+        const n = nextFetch++;
+        try { got.set(n, await getChunk(trackIndex, n)); }
+        catch (e) { failed = e.message; wake(); return; }
+        wake();
+      }
+    }
+    const fetchers = Array.from({ length: Math.min(MSE_PARALLEL, meta.total) }, fetcher);
+
+    while (nextAppend < meta.total) {
+      if (!alive()) return { ok: false, cancelled: true };
+      if (failed !== null) throw new Error(failed);
+      if (!got.has(nextAppend)) { await new Promise(r => { waiters.push(r); setTimeout(r, 500); }); continue; }
+      const bytes = got.get(nextAppend); got.delete(nextAppend);
+      await append(bytes);
+      streamBytesIn += bytes.length;
+      nextAppend++;
+      wake();
+      if (onProgress) onProgress(nextAppend, meta.total);
+      if (!readyCalled && nextAppend >= Math.min(MSE_START_CHUNKS, meta.total)) { readyCalled = true; if (onReady) onReady(meta); }
+    }
+    await Promise.all(fetchers);
+    if (!alive()) return { ok: false, cancelled: true };
+    if (ms.readyState === 'open') ms.endOfStream();   // the exact duration is known now
+    return { ok: true, url, stream: true };
+  } catch (e) {
+    return { ok: false, message: e && e.message ? e.message : String(e), mseFailed: true };
   }
 }
 
 async function loadCurrent(autoplay){
   renderMeta();
-  const t = tracks[idx];
-  if (t.audioUrl) {
-    audioEl.src = t.audioUrl;
-    audioEl.load();
-    loadedIdx = idx;
-    if (autoplay) attemptPlay();
-    return;
-  }
-  if (!resolveToken) return;
+  const myIdx = idx;
+  const t = tracks[myIdx];
   loading = true;
   spinnerEl.style.display = 'block';
   playBtn.disabled = true;
-  artistEl.textContent = 'Menyiapkan audio…';
-  const result = await sendAction({ type:'aiRichAction', token: resolveToken, index: idx }, 100000);
-  loading = false;
-  spinnerEl.style.display = 'none';
-  playBtn.disabled = false;
-  artistEl.textContent = (t.artists||[]).join(', ') || ' ';
-  if (result.success && result.audioUrl) {
-    t.audioUrl = result.audioUrl;
-    if (result.cover) { t.album = t.album || {}; t.album.cover = result.cover; coverEl.src = result.cover; }
-    audioEl.src = t.audioUrl;
-    audioEl.load();
-    loadedIdx = idx;
-    if (autoplay) attemptPlay();
-  } else {
-    titleEl.textContent = 'Failed to load track';
-    showError(result.message || 'Resolve failed');
+  artistEl.textContent = 'Preparing audio…';
+
+  // Stage 1 (search mode): the server looks up the mp3 link on y2mate. This can take tens of seconds.
+  if (!t.audioUrl && resolveToken) {
+    const r = await sendAction({ type:'aiRichAction', token: resolveToken, index: myIdx }, 100000);
+    // the user switched tracks while waiting for resolve: this result is not the UI's business anymore.
+    // (audioUrl is still stored so coming back to this track later does not resolve again)
+    if (r.success && r.audioUrl) t.audioUrl = r.audioUrl;
+    if (idx !== myIdx) return;
+    if (!(r.success && r.audioUrl)) {
+      loading = false; spinnerEl.style.display = 'none'; playBtn.disabled = false;
+      titleEl.textContent = 'Failed to load track';
+      showError(r.message || 'Resolve failed');
+      return;
+    }
   }
+
+  // Stage 2: get the audio over WebSocket. Streaming (MSE) if supported, otherwise -> full Blob.
+  const finishUi = () => { loading = false; spinnerEl.style.display = 'none'; playBtn.disabled = false; };
+  const showArtist = () => { artistEl.textContent = (t.artists||[]).join(', ') || ' '; };
+
+  // already fully downloaded before (e.g. going back to the previous track) -> use it directly
+  if (blobCache.has(myIdx)) {
+    finishUi(); showArtist();
+    audioEl.src = blobCache.get(myIdx); audioEl.load(); loadedIdx = myIdx;
+    if (autoplay) attemptPlay();
+    return;
+  }
+
+  if (mseSupported()) {
+    let started = false;
+    const r = await streamAudio(myIdx,
+      (d, tot) => { if (idx === myIdx && !started) artistEl.textContent = 'Preparing… ' + Math.round(d / tot * 100) + '%'; },
+      (meta) => {
+        if (idx !== myIdx) return;
+        started = true;
+        finishUi(); showArtist();
+        loadedIdx = myIdx;
+        streamingIdx = myIdx; streamMeta = meta;
+        if (autoplay) attemptPlay();
+      });
+    if (r.cancelled || idx !== myIdx) return;
+    if (r.ok) { streamingIdx = -1; return; }             // streaming finished completely
+    if (started) {                                       // failed midway through a song that was already playing
+      showError('Streaming interrupted: ' + (r.message || 'unknown'));
+      streamingIdx = -1;
+      return;
+    }
+    // failed before playback started -> fall through to Blob below
+  }
+
+  const res = await fetchAudioBlobUrl(myIdx, (d, tot) => {
+    if (idx === myIdx) artistEl.textContent = 'Downloading audio… ' + Math.round(d / tot * 100) + '%';
+  });
+  finishUi();
+  if (idx !== myIdx) return;
+  showArtist();
+  if (!res.ok) {
+    titleEl.textContent = 'Failed to load track';
+    showError(res.message || 'Audio download failed');
+    return;
+  }
+  audioEl.src = res.url;
+  audioEl.load();
+  loadedIdx = myIdx;
+  if (autoplay) attemptPlay();
 }
 
-let loadedIdx = -1;   // index track yang src-nya SUDAH diset ke audio nyata
+let loadedIdx = -1;   // index of the track whose src is ALREADY set to real audio
+let streamingIdx = -1; // index of the track currently being streamed (duration not final yet)
+let streamMeta = null;
+let streamBytesIn = 0;   // total bytes already appended to MediaSource (for duration estimation)
 playBtn.addEventListener('click', async () => {
-  if (loading) return;
+  if (loading) { return; }
   if (loadedIdx !== idx) { await loadCurrent(true); return; }
   if (audioEl.paused) attemptPlay(); else audioEl.pause();
 });
@@ -765,47 +1059,59 @@ audioEl.addEventListener('play', () => setIcon(PAUSE_SVG));
 audioEl.addEventListener('playing', () => { spinnerEl.style.display = 'none'; setIcon(PAUSE_SVG); });
 audioEl.addEventListener('waiting', () => { spinnerEl.style.display = 'block'; });
 audioEl.addEventListener('pause', () => setIcon(PLAY_SVG));
-let audioRetried = false;
 audioEl.addEventListener('error', () => {
   const err = audioEl.error;
   const codes = { 1:'ABORTED', 2:'NETWORK', 3:'DECODE', 4:'SRC_NOT_SUPPORTED' };
   spinnerEl.style.display = 'none';
-  // Satu kali retry otomatis dengan cache-buster (link y2mate kadang baru siap di percobaan ke-2).
-  if (!audioRetried && audioEl.src) {
-    audioRetried = true;
-    const base = audioEl.src.replace(/([?&])_r=\d+/, '').replace(/[?&]$/, '');
-    setTimeout(() => { audioEl.src = base + (base.includes('?') ? '&' : '?') + '_r=' + Date.now(); audioEl.load(); attemptPlay(); }, 700);
-    return;
-  }
-  const code = codes[err?.code] || err?.code || 'unknown';
-  const url = tracks[idx] && tracks[idx].audioUrl;
-  if (url) diagnose(url).then(d => showError('Audio error: ' + code + ' | ' + d));
-  else showError('Audio error: ' + code + ' | tidak ada URL audio');
+  showError('Audio error: ' + (codes[err?.code] || err?.code || 'unknown') + (err?.message ? ' — ' + err.message : ''));
 });
+// While streaming (MSE), audioEl.duration only covers the part that has ALREADY arrived (or Infinity/NaN) and keeps
+// growing, so the slider would jump around. Estimate the total duration from the file size & measured bitrate.
+function totalDuration(){
+  const d = audioEl.duration;
+  if (streamingIdx === idx && streamMeta && streamMeta.size) {
+    // estimated bitrate from the data buffered so far: bytes_in / seconds_in
+    let secIn = 0;
+    try { if (audioEl.buffered.length) secIn = audioEl.buffered.end(audioEl.buffered.length - 1); } catch (e) {}
+    const bytesIn = Math.min(streamMeta.size, (streamBytesIn || 0));
+    if (secIn > 1 && bytesIn > 0) return streamMeta.size / (bytesIn / secIn);
+    return isFinite(d) && d > 0 ? d : 0;
+  }
+  return isFinite(d) && d > 0 ? d : 0;
+}
+function bufferedEnd(){
+  try { return audioEl.buffered.length ? audioEl.buffered.end(audioEl.buffered.length - 1) : 0; } catch (e) { return 0; }
+}
 audioEl.addEventListener('timeupdate', () => {
-  if (!audioEl.duration) return;
-  seekEl.value = (audioEl.currentTime / audioEl.duration) * 100;
+  const dur = totalDuration();
+  if (!dur) return;
+  seekEl.value = Math.min(100, (audioEl.currentTime / dur) * 100);
   curTimeEl.textContent = fmt(audioEl.currentTime);
-  durTimeEl.textContent = fmt(audioEl.duration);
+  durTimeEl.textContent = fmt(dur);
 });
 audioEl.addEventListener('ended', () => { if (!single) goNext(); });
 seekEl.addEventListener('input', () => {
-  if (audioEl.duration) audioEl.currentTime = (seekEl.value/100) * audioEl.duration;
+  const dur = totalDuration();
+  if (!dur) return;
+  let target = (seekEl.value / 100) * dur;
+  // while streaming, do not jump to a part that has not arrived yet (it would stall) -> clamp to the buffer end
+  if (streamingIdx === idx) target = Math.min(target, Math.max(0, bufferedEnd() - 1));
+  audioEl.currentTime = target;
 });
 
 function goPrev(){
-  if (single || loading) return;
-  audioRetried = false;
+  if (single) return;
   idx = (idx - 1 + tracks.length) % tracks.length;
-  loadedIdx = -1;
+  loadedIdx = -1; streamingIdx = -1; streamSession++;
+  loading = false; spinnerEl.style.display = 'none'; playBtn.disabled = false;
   audioEl.pause(); audioEl.currentTime = 0; seekEl.value = 0;
   loadCurrent(true);
 }
 function goNext(){
-  if (single || loading) return;
-  audioRetried = false;
+  if (single) return;
   idx = (idx + 1) % tracks.length;
-  loadedIdx = -1;
+  loadedIdx = -1; streamingIdx = -1; streamSession++;
+  loading = false; spinnerEl.style.display = 'none'; playBtn.disabled = false;
   audioEl.pause(); audioEl.currentTime = 0; seekEl.value = 0;
   loadCurrent(true);
 }
@@ -822,11 +1128,9 @@ dlBtn.addEventListener('click', async () => {
 });
 
 renderMeta();
+// Single mode: the mp3 link already exists -> prepare the audio in the background so play starts instantly.
+// Search mode: do NOT start anything before the user presses play (y2mate resolve + download are expensive).
 if (single) {
-  audioEl.src = tracks[0].audioUrl;
-  audioEl.load();
-  loadedIdx = 0;
-} else {
   loadCurrent(false);
 }
 </script>`

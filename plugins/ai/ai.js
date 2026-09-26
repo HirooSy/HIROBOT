@@ -121,7 +121,8 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
     const sub = rawText.trim().toLowerCase()
 
     if (sub === 'reset') {
-        resetSession(senderJid)
+        const chatJid = m.key?.remoteJid || m.chat || senderJid
+        resetSession(chatJid)
         resetRateLimit(senderJid)
         return m.react("🔄")
     }

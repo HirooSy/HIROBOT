@@ -1,3 +1,37 @@
+<h3>26/September/2026</h3>
+<sub>
+
+```diff
+• Massive refactoring of core AI MCP utility and Spotify downloader functionality
+• Significant enhancements to VoIP and SCTP relay stability
+• Core utility refactoring for messaging and handler logic
+• Implementation of new CRM and Reaction tool plugins
+• Cleanup of legacy plugins (deletemsg) and maintenance
+
+________________________
+
++ Add "plugins/tools/crm.js"
++ Add "plugins/tools/reaction.js"
+- Delete "plugins/owner/deletemsg.js"
+* Edit ".env.example"
+* Edit "README.md"
+* Edit "lib/config.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/tools/media.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/package/voip/relay/WaManualRelay.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
+* Edit "lib/package/voip/types.js"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/simple.js"
+* Edit "plugins/ai/ai.js"
+* Edit "plugins/dl/spotify.js"
+* Edit "plugins/group/mute.js"
+* Edit "plugins/subbot/connect.js"
+```
+</sub>
+
 <h3>24/September/2026</h3>
 <sub>
 
@@ -144,59 +178,5 @@ ________________________
 * Edit "lib/utils/simple.js"
 * Edit "plugins/sticker/telegram.js"
 * Edit "plugins/subbot/connect.js"
-```
-</sub>
-
-<h3>14/September/2026</h3>
-<sub>
-
-```diff
-• Major refactoring of VoIP architecture, migrating from worker-based signaling to a streamlined, module-oriented implementation
-• Complete overhaul of media engines (audio, video, signaling, relay) for better synchronization and performance
-• Cleanup of legacy and deprecated code modules across the VoIP package
-• General optimizations in main handler and connection utilities
-• Update of owner call plugin functionality
-
-________________________
-
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/main.js"
-* Edit "lib/package/voip/WaVoipCoordinator.js"
-* Edit "lib/package/voip/call/WaCallManager.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/crypto/rtcp.js"
-* Edit "lib/package/voip/crypto/ssrc.js"
-* Edit "lib/package/voip/index.js"
-* Edit "lib/package/voip/media/WaAudioEngine.js"
-* Edit "lib/package/voip/media/WaVideoEngine.js"
-* Edit "lib/package/voip/media/audio-codec.js"
-* Edit "lib/package/voip/media/h264.js"
-* Edit "lib/package/voip/media/rtcp.js"
-* Edit "lib/package/voip/media/rtp.js"
-* Edit "lib/package/voip/relay/WaManualRelay.js"
-* Edit "lib/package/voip/relay/WaSctpRelay.js"
-* Edit "lib/package/voip/relay/datachannel/pre-negotiated.js"
-* Edit "lib/package/voip/relay/dtls/aead.js"
-* Edit "lib/package/voip/relay/dtls/cert-builder.js"
-* Edit "lib/package/voip/relay/dtls/der.js"
-* Edit "lib/package/voip/relay/dtls/ecdhe.js"
-* Edit "lib/package/voip/relay/dtls/handshake-framing.js"
-* Edit "lib/package/voip/relay/dtls/handshake-messages.js"
-* Edit "lib/package/voip/relay/dtls/handshake.js"
-* Edit "lib/package/voip/relay/dtls/prf.js"
-* Edit "lib/package/voip/relay/dtls/record.js"
-* Edit "lib/package/voip/relay/sctp/association.js"
-* Edit "lib/package/voip/relay/sctp/crc32c.js"
-* Edit "lib/package/voip/relay/sctp/wire.js"
-* Edit "lib/package/voip/relay/stun.js"
-* Edit "lib/package/voip/shim/core.js"
-* Edit "lib/package/voip/relay/signaling/signaling.js"
-* Edit "lib/package/voip/types.js"
-- Delete "lib/package/voip/worker.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/owner/call.js"
-+ Add "lib/package/voip/voipClient.js"
 ```
 </sub>
