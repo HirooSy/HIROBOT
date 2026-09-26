@@ -544,6 +544,156 @@ conn.sendButton(m.chat, {
 ```
 </sub></details>
 
+<details><summary>❇️ Widget</summary>
+
+<sub>
+  
+```javascript
+await conn.sendButton(m.chat, {
+    text: 'Full demo of all widget components',
+    footer: 'A2UI Showcase',
+    widget: {
+        align: 'center',
+        fallback: 'Widget cannot be loaded on this device', // optional
+        items: [
+            // --- TEXT ---
+            { text: 'Welcome to the Widget Demo', variant: 'title' },
+            { text: 'This is a longer description explaining what the widget contains.', variant: 'body' },
+            { text: 'Small caption', variant: 'caption' },
+
+            // --- ICON ---
+            { icon: 'info' },                          // -> '[i]'
+            { icon: 'warning', style: 'symbol' },      // -> '!'
+            { icon: 'favorite', native: true },        // uses native Icon component
+
+            // --- IMAGE ---
+            {
+                image: 'https://example.com/banner.jpg',
+                variant: 'header',
+                fit: 'cover',
+                description: 'Promo banner'
+            },
+
+            // --- VIDEO ---
+            { video: 'https://example.com/preview.mp4' },
+
+            // --- AUDIO ---
+            {
+                audio: 'https://example.com/audio.mp3',
+                description: 'Listen to this audio'
+            },
+
+            // --- DIVIDER ---
+            { divider: 'horizontal' },
+            { divider: 'vertical' },
+
+            // --- BUTTON ---
+            {
+                button: 'Open Website',
+                url: 'https://example.com',
+                variant: 'primary'
+            },
+
+            // --- TEXT INPUT ---
+            {
+                input: 'name',
+                label: 'Enter your name',
+                value: '',
+                variant: 'shortText'
+            },
+            {
+                input: 'message',
+                label: 'Long message',
+                variant: 'longText',
+                value: ''
+            },
+            {
+                input: 'email',
+                label: 'Email',
+                variant: 'shortText',
+                validationRegexp: '^[^@]+@[^@]+\\.[^@]+$'
+            },
+
+            // --- CHECKBOX ---
+            { checkbox: 'I agree to the terms & conditions', value: false },
+
+            // --- CHOICE PICKER ---
+            {
+                choice: ['Red', 'Green', 'Blue'],
+                label: 'Pick your favorite color',
+                variant: 'mutuallyExclusive',
+                displayStyle: 'chips',
+                filterable: true
+            },
+            {
+                choice: [
+                    { label: 'Option A', value: 'a' },
+                    { label: 'Option B', value: 'b' },
+                    { label: 'Option C', value: 'c' }
+                ],
+                label: 'Pick multiple (multi-select)',
+                variant: 'multipleSelection',
+                value: ['a', 'b']
+            },
+
+            // --- SLIDER ---
+            {
+                slider: 100,
+                min: 0,
+                max: 100,
+                value: 50,
+                label: 'Volume'
+            },
+
+            // --- DATETIME ---
+            {
+                datetime: true,
+                label: 'Pick a date',
+                value: '',
+                enableDate: true,
+                enableTime: false
+            },
+
+            // --- ROW (horizontal) ---
+            {
+                row: [
+                    { text: 'Left' },
+                    { text: 'Center' },
+                    { text: 'Right' }
+                ],
+                justify: 'space-between',
+                align: 'center'
+            },
+
+            // --- COLUMN (vertical) ---
+            {
+                column: [
+                    { text: 'Row 1' },
+                    { text: 'Row 2' },
+                    { text: 'Row 3' }
+                ],
+                justify: 'start',
+                align: 'stretch'
+            },
+
+            // --- LIST ---
+            {
+                list: [
+                    { text: '• First item' },
+                    { text: '• Second item' },
+                    { text: '• Third item' }
+                ],
+                direction: 'vertical'
+            }
+        ]
+    }
+}, quoted)
+
+```
+</sub>
+  
+</details>
+
 <details> <summary>🗓️ AI Rich</summary>
   <sub>
 
