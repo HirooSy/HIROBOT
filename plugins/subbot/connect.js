@@ -293,7 +293,7 @@ export async function autoConnectSubBots() {
 }
 
 async function doConnect(m, { conn, usedPrefix, isPrems }) {
-    if (!isPrems) throw `❌ This command is for premium users only.`
+    //if (!isPrems) return dfail("premium", m, conn)
 
     const parentConn = await Connection.conn
     const { max } = getSubbotConfig()

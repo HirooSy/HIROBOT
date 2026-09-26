@@ -374,8 +374,8 @@ export default [
       <td>Required for the domain that becomes your bot's main address, e.g. <code>bot.yourdomain.com</code></td>
     </tr>
     <tr>
-      <td rowspan="3"><b>SCENARIO 2</b><br><sub>DNS-pointable server, using own domain</sub></td>
-      <td colspan="2">
+      <td rowspan="4"><b>SCENARIO 2</b><br><sub>DNS-pointable server, using own domain</sub></td>
+      <td colspan="3">
         
 > [!NOTE]
 > <sub>Your panel/server <b>can</b> be pointed to via a DNS record (a VPS with a fixed IP, or a panel supporting Cloudflare Named Tunnel / Zero Trust). Requires card verification on Cloudflare Zero Trust (free forever, no charge unless you exceed free-tier limits).</sub>
@@ -388,6 +388,10 @@ export default [
     <tr>
       <td><code>CF_HOSTNAME</code></td>
       <td>Required for the domain that becomes your bot's main address, e.g. <code>bot.yourdomain.com</code></td>
+    </tr>
+    <tr>
+      <td><code>HOSTNAME_PUBLIC</code></td>
+      <td>Fill it using same value as CF_HOSTNAME <code>bot.yourdomain.com</code></td>
     </tr>
     <tr>
       <td><b>SCENARIO 3</b><br><sub>No own domain, free provider</sub></td>
@@ -642,13 +646,63 @@ call(m.sender, media, "720p").silent()
   </tbody>
 </table>
 
+<h4>Configuration environment (.env)</h4>
+
+1. Create file ".env"
+2. And set it with this code:
+
+<table align=center height=100>
+  <td>
+<sub>
+  
+```env
+OWNER=6281234567890,6281234567890
+MODERATOR=6281234567890,6281234567890
+
+# Support mongodb/MySql2/Local file sql
+# • mongodb+srv://...
+# • mysql://...
+# • dont fill it to use local file sql
+DATABASE=
+
+AI_PERSONALITY=
+
+# Gemini API Key (Free, Get from aistudio.google.com)
+# Accepts single string or Array for fallback
+AI_KEYS=
+
+# OPTIONAL ENV
+#__________________________________________________
+
+GIT_CLASSIC_KEY=
+GIT_TOKEN=
+GIT_USER=
+GIT_EMAIL=
+GIT_REPO=
+
+# TUNNEL / CUSTOM DOMAIN (optional)
+#__________________________________________________
+# See README.md -> "About Website" for full explanation of each scenario.
+
+CF_KV_TOKEN=
+CF_ACCOUNT_ID=
+CF_KV_NAMESPACE_ID=
+
+CF_TOKEN=
+CF_HOSTNAME=
+
+HOSTNAME_PUBLIC=
+```
+</sub>
+</td>
+</table>
+
 <sub align=left>
 
 ```bash
 $ git clone https://github.com/HirooSy/HIROBOT.git
 $ cd HIROBOT
-$ mv .env.example .env
-$ nano .env
+$ npm i
 $ node .
 ```
 </sub>
