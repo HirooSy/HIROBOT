@@ -1,6 +1,4 @@
-import axios from 'axios'
 import fs from 'fs'
-import { spawn } from 'child_process'
 import { tmpdir } from 'os'
 import { join } from 'path'
 const upload = global.scraper.upload.default
@@ -15,27 +13,96 @@ const {
   extractMediaFromPin
 } = global.scraper.pinterest
 
-async function extractFirstFrame(videoUrl) {
-  const outPath = join(tmpdir(), `pin_frame_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`)
-  await new Promise((resolve, reject) => {
-    const proc = spawn('ffmpeg', ['-y', '-i', videoUrl, '-vframes', '1', '-q:v', '4', outPath])
-    let stderr = ''
-    proc.stderr.on('data', d => { stderr += d })
-    proc.on('close', code => code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}: ${stderr.slice(-300)}`)))
-    proc.on('error', reject)
-  })
-  const buf = await fs.promises.readFile(outPath)
-  fs.promises.unlink(outPath).catch(() => {})
-  return buf
+if (!global.pinterestSearchState) global.pinterestSearchState = {}
+
+const SEARCH_STATE_TTL = 15 * 60 * 1000
+
+function cleanupSearchState() {
+  const now = Date.now()
+  for (const key of Object.keys(global.pinterestSearchState)) {
+    if (now - global.pinterestSearchState[key].timestamp > SEARCH_STATE_TTL) {
+      delete global.pinterestSearchState[key]
+    }
+  }
 }
 
-// ─── Main Handler ────────────────────────────────────────────────────────────
-let handler = async (m, { conn, args }) => {
+function buildPreviewGrid(items, perRow = 5) {
+  const rows = []
+  for (let r = 0; r < items.length; r += perRow) {
+    const rowItems = items.slice(r, r + perRow).map((item, j) => {
+      const idx = r + j
+      const thumb = item.thumbUrl || (item.type === 'image' ? item.rawUrl : '')
+      return {
+        column: [
+          thumb ? { image: thumb, fit: 'cover', variant: 'avatar' } : { text: '[no preview]', variant: 'caption' },
+          { text: String(idx + 1), variant: 'caption' }
+        ],
+        align: 'center'
+      }
+    })
+    rows.push({ row: rowItems, justify: 'spaceBetween', align: 'start' })
+  }
+  return rows
+}
+
+async function downloadItem(conn, chatId, quoted, item, caption) {
+  if (item.type === 'image') {
+    await conn.sendFile(chatId, item.rawUrl, 'pinterest.jpg', caption, quoted)
+    return
+  }
+
+  if (item.type === 'gif') {
+    const videoPath = await gifToMp4(item.rawUrl)
+    try {
+      await conn.sendFile(chatId, fs.readFileSync(videoPath), 'pinterest.mp4', caption, quoted)
+    } finally {
+      fs.unlinkSync(videoPath)
+    }
+    return
+  }
+
+  if (item.type === 'video') {
+    const hls = await getPinterestHLS(item.rawUrl)
+    const best = hls?.qualities?.at(-1)
+    if (!best) throw new Error('No video quality available.')
+    const output = join(tmpdir(), `pin_dl_${Date.now()}.mp4`)
+    try {
+      await mergeVideoAudio(best.url, hls.audio, output)
+      await conn.sendFile(chatId, fs.readFileSync(output), 'pinterest.mp4', caption, quoted)
+    } finally {
+      if (fs.existsSync(output)) fs.unlinkSync(output)
+    }
+    return
+  }
+
+  throw new Error('Unknown item type.')
+}
+
+let handler = async (m, { conn, args, command }) => {
   if (!args[0]) throw `Usage:\n\n*Download by URL:*\n.pin https://pinterest.com/pin/xxx\n.pin https://pin.it/xxx\n\n*Search:*\n.pin <keyword>\n.pin video <keyword>\n.pin image <keyword>\n.pin gif <keyword>`
 
   const firstArg = args[0]
 
-  // ─── MODE: Download by URL ───────────────────────────────────────────────
+  if (firstArg === 'get') {
+    const token = args[1]
+    const index = Number(args[2])
+    const state = global.pinterestSearchState[token]
+    if (!state) throw 'This search result has expired, please search again.'
+    const item = state.items[index]
+    if (!item) throw 'Item not found.'
+
+    await m.react('⬇️')
+    const caption = item.title ? `Pinterest — ${item.title}` : `Pinterest — ${state.query}`
+    try {
+      await downloadItem(conn, m.chat, m, item, caption)
+      await m.react('✅')
+    } catch (error) {
+      await m.react('❌')
+      throw `Failed to download: ${error.message || error}`
+    }
+    return
+  }
+
   if (isPinterestUrl(firstArg)) {
     await m.reply('Fetching pin info...')
 
@@ -93,7 +160,6 @@ let handler = async (m, { conn, args }) => {
     return
   }
 
-  // ─── MODE: Search ────────────────────────────────────────────────────────
   const modeKeys = ['vid', 'video', 'gif', 'gifs', 'img', 'image', 'images']
   const mode = detectMode(args)
   const queryArgs = modeKeys.includes(args[0]?.toLowerCase()) ? args.slice(1) : args
@@ -124,21 +190,13 @@ let handler = async (m, { conn, args }) => {
 
   const totalResult = filteredPins.length
 
-  // Now shows up to 50 mixed items (image+gif+video), matching e621's
-  // gallery size. Unlike before, gif/video are NOT converted+uploaded here
-  // - that's expensive (ffmpeg + upload) and doing it for up to 50 items
-  // up front would make search painfully slow. Instead we keep the raw
-  // pin reference and only convert+upload when someone actually clicks
-  // Download on that specific item (see the token's run() below).
-  const maxResults = 50
+  const maxResults = 30
 
   const shuffled = filteredPins
     .sort(() => Math.random() - 0.5)
     .slice(0, maxResults)
 
-  // Each entry: { type: 'image'|'gif'|'video', rawUrl, pinUrl, title }
   const items = []
-  const allSources = []
 
   for (const pin of shuffled) {
     const medias = extractMediaFromPin(pin)
@@ -153,318 +211,42 @@ let handler = async (m, { conn, args }) => {
         items.push({ type: 'video', rawUrl: media.url, thumbUrl: media.thumbnailUrl, pinUrl: pin.pin_url, title: pin.title });
       }
     }
-
-    allSources.push(['https://www.pinterest.com/favicon.ico', pin.pin_url, pin.title || 'Pinterest'])
   }
 
-  // ─── Resolve preview thumbnails ─────────────────────────────────────────
-  // Sebelumnya: tiap gif/video menjalankan ffmpeg SERENTAK (Promise.all) sebelum pesan
-  // dikirim - sampai 50 proses ffmpeg, inilah yang bikin lama banget. Sekarang semua item
-  // cukup memakai URL preview ringan (474x) dari Pinterest lewat /api/proxy, sama seperti
-  // e621: tidak ada download/ffmpeg di sisi server saat search.
-  // Kalau sebuah gif tidak punya preview statis, ffmpeg dipakai LAZY (hanya saat slide itu
-  // dibuka) lewat thumbToken di bawah, bukan untuk semua item di depan.
-  const thumbs = items.map(item => item.thumbUrl || '')
+  if (!items.length) throw `No ${mode} results found for: *${query}*`
 
-  // ─── Kirim dengan AiRich ──────────────────────────────────────────────
-  try {
-    const rich = conn.aiRich()
-      .setTitle("Pinterest Search")
-      .addSuggest([
-        `Query: ${query}`,
-        `Mode: ${modeLabel[mode] || 'All'}`,
-        `Result: ${totalResult}`,
-        `Showing: ${shuffled.length}`
-      ])
-      .addSource(allSources)
+  cleanupSearchState()
+  const token = `${(m.sender || '').split('@')[0]}_${Date.now().toString(36)}`
+  global.pinterestSearchState[token] = { items, query, mode, timestamp: Date.now() }
 
-    if (items.length) {
-      const token = global.registerHtmlAction({
-        chatId: m.chat,
-        singleUse: false,
-        run: async (conn, chatId, args) => {
-          const i = Number(args?.index) || 0
-          const item = items[i]
-          if (!item) throw new Error('Nothing to send.')
-          const caption = item.title ? `Pinterest — ${item.title}` : `Pinterest — ${query}`
+  const typeLabel = { image: 'Image', gif: 'GIF', video: 'Video' }
 
-          if (item.type === 'image') {
-            await conn.sendFile(chatId, item.rawUrl, 'pinterest.jpg', caption, null)
-            return { message: 'Sent to chat.' }
-          }
+  const rows = items.map((item, i) => ({
+    header: `${i + 1}. ${typeLabel[item.type] || 'Media'}`,
+    title: (item.title || query).slice(0, 60),
+    description: '',
+    id: `.${command} get ${token} ${i}`
+  }))
 
-          if (item.type === 'gif') {
-            // Convert+upload only happens now, on click - not for all 50
-            // items up front.
-            const videoPath = await gifToMp4(item.rawUrl)
-            try {
-              const videoBuffer = fs.readFileSync(videoPath)
-              await conn.sendFile(chatId, videoBuffer, 'pinterest.mp4', caption, null)
-            } finally {
-              fs.unlinkSync(videoPath)
-            }
-            return { message: 'Sent to chat.' }
-          }
+  const caption = `- *Query:* ${query}\n- Mode: ${modeLabel[mode] || 'All'}\n- Result: ${totalResult}\n- Showing: ${items.length}`
 
-          if (item.type === 'video') {
-            const hls = await getPinterestHLS(item.rawUrl)
-            const best = hls?.qualities?.at(-1)
-            if (!best) throw new Error('No video quality available.')
-            const output = join(tmpdir(), `pin_dl_${Date.now()}.mp4`)
-            try {
-              await mergeVideoAudio(best.url, hls.audio, output)
-              const videoBuffer = fs.readFileSync(output)
-              await conn.sendFile(chatId, videoBuffer, 'pinterest.mp4', caption, null)
-            } finally {
-              if (fs.existsSync(output)) fs.unlinkSync(output)
-            }
-            return { message: 'Sent to chat.' }
-          }
+  const widgetItems = [
+    ...buildPreviewGrid(items, 5)
+  ]
 
-          throw new Error('Unknown item type.')
-        }
-      })
-      const thumbToken = global.registerHtmlAction({
-        chatId: m.chat,
-        singleUse: false,
-        run: async (conn, chatId, args) => {
-          const url = args?.url
-          const idxArg = Number(args?.index)
-          // Lazy: item tanpa preview statis (mis. gif) -> ambil frame pertama SEKARANG, 1 item saja.
-          if ((!url || typeof url !== 'string') && Number.isInteger(idxArg) && items[idxArg]) {
-            const it = items[idxArg]
-            if (it.type === 'image') throw new Error('No fallback for image.')
-            const buf = await extractFirstFrame(it.rawUrl)
-            return { dataUri: `data:image/jpeg;base64,${buf.toString('base64')}` }
-          }
-          if (!url || typeof url !== 'string') throw new Error('Missing url.')
-          // Same VPS-to-CDN flakiness as e621's fallback - retry once more
-          // with a longer timeout before giving up.
-          let lastErr
-          for (let attempt = 0; attempt < 2; attempt++) {
-            try {
-              const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 10000 })
-              const mime = url.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg'
-              return { dataUri: `data:${mime};base64,${Buffer.from(res.data).toString('base64')}` }
-            } catch (err) {
-              lastErr = err
-            }
-          }
-          throw lastErr
-        }
-      })
-      const rawServer = typeof global.opts?.server === 'string' ? global.opts.server : ''
-      const apiBase = rawServer.replace(/\/$/, '')
-      const apiHost = apiBase.replace(/^https?:\/\//, '')
-      const types = items.map(it => it.type)
-      rich.addHtml(buildGalleryHtml(thumbs, types, query, token, thumbToken, apiBase), { trustedSources: apiHost ? [apiHost] : [] })
-    }
-
-    await rich.send(m.chat, { quoted:m })
-  } catch (e) {
-    console.error('AiRich error:', e)
-    throw e.message
-  }
+  await conn.sendButton(m.chat, {
+    text: caption,
+    footer: 'Pinterest',
+    widget: { align: 'center', items: widgetItems, fallback: "Can't load preview, try to use this command in private chat" },
+    nativeFlow: [{ text: 'Select', sections: [{ rows }] }]
+  }, m)
 }
 
-function buildGalleryHtml(thumbs, types, query, token, thumbToken, apiBase) {
-  const httpsApiBase = apiBase ? apiBase.replace(/^http:\/\//, 'https://') : ''
-  return `<style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-body{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff;touch-action:manipulation}
-.wrap{width:100%;max-width:620px;margin:auto;padding:14px}
-.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:18px;overflow:hidden;box-shadow:0 10px 35px rgba(0,0,0,.35)}
-.head{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
-.head small{display:block;font-size:10px;letter-spacing:2px;color:#888}
-.head b{font-size:18px}
-.stage{position:relative;background:#000;aspect-ratio:1/1}
-.stage img{width:100%;height:100%;display:block;object-fit:contain;background:#000}
-.spinner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none}
-@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-.playIcon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:22px;pointer-events:none}
-.nav{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:18px;border:1px solid rgba(255,255,255,.25);background:rgba(20,20,20,.55);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1}
-.nav.prev{left:12px}
-.nav.next{right:12px}
-.bottom{padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.counter{font-size:12px;color:#999}
-.dl{background:#00a884;border:none;border-radius:20px;color:#fff;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer}
-.dl:disabled{opacity:.55}
-</style>
-<div class="wrap">
-  <div class="card">
-    <div class="head"><small>PINTEREST</small><b>${query.replace(/[<>&]/g, '')}</b></div>
-    <div class="stage">
-      <img id="img" src="">
-      <div class="spinner" id="spinner"></div>
-      <div class="playIcon" id="playIcon" style="display:none">&#9654;</div>
-      <div class="nav prev" id="prev">&lsaquo;</div>
-      <div class="nav next" id="next">&rsaquo;</div>
-    </div>
-    <div class="bottom">
-      <span class="counter" id="counter"></span>
-      <button class="dl" id="dl">Download</button>
-    </div>
-  </div>
-</div>
-<script>
-const thumbs = ${JSON.stringify(thumbs)};
-const types = ${JSON.stringify(types)};
-const token = ${JSON.stringify(token || '')};
-const thumbToken = ${JSON.stringify(thumbToken || '')};
-const apiBase = ${JSON.stringify(httpsApiBase)};
-let idx = 0;
-
-function proxify(url) {
-  if (!url) return '';
-  if (url.startsWith('data:')) return url;
-  return apiBase ? apiBase + '/api/proxy?url=' + encodeURIComponent(url) : url;
-}
-
-const imgEl = document.getElementById('img');
-const spinnerEl = document.getElementById('spinner');
-const counterEl = document.getElementById('counter');
-const playIconEl = document.getElementById('playIcon');
-const dlBtn = document.getElementById('dl');
-
-const preloaded = new Set();
-function preload(i) {
-  const n = ((i % thumbs.length) + thumbs.length) % thumbs.length;
-  const raw = thumbs[n];
-  if (!raw || raw.startsWith('data:') || preloaded.has(n)) return;
-  preloaded.add(n);
-  const im = new Image();
-  im.decoding = 'async';
-  im.src = proxify(raw);
-}
-
-async function firstFrameFallback() {
-  // Item tanpa preview statis (mis. gif) atau preview gagal dimuat -> minta server ambil
-  // frame pertama untuk SLIDE INI saja (bukan untuk semua item di depan).
-  if (thumbToken) {
-    const r = await sendAction({ type: 'aiRichAction', token: thumbToken, index: idx }, 20000);
-    if (r.success && r.dataUri) { imgEl.src = r.dataUri; return true; }
-  }
-  return false;
-}
-
-function render(){
-  const raw = thumbs[idx];
-  const src = proxify(raw);
-  let retried = false;
-  imgEl.style.visibility = 'hidden';
-  spinnerEl.style.display = 'block';
-  imgEl.onload = () => {
-    spinnerEl.style.display = 'none';
-    imgEl.style.visibility = 'visible';
-  };
-  imgEl.onerror = async () => {
-    if (!retried && src) {
-      retried = true;
-      setTimeout(() => {
-        imgEl.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
-      }, 500);
-      return;
-    }
-    if (raw && !raw.startsWith('data:') && thumbToken) {
-      const result = await sendAction({ type: 'aiRichAction', token: thumbToken, url: raw });
-      if (result.success && result.dataUri) { imgEl.src = result.dataUri; return; }
-    }
-    if (await firstFrameFallback()) return;
-    spinnerEl.style.display = 'none';
-    imgEl.style.visibility = 'visible';
-  };
-  if (src) {
-    imgEl.fetchPriority = 'high';
-    imgEl.src = src;
-  } else {
-    firstFrameFallback().then(ok => { if (!ok) { spinnerEl.style.display = 'none'; imgEl.style.visibility = 'visible'; } });
-  }
-  const typeLabel = types[idx] === 'video' ? 'Video' : (types[idx] === 'gif' ? 'GIF' : 'Image');
-  counterEl.textContent = (idx + 1) + ' / ' + thumbs.length + '  \u2014  ' + typeLabel;
-  playIconEl.style.display = (types[idx] === 'video' || types[idx] === 'gif') ? 'flex' : 'none';
-  // Preload 2 slide ke depan & 1 ke belakang supaya geser terasa instan.
-  preload(idx + 1); preload(idx + 2); preload(idx - 1);
-}
-document.getElementById('prev').addEventListener('click', () => { idx = (idx - 1 + thumbs.length) % thumbs.length; render(); });
-document.getElementById('next').addEventListener('click', () => { idx = (idx + 1) % thumbs.length; render(); });
-
-let ws = null;
-let wsReady = false;
-let pingTimer = null;
-const pending = new Map();
-
-function connectWs() {
-  if (!apiBase) return;
-  const wsUrl = apiBase.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:');
-  try {
-    ws = new WebSocket(wsUrl);
-  } catch (e) {
-    wsReady = false;
-    return;
-  }
-
-  ws.onopen = () => {
-    wsReady = true;
-    if (pingTimer) clearInterval(pingTimer);
-    pingTimer = setInterval(() => {
-      if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping' }));
-    }, 10000);
-  };
-
-  ws.onmessage = (e) => {
-    let msg;
-    try { msg = JSON.parse(e.data); } catch { return; }
-    if (msg.type === 'aiRichActionResult' && pending.has(msg.requestId)) {
-      pending.get(msg.requestId)(msg);
-      pending.delete(msg.requestId);
-    }
-  };
-
-  ws.onclose = () => {
-    wsReady = false;
-    if (pingTimer) clearInterval(pingTimer);
-    setTimeout(connectWs, 1500);
-  };
-
-  ws.onerror = () => {
-    wsReady = false;
-  };
-}
-connectWs();
-
-function sendAction(payload, timeoutMs = 10000) {
-  return new Promise((resolve) => {
-    if (!ws || ws.readyState !== 1) return resolve({ success: false, message: 'Not connected' });
-    const requestId = Math.random().toString(36).slice(2);
-    const timer = setTimeout(() => {
-      pending.delete(requestId);
-      resolve({ success: false, message: 'Timed out' });
-    }, timeoutMs);
-    pending.set(requestId, (msg) => { clearTimeout(timer); resolve(msg); });
-    ws.send(JSON.stringify({ ...payload, requestId }));
-  });
-}
-
-dlBtn.addEventListener('click', async () => {
-  if (!token) { dlBtn.textContent = 'Unavailable'; return; }
-  dlBtn.disabled = true;
-  dlBtn.textContent = 'Sending...';
-  const result = await sendAction({ type: 'aiRichAction', token, index: idx });
-  dlBtn.textContent = result.success ? 'Sent!' : ('Failed: ' + (result.message || 'unknown'));
-  setTimeout(() => { dlBtn.disabled = false; dlBtn.textContent = 'Download'; }, 3000);
-});
-render();
-</script>`
-}
-
-// ─── Quality Selection Handler ────────────────────────────────────────────
 handler.before = async (m, { conn }) => {
-  // Fix: Aman dari quoted message yang undefined/null
   if (!m.quoted || !m.quoted.id) return
   const state = global.pinterestDlState?.[m.sender]
   if (!state || Date.now() - state.timestamp > 300000) return
 
-  // Validasi ID pesan yang di-reply
   if (state.messageId !== m.quoted.id) return
 
   const choice = parseInt(m.text)
@@ -474,9 +256,9 @@ handler.before = async (m, { conn }) => {
     const { hls, title, desc, creator, saves } = state
     const selected = hls.qualities[choice - 1]
 
-    const infoText = `Pinterest Video\n${title ? `- Title: ${title}\n` : ''}${desc ? `- Description: ${desc}\n` : ''}- Creator: ${creator}\n- Saves: ${saves}\n- Resolution: ${selected.resolution}`
+    const infoText = `${title ? `- Title: ${title}\n` : ''}${desc ? `- Description: ${desc}\n` : ''}- Creator: ${creator}\n- Saves: ${saves}\n- Resolution: ${selected.resolution}`
 
-    await m.reply(`Downloading resolution ${selected.resolution}...`)
+    await m.react(`⬇️`)
     const output = `/tmp/pin_${Date.now()}.mp4`
     await mergeVideoAudio(selected.url, hls.audio, output)
 
