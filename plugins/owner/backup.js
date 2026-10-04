@@ -40,6 +40,7 @@ let handler = async (m, { conn }) => {
     join(cwd, '.agents'),
     join(cwd, '.config'),
     join(cwd, '.git'),
+    join(cwd, 'data/sessions/store.db'),
   ]
 
   await addFolderRecursively(zipAll, cwd, cwd, excludePaths)

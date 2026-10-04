@@ -20,18 +20,50 @@ const H2 = {
     'accept-encoding': 'gzip'
 }
 
+/* ============ IP SPOOF ============ */
 const dip = () => `${randomInt(1,255)}.${randomInt(0,255)}.${randomInt(0,255)}.${randomInt(1,255)}`
 
-const sp = h => ({
-    ...h,
-    'x-forwarded-for'    : dip(),
-    'x-real-ip'          : dip(),
-    'client-ip'          : dip(),
-    'x-client-ip'        : dip(),
-    'x-originating-ip'   : dip(),
-    'x-cluster-client-ip': dip()
+// pool IP "residential" biar gak keliatan random mentah
+const IP_POOL = [
+    '36.66.', '36.72.', '36.85.', '103.28.', '103.47.',
+    '114.79.', '114.122.', '180.243.', '180.244.', '182.253.'
+]
+const dipId = () => {
+    const base = IP_POOL[randomInt(0, IP_POOL.length - 1)]
+    return `${base}${randomInt(1,255)}.${randomInt(1,255)}`
+}
+
+const sp = h => {
+    const ip  = dipId()
+    const ip2 = dipId()
+    const ip3 = dip()
+    return {
+        ...h,
+        'x-forwarded-for'        : `${ip}, ${ip2}`,
+        'x-real-ip'              : ip,
+        'client-ip'              : ip,
+        'x-client-ip'            : ip,
+        'x-originating-ip'       : ip2,
+        'x-cluster-client-ip'    : ip2,
+        'x-forwarded-host'       : 'identitytoolkit.googleapis.com',
+        'x-forwarded-proto'      : 'https',
+        'forwarded'              : `for=${ip};proto=https;by=${ip3}`,
+        'via'                    : `1.1 ${ip3} (squid/3.5.27)`,
+        'true-client-ip'         : ip,
+        'cf-connecting-ip'       : ip,
+        'x-proxyuser-ip'         : ip2
+    }
+}
+
+// axios instance dengan IP spoof konsisten + proxy opsional
+const makeClient = (extra = {}) => axios.create({
+    timeout: 30000,
+    headers: sp(extra),
+    // kalau punya proxy, isi di sini:
+    // proxy: { host: '127.0.0.1', port: 8080, protocol: 'http' }
 })
 
+/* ============ helpers ============ */
 const bad = e => {
     const d = e.response?.data
     return d ? (typeof d === 'object' ? JSON.stringify(d) : String(d)) : e.message
@@ -57,19 +89,23 @@ function extractCode(raw) {
     return null
 }
 
+/* ============ API calls ============ */
 async function sendMagicLink(email) {
     try {
-        await axios.post(`${IDT}/getOobConfirmationCode?key=${KEY}`, {
-            requestType          : 6,
-            email,
-            androidInstallApp    : true,
-            canHandleCodeInApp   : true,
-            continueUrl          : 'https://alightcreative.com?ui_sid=0366624874&ui_sd=0',
-            iosBundleId          : 'com.alightcreative.motion',
-            androidPackageName   : 'com.alightcreative.motion',
-            androidMinimumVersion: '585',
-            clientType           : 'CLIENT_TYPE_ANDROID'
-        }, { headers: sp(H1) })
+        await makeClient(H1).post(
+            `${IDT}/getOobConfirmationCode?key=${KEY}`,
+            {
+                requestType          : 6,
+                email,
+                androidInstallApp    : true,
+                canHandleCodeInApp   : true,
+                continueUrl          : 'https://alightcreative.com?ui_sid=0366624874&ui_sd=0',
+                iosBundleId          : 'com.alightcreative.motion',
+                androidPackageName   : 'com.alightcreative.motion',
+                androidMinimumVersion: '585',
+                clientType           : 'CLIENT_TYPE_ANDROID'
+            }
+        )
         return { ok: true }
     } catch (e) { return { ok: false, why: bad(e) } }
 }
@@ -78,9 +114,10 @@ async function verifyLink(email, rawLink) {
     const c = extractCode(rawLink)
     if (!c) return { ok: false, why: 'oobCode tidak ditemukan di link' }
     try {
-        const a = await axios.post(`${IDT}/emailLinkSignin?key=${KEY}`, {
-            email, oobCode: c, clientType: 'CLIENT_TYPE_ANDROID'
-        }, { headers: sp(H1) })
+        const a = await makeClient(H1).post(
+            `${IDT}/emailLinkSignin?key=${KEY}`,
+            { email, oobCode: c, clientType: 'CLIENT_TYPE_ANDROID' }
+        )
         return {
             ok : true,
             id : a.data.idToken,
@@ -94,19 +131,17 @@ async function verifyLink(email, rawLink) {
 async function activatePremium(idToken) {
     const orderId = randomBytes(6).toString('hex')
     try {
-        const r = await axios.post(VFY, {
+        const r = await makeClient({
+            ...H2,
+            authorization               : 'Bearer ' + idToken,
+            'firebase-instance-id-token': 'cSDnCyp3T-uwp07z3tL86T:APA91bFkmvvsHw5nnqa1SBFci-99DRsKClLiETdRrVcJjS5yBx1v_FbCb1d8WhBuea_zmwnYBktyTIzcRhN4b6uNOUur9wPc0gKXmJDoZic0LhNq5V2s0xI'
+        }).post(VFY, {
             data: {
                 productId: 'am.full.sub.annual.19q4',
                 token    : 'mmgaobamlahbbeccfplmbkbb.AO-J1OzqG0or_GJJIx-ms8GrTm-jaglCRfhQSRPUZKpl2YspYS-oN7_94uv8RC5vQbvd_Ios2pPDStZ2n7F0hLE3FiOU7HS3R6Fquulv5xLXFECSv4ctElw',
                 skuType  : 'subs',
                 orderId
             }
-        }, {
-            headers: sp({
-                ...H2,
-                authorization               : 'Bearer ' + idToken,
-                'firebase-instance-id-token': 'cSDnCyp3T-uwp07z3tL86T:APA91bFkmvvsHw5nnqa1SBFci-99DRsKClLiETdRrVcJjS5yBx1v_FbCb1d8WhBuea_zmwnYBktyTIzcRhN4b6uNOUur9wPc0gKXmJDoZic0LhNq5V2s0xI'
-            })
         })
         return { ok: true, orderId, data: r.data }
     } catch (e) { return { ok: false, why: bad(e) } }
@@ -114,14 +149,16 @@ async function activatePremium(idToken) {
 
 async function refreshAndActivate(refreshToken) {
     try {
-        const r = await axios.post(`${STK}?key=${KEY}`, {
-            grant_type: 'refresh_token', refresh_token: refreshToken
-        })
+        const r = await makeClient(H2).post(
+            `${STK}?key=${KEY}`,
+            { grant_type: 'refresh_token', refresh_token: refreshToken }
+        )
         const result = await activatePremium(r.data.id_token)
         return { ...result, newRef: r.data.refresh_token }
     } catch (e) { return { ok: false, why: bad(e) } }
 }
 
+/* ============ session ============ */
 function getSettings() {
     if (!db.data.settings) db.data.settings = {}
     return db.data.settings
@@ -146,6 +183,7 @@ function saveSession(userJid, email, data) {
     db.saveSync?.() || db.write?.()
 }
 
+/* ============ handler ============ */
 let handler = async (m, { conn, text }) => {
     if (!text) return m.reply(`Usage:
 - \`.ampro <email>\` - send magic link to email

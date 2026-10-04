@@ -1,3 +1,50 @@
+<h3>04/October/2026</h3>
+<sub>
+
+```diff
+• Major refactoring of VoIP engine and media handling to improve stability and performance in call sessions
+• Added screen sharing signaling and refined audio/video engine handling for better quality
+• Updated E621 scraper to adapt to API changes and maintain functionality
+• General stability and performance improvements across utility modules and plugins
+
+________________________
+
+* Edit "lib/package/voip/WaVoipCoordinator.js"
+* Edit "lib/package/voip/call/WaCallManager.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/call/call-state.js"
+* Edit "lib/package/voip/index.js"
+* Edit "lib/package/voip/media/WaAudioEngine.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/package/voip/media/audio-codec.js"
+* Edit "lib/package/voip/media/h264.js"
+* Edit "lib/package/voip/relay/WaManualRelay.js"
+* Edit "lib/package/voip/relay/dtls/handshake.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
+* Edit "lib/package/voip/relay/sctp/wire.js"
+* Edit "lib/package/voip/relay/stun.js"
+* Edit "lib/package/voip/shim/baileys-resolve.js"
+* Edit "lib/package/voip/shim/core.js"
+* Edit "lib/package/voip/signaling/bridge.js"
+* Edit "lib/package/voip/signaling/signaling.js"
+* Edit "lib/package/voip/types.js"
+* Edit "lib/package/voip/voipClient.js"
+* Edit "lib/scrapers/src/e621.js"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/owner/backup.js"
+* Edit "plugins/owner/call.js"
+* Edit "plugins/tools/alightmotion.js"
++ Add "lib/package/voip/app-data/"
++ Add "lib/package/voip/media/audio-reorder.js"
++ Add "lib/package/voip/media/mlow-codec.js"
++ Add "lib/package/voip/protobuf.js"
++ Add "lib/package/voip/signaling/screen-share.js"
+```
+</sub>
+
 <h3>28/September/2026</h3>
 <sub>
 
@@ -184,27 +231,5 @@ ________________________
 
 * Edit "lib/package/website/views/index.html"
 * Edit "lib/package/website/views/profile.html"
-```
-</sub>
-
-<h3>16/September/2026</h3>
-<sub>
-
-```diff
-• Refactor VoIP media session and video engine for better stability and synchronization
-• Major refactoring of connection utility to enhance resilience
-• Update Telegram sticker plugin and subbot connection logic
-• Core maintenance in main and configuration files
-
-________________________
-
-* Edit "lib/config.js"
-* Edit "lib/main.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/media/WaVideoEngine.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/sticker/telegram.js"
-* Edit "plugins/subbot/connect.js"
 ```
 </sub>

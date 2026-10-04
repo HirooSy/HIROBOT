@@ -1,11 +1,12 @@
-const e621 = global.scraper.e621.default
-const upload = global.scraper.upload.default
 import { default as axios } from 'axios';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import { img2pdf, ZipFile } from '../../lib/utils/converter.js';
+
+const e621 = global.scraper.e621;
+const upload = global.scraper.upload.default;
 
 const execFileAsync = promisify(execFile);
 const FFMPEG_PATH = '/usr/bin/ffmpeg';
@@ -165,6 +166,7 @@ async function buildPoolZip(posts) {
     }
     return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
+
 async function extractFramePreview(fileUrl, ext) {
     const tmpDir = getTmpDir();
     const ts = Date.now();
@@ -341,7 +343,6 @@ async function sendGallery(conn, m, { type, keywords, poolId, label, posts, page
     if (hasNext) navFlow.push({ text: '▶︎Next', id: `.${command} page ${token} ${page + 1}` });
 
     const previewPerRow = 5;
-    const maxPreviewItems = calcMaxPreviewItems(previewPerRow);
     const caption = `- ${label}\n- *Page:* ${page}\n- *Showing:* ${posts.length}\n`;
 
     const widgetItems = [
