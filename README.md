@@ -15,7 +15,7 @@
 > <p align=center><b>Features:</b></p>
 > 
 > - [x] AI Agent Using Gemini.
-> - [x] 1:1 Voice & Video Call.
+> - [x] Audio & Video Call.
 > - [x] Multi Sessions.
 > - [x] Database node:sqlite / Mongodb / MySql2.
 > - [x] Support AI Rich and Button Message.

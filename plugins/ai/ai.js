@@ -9,6 +9,7 @@ const {
     cancelPending,
     getUserIdentity,
     getApiKeys,
+    getKeyStatus,
     MODELS,
     getContextInfo,
 } = (await import("../../lib/package/ai/mcp.js"))
@@ -137,8 +138,17 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false)
             ? `User: ${identity.name}`
             : `Unregistered user (${identity.number})`
 
+        const keyLines = identity.isOwner && keys.length
+            ? '\n' + getKeyStatus().map(k => {
+                const state = k.cooling.length
+                    ? '⏳ ' + k.cooling.map(c => `${c.scope} ${Math.ceil(c.remainingMs / 1000)}s`).join(', ')
+                    : '✅ ready'
+                return `  ${k.index}. ${k.masked} ${state}`
+            }).join('\n')
+            : ''
+
         return conn.sendMessage(chat, {
-            text: `*${global.settings.botname} — Info*\n- ${userInfo}\n- API Keys: ${keys.length ? `${keys.length} key active` : 'No Apikey'}\n- AI Tools: ${countTools()} tools\n- Default model: ${MODELS.default}`
+            text: `*${global.settings.botname} — Info*\n- ${userInfo}\n- API Keys: ${keys.length ? `${keys.length} key active` : 'No Apikey'}${keyLines}\n- AI Tools: ${countTools()} tools\n- Default model: ${MODELS.default}`
         }, { quoted: m })
     }
 

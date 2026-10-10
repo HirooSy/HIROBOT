@@ -10,9 +10,11 @@ const {
 import fs from 'fs'
 import path from 'path'
 import Helper from '../../lib/utils/helper.js'
-import Connection, { generateQR } from '../../lib/utils/connection.js'
+import Connection, { generateQR, generateQRMatrix } from '../../lib/utils/connection.js'
 import { HelperConnection } from '../../lib/utils/simple.js'
 import db, { loadDatabase, getUserAutoReconnect as dbGetUserAutoReconnect, setUserAutoReconnect as dbSetUserAutoReconnect } from '../../lib/utils/database.js'
+
+const subbotHandles = (global.subbotHandles ||= new Map())
 
 const CROCKFORD_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ' // kept for reference only, no longer enforced
 
@@ -101,6 +103,8 @@ export async function startSubBot(jid, opts = {}) {
 
     let isReconnecting = false
     let connGeneration = 0
+    let stopped = false
+    let handle = null
 
     function buildSocketOptions() {
         const customPairing = sanitizeCustomPairingCode(global.settings?.connection?.subbot?.paircode)
@@ -132,6 +136,7 @@ export async function startSubBot(jid, opts = {}) {
     let isInit = true
 
     async function reloadHandler(restartConn = false) {
+        if (stopped) return false
         connGeneration++
         const myGeneration = connGeneration
 
@@ -141,6 +146,8 @@ export async function startSubBot(jid, opts = {}) {
         } catch (e) {
             console.error(e)
         }
+
+        if (stopped) return false
 
         if (restartConn) {
             try { subConn.ws.close() } catch {}
@@ -201,6 +208,7 @@ export async function startSubBot(jid, opts = {}) {
     }
 
     async function connectionUpdate(update) {
+        if (stopped) return
         const { connection, lastDisconnect, qr } = update
 
         // Show QR in terminal jika qr: true di config subbot
@@ -211,6 +219,8 @@ export async function startSubBot(jid, opts = {}) {
                 console.log(output)
             })
         }
+
+        if (qr) opts.onQR?.(qr)
 
         if (!connection) return
 
@@ -229,6 +239,7 @@ export async function startSubBot(jid, opts = {}) {
             const loggedOut = statusCode === DisconnectReason.loggedOut
 
             if (loggedOut) {
+                if (subbotHandles.get(jid) === handle) subbotHandles.delete(jid)
                 Connection.removeSavedAuthState(type, subbotRelativePath(jid))
                 await opts.onClose?.(subConn, statusCode, true)
                 return
@@ -242,6 +253,7 @@ export async function startSubBot(jid, opts = {}) {
                     await opts.onReconnecting?.(subConn)
                     const retryDelay = statusCode === DisconnectReason.connectionLost ? 1000 : 3000
                     await new Promise(resolve => setTimeout(resolve, retryDelay))
+                    if (stopped) return
                     await reloadHandler(true).catch(err => console.error('[Subbot] Reload error:', err))
                 } finally {
                     isReconnecting = false
@@ -249,18 +261,29 @@ export async function startSubBot(jid, opts = {}) {
                 return
             }
 
+            if (subbotHandles.get(jid) === handle) subbotHandles.delete(jid)
             await opts.onClose?.(subConn, statusCode, false)
         }
     }
 
     await reloadHandler(false)
-    return {
+    handle = {
         get subConn() { return subConn },
         requestPairingCode: (phone, customCode) => subConn.requestPairingCode(
             phone,
             sanitizeCustomPairingCode(customCode ?? global.settings?.connection?.subbot?.paircode) || undefined
-        )
+        ),
+        stop() {
+            stopped = true
+            connGeneration++
+            try { subConn.ev.removeAllListeners() } catch {}
+            try { subConn.ws.close() } catch {}
+            Connection.conns.delete(jid)
+            if (subbotHandles.get(jid) === handle) subbotHandles.delete(jid)
+        }
     }
+    subbotHandles.set(jid, handle)
+    return handle
 }
 
 let hasAutoConnected = false
@@ -292,8 +315,185 @@ export async function autoConnectSubBots() {
     }
 }
 
+const webSubbots = (global.webSubbots ||= new Map())
+const WEB_PAIR_TTL = 150_000
+const WEB_START_TTL = 90_000
+
+function clearWebEntry(jid) {
+    const entry = webSubbots.get(jid)
+    if (entry?.timer) clearTimeout(entry.timer)
+    webSubbots.delete(jid)
+    return entry
+}
+
+function discardUnregistered(jid) {
+    if (!hasSavedSession(jid)) removeSavedSession(jid)
+}
+
+async function assertCanRun(jid) {
+    const parentConn = await Connection.conn
+    const { max } = getSubbotConfig()
+    if (parentConn?.user?.id && areJidsSameUser(parentConn.user.id, jid)) throw new Error('Cannot create a session on the main bot number.')
+    if (Connection.conns.has(jid)) throw new Error('Your session is already running.')
+    if (webSubbots.has(jid)) throw new Error('A connection attempt is already in progress.')
+    if (Connection.conns.size >= max) throw new Error(`Slots are full (max ${max}).`)
+}
+
+async function fetchPairingCode(handle, jid, entry) {
+    for (let i = 0; i < 4; i++) {
+        await new Promise(resolve => setTimeout(resolve, i === 0 ? 3000 : 2500))
+        if (webSubbots.get(jid) !== entry) return
+        try {
+            entry.code = await handle.requestPairingCode(jid.split('@')[0])
+            return
+        } catch (err) {
+            entry.lastError = err?.message || 'Failed to get pairing code.'
+        }
+    }
+    if (webSubbots.get(jid) === entry) entry.failed = true
+}
+
+export function webSubbotInfo(jid) {
+    const { max } = getSubbotConfig()
+    const entry = webSubbots.get(jid)
+    const running = Connection.conns.has(jid)
+    const saved = hasSavedSession(jid)
+    let state = 'none'
+    if (running) state = 'online'
+    else if (entry) state = entry.kind === 'start' ? 'connecting' : 'pairing'
+    else if (saved) state = 'stopped'
+
+    const info = {
+        state,
+        saved,
+        autoConnect: !!getUserAutoReconnect(jid),
+        slots: { used: Connection.conns.size, max },
+        active: [...Connection.conns.keys()]
+    }
+    if (state === 'pairing') {
+        info.pairing = {
+            method: entry.method,
+            code: entry.code,
+            qr: entry.qr ? generateQRMatrix(entry.qr) : null,
+            failed: !!entry.failed,
+            error: entry.failed ? entry.lastError || 'Failed to get pairing code.' : null,
+            expiresIn: Math.max(0, entry.expiresAt - Date.now())
+        }
+    }
+    return info
+}
+
+export async function webSubbotConnect(jid, method, allowed) {
+    if (!allowed) throw new Error('Subbot requires premium.')
+    if (method !== 'pairing' && method !== 'qr') throw new Error('Invalid method.')
+    await assertCanRun(jid)
+    if (hasSavedSession(jid)) throw new Error('You already have a session. Start it or delete it first.')
+
+    const entry = { kind: 'pair', method, code: null, qr: null, failed: false, lastError: null, timer: null, expiresAt: Date.now() + WEB_PAIR_TTL }
+    webSubbots.set(jid, entry)
+    entry.timer = setTimeout(() => {
+        if (webSubbots.get(jid) === entry) webSubbotAbort(jid)
+    }, WEB_PAIR_TTL)
+
+    try {
+        const handle = await startSubBot(jid, {
+            onQR: (qr) => {
+                if (webSubbots.get(jid) === entry && method === 'qr') entry.qr = qr
+            },
+            onOpen: async () => {
+                if (webSubbots.get(jid) === entry) clearWebEntry(jid)
+                await setUserAutoReconnect(jid, true)
+            },
+            onReconnecting: () => {},
+            onClose: () => {
+                if (webSubbots.get(jid) === entry) {
+                    clearWebEntry(jid)
+                    discardUnregistered(jid)
+                }
+            },
+        })
+        if (method === 'pairing' && !handle.subConn.authState.creds.registered) {
+            fetchPairingCode(handle, jid, entry)
+        }
+    } catch (err) {
+        clearWebEntry(jid)
+        discardUnregistered(jid)
+        throw err
+    }
+}
+
+export async function webSubbotStart(jid, allowed) {
+    if (!allowed) throw new Error('Subbot requires premium.')
+    await assertCanRun(jid)
+    if (!hasSavedSession(jid)) throw new Error('No saved session found. Connect first.')
+
+    const entry = { kind: 'start', timer: null, expiresAt: Date.now() + WEB_START_TTL }
+    webSubbots.set(jid, entry)
+    entry.timer = setTimeout(() => {
+        if (webSubbots.get(jid) === entry) webSubbotAbort(jid)
+    }, WEB_START_TTL)
+
+    try {
+        await startSubBot(jid, {
+            onOpen: () => {
+                if (webSubbots.get(jid) === entry) clearWebEntry(jid)
+            },
+            onReconnecting: () => {},
+            onClose: () => {
+                if (webSubbots.get(jid) === entry) clearWebEntry(jid)
+            },
+        })
+    } catch (err) {
+        clearWebEntry(jid)
+        throw err
+    }
+}
+
+export function webSubbotAbort(jid) {
+    const entry = clearWebEntry(jid)
+    const handle = subbotHandles.get(jid)
+    if (handle) handle.stop()
+    if (entry?.kind === 'pair') discardUnregistered(jid)
+    return !!entry
+}
+
+export function webSubbotStop(jid) {
+    if (webSubbots.has(jid)) return webSubbotAbort(jid)
+    const handle = subbotHandles.get(jid)
+    const live = Connection.conns.get(jid)
+    if (!handle && !live) return false
+    if (handle) handle.stop()
+    else {
+        try { live.ev.removeAllListeners() } catch {}
+        try { live.ws.close() } catch {}
+        Connection.conns.delete(jid)
+    }
+    return true
+}
+
+export function webSubbotDelete(jid) {
+    webSubbotStop(jid)
+    removeSavedSession(jid)
+}
+
+export async function webSubbotSetAuto(jid, value) {
+    await setUserAutoReconnect(jid, !!value)
+}
+
+export function webSubbotSessionFile(jid) {
+    if (!hasSavedSession(jid)) return null
+    const target = sessionPath(jid)
+    if (!fs.existsSync(target) || fs.statSync(target).isDirectory()) return null
+    return { path: target, name: path.basename(target) }
+}
+
+function subbotPremiumOnly() {
+    return db.data?.siteSettings?.subbot?.mode === 'premium'
+}
+
 async function doConnect(m, { conn, usedPrefix, isPrems }) {
     //if (!isPrems) return dfail("premium", m, conn)
+    if (subbotPremiumOnly() && !isPrems) throw `❌ This command is for premium users only.`
 
     const parentConn = await Connection.conn
     const { max } = getSubbotConfig()
@@ -346,7 +546,7 @@ async function doConnect(m, { conn, usedPrefix, isPrems }) {
 }
 
 async function doReconnect(m, { conn, args, usedPrefix, isPrems }) {
-    if (!isPrems) throw `❌ This command is for premium users only.`
+    if (subbotPremiumOnly() && !isPrems) throw `❌ This command is for premium users only.`
 
     const parentConn = await Connection.conn
     const { max } = getSubbotConfig()
