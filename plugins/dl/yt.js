@@ -42,10 +42,10 @@ if (command == "play") {
 }
 
 //--------------------- AUDIO AND VIDEO --------------
-if (/^yt(a|v|audio|video)$/i.test(command)) {
+if (/^yt(a|v|audio|video|mp4|mp3)$/i.test(command)) {
        let links = isLink(text);
        if (!text || !links) return m.reply(`*How To Use:* \`${usedPrefix + command} <your_link>\`\n\nContoh: \`${usedPrefix + command} https://youtube.com/watch?v=xxxx\``)
-       var isAudio = /yt(a|audio)/.test(command)
+       var isAudio = /yt(a|audio|mp3)/.test(command)
        try {
          var data = await ytdl((isAudio ? "audio" : "video"), links[0]);
          var filename = isAudio ? "YouTube.mp3" : "YouTube.mp4";
@@ -70,7 +70,7 @@ if (/^yt(s|search)$/i.test(command)) {
 }
 handler.help = ['ytv <link>', 'yta <link>', 'yts <query>', 'play <query>']
 handler.tags = ['downloader']
-handler.command = /^(play|yt(v|video|a|audio|s|search))$/i
+handler.command = /^(play|yt(v|video|a|audio|s|search|mp3|mp4))$/i
 handler.limit = true
 handler.ai = { risk: "low", description: "play/download music or video from youtube" }
 

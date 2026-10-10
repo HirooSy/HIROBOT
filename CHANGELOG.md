@@ -1,3 +1,143 @@
+<h3>09/October/2026</h3>
+<sub>
+
+```diff
+• Implement dynamic site settings in profile dashboard, allowing customization of daily rewards, shop pricing, gacha symbol weights/rewards, and subbot mode constraints
+• Update web server routes and add API endpoints to fetch, validate, and save customized site settings in database
+• Integrate settings UI tabs, inputs, and controls inside the database section of the web dashboard
+• Enhance subbot connection commands to dynamically enforce premium validation rules from active site settings
+
+________________________
+
+* Edit "lib/package/website/server.js"
+* Edit "lib/package/website/views/profile.html"
+* Edit "lib/package/website/views/style.css"
+* Edit "plugins/subbot/connect.js"
+```
+</sub>
+
+<h3>08/October/2026</h3>
+<sub>
+
+```diff
+• Add new ApkPure downloader plugin and scraper utility
+• Update web profile dashboard with custom pixel particle snow animation and black theme
+• Refine syntax and command aliases for channel utility plugins (upch, upchannel, statsch, statschannel, statusch, statuschannel)
+• General maintenance and refactoring of connection and subbot utilities
+• Refactor 'generate_image' AI tool to utilize the newly implemented Bing Image Creator scraper and support rich message formatting with up to 4 images
+• Rewrite text-to-image scraper from scratch using Bing Image Creator with a custom cookie jar, polling sequence, and robust user-agent spoofing to replace the deprecated guest-mode ImageGPT endpoint
+• Update 'generate_image' AI tool definition and execution to dynamically support and forward user-specified aspect ratios (1:1, 3:2, 2:3)
+• Modify Bing Image Creator scraper to support and parse aspect ratio parameters, mapping them to the proper query and payload indices
+• Implement new 'bingImage' command plugin ('plugins/ai/bingImage.js') supporting custom ratio options with automatic text parsing and rich message fallback
+• Update 'create_zip' tool to support zipping installed library directories inside 'node_modules' when explicitly specified as input paths
+• Clarify zipping behavior for nested modules and parent folders in the AI system prompts
+
+________________________
+
++ Add "lib/scrapers/src/apkpure.js"
++ Add "plugins/ai/bingImage.js"
++ Add "plugins/dl/apkpure.js"
++ Add "plugins/tools/channel.js"
+* Edit "lib/package/ai/prompt.txt"
+* Edit "lib/package/ai/tools/convert.js"
+* Edit "lib/package/ai/tools/media.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/package/website/views/profile.html"
+* Edit "lib/package/website/views/style.css"
+* Edit "lib/scrapers/src/ai-image.js"
+* Edit "lib/utils/connection.js"
+* Edit "plugins/subbot/connect.js"
+```
+</sub>
+
+<h3>07/October/2026</h3>
+<sub>
+
+```diff
+• Complete migration of AI Agent tool definitions, prompt guidance, and chat log parsing structures to English for global standardization
+• Implement robust multi-key API rotation, classification of Gemini failures (transient, auth, rate limit/quota, fatal), and automatic retry backoffs with dynamic sleep delays
+• Add new modular tools: 'convert_file' (supporting LibreOffice, ffmpeg, and Pandoc conversions), 'create_zip'/'extract_zip' (with recursive directory skipping and temporary storage management), and 'html_design'/'html_preview' (enabling live interactive web sandbox rendering directly in chat)
+• Enhance in-memory message store with 'loadAlbum' functionality and retain parent-sibling 'messageContextInfo' associations during message ingest
+• Refactor Code-to-Message (CRM) utility to automatically detect and reconstruct message albums via 'loadAlbum' and extract base64 data URIs from message strings
+• Add support for custom sticker styling (splitting names and authors with '|') in the sticker creation command
+• Optimize system shutdown routines to cleanly persist message store files on signal execution
+• Introduce AI-only output marking mechanism (`AI_ONLY_MARKER`) in MCP to reliably strip raw metadata and format internal plugin executions cleanly for users
+• Refactor plugin execution responses to wrap raw command outputs within specific parsing boundaries (`PLUGIN_OUT_START` and `PLUGIN_OUT_END`)
+
+________________________
+
++ Add "lib/package/ai/tools/convert.js"
++ Add "lib/package/ai/tools/html.js"
+* Edit "lib/main.js"
+* Edit "lib/package/ai/chatlog.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/prompt.txt"
+* Edit "lib/package/ai/tools/database.js"
+* Edit "lib/package/ai/tools/files.js"
+* Edit "lib/package/ai/tools/group.js"
+* Edit "lib/package/ai/tools/media.js"
+* Edit "lib/package/ai/tools/memory.js"
+* Edit "lib/package/ai/tools/messaging.js"
+* Edit "lib/package/ai/tools/plugin.js"
+* Edit "lib/package/ai/tools/readchat.js"
+* Edit "lib/package/ai/tools/reminder.js"
+* Edit "lib/package/ai/tools/system.js"
+* Edit "lib/package/ai/tools/web.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/simple.js"
+* Edit "plugins/owner/backup.js"
+* Edit "plugins/sticker/sticker.js"
+* Edit "plugins/tools/crm.js"
+```
+</sub>
+
+<h3>04/October/2026</h3>
+<sub>
+
+```diff
+• Major refactoring of VoIP engine and media handling to improve stability and performance in call sessions
+• Added screen sharing signaling and refined audio/video engine handling for better quality
+• Updated E621 scraper to adapt to API changes and maintain functionality
+• General stability and performance improvements across utility modules and plugins
+
+________________________
+
+* Edit "lib/package/voip/WaVoipCoordinator.js"
+* Edit "lib/package/voip/call/WaCallManager.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/call/call-state.js"
+* Edit "lib/package/voip/index.js"
+* Edit "lib/package/voip/media/WaAudioEngine.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/package/voip/media/audio-codec.js"
+* Edit "lib/package/voip/media/h264.js"
+* Edit "lib/package/voip/relay/WaManualRelay.js"
+* Edit "lib/package/voip/relay/dtls/handshake.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
+* Edit "lib/package/voip/relay/sctp/wire.js"
+* Edit "lib/package/voip/relay/stun.js"
+* Edit "lib/package/voip/shim/baileys-resolve.js"
+* Edit "lib/package/voip/shim/core.js"
+* Edit "lib/package/voip/signaling/bridge.js"
+* Edit "lib/package/voip/signaling/signaling.js"
+* Edit "lib/package/voip/types.js"
+* Edit "lib/package/voip/voipClient.js"
+* Edit "lib/scrapers/src/e621.js"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/owner/backup.js"
+* Edit "plugins/owner/call.js"
+* Edit "plugins/tools/alightmotion.js"
++ Add "lib/package/voip/app-data/"
++ Add "lib/package/voip/media/audio-reorder.js"
++ Add "lib/package/voip/media/mlow-codec.js"
++ Add "lib/package/voip/protobuf.js"
++ Add "lib/package/voip/signaling/screen-share.js"
+```
+</sub>
+
 <h3>28/September/2026</h3>
 <sub>
 
@@ -94,117 +234,5 @@ ________________________
 * Edit "plugins/owner/backup.js"
 * Edit "plugins/subbot/connect.js"
 + Add "lib/package/website/views/style.css"
-```
-</sub>
-
-<h3>22/September/2026</h3>
-<sub>
-
-```diff
-• Massive refactoring of canvas utility for optimized rendering and performance
-• Database utility enhancements and optimization for better reliability
-• Refactor brat scraper for improved stability and functional consistency
-• Dependency updates in package.json and configuration sync
-• Cleanup of legacy plugins and minor maintenance across core utilities
-• Implement isolated extra connection update listener and diagnostic logging for Baileys socket disconnects
-• Add periodic diagnostic timer to WaCallMediaSession reporting real-time VoIP performance metrics (SCTP queue, Opus codec, and packet loss stats)
-• Enable RFC 7675-style ICE consent refreshes on WaManualRelay for open connections to prevent random mid-call drops, and defer DTLS initialization until ICE binding is verified
-• Route WhatsApp web-call media channels as unordered SCTP chunks and handle immediate delivery on receipt to bypass stream sequencing issues under packet loss
-• Improve bot process restart sequence on 'reset' signal by deferring restart until the child process has fully exited
-• Update e621 search plugin tags and bump bot version to 1.2.1
-
-________________________
-
-* Edit "lib/utils/canvas.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/scrapers/src/brat.js"
-* Edit "lib/utils/simple.js"
-* Edit "lib/utils/converter.js"
-* Edit "lib/package/voip/media/WaAudioEngine.js"
-* Edit "plugins/owner/setpp.js"
-* Edit "plugins/tools/resize.js"
-* Edit "package.json"
-* Edit ".env.example"
-* Edit "README.md"
-* Edit "plugins/owner/migratedb.js"
-* Edit "lib/main.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/relay/WaManualRelay.js"
-* Edit "lib/package/voip/relay/sctp/association.js"
-* Edit "lib/start.js"
-* Edit "lib/utils/connection.js"
-* Edit "plugins/dl/e621.js"
-```
-</sub>
-
-<h3>20/September/2026</h3>
-<sub>
-
-```diff
-• Replace 'ws' package with a native, RFC 6455-compliant WebSocket server implementation for improved stability and reduced dependency overhead
-• Refactor website server endpoints to support native WebSockets
-• Update web dashboard HTML views and upload scrapers
-• General refactoring and cleanup of core utilities and VoIP package
-• Cleanup legacy and unused modules
-• Optimize tunnel setup by replacing Promise-based connection waiting with a global callback mechanism for improved reliability
-• Implement robust error handling for tunnel initialization on connection open
-• Implement group history context in AI agent to improve conversation understanding, utilizing a new `chatlog` module for message unwrapping and context building
-• Add `readchat` tool for browsing group chat history
-• Update system instructions to include Group History guidelines
-
-________________________
-
-* Edit "lib/main.js"
-* Edit "lib/utils/connection.js"
-- Delete "lib/package/voip/relay/WaSctpRelay.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/package/website/views/index.html"
-* Edit "lib/package/website/views/profile.html"
-* Edit "lib/scrapers/src/upload.js"
-* Edit "lib/utils/helper.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/subbot/connect.js"
-- Delete "plugins/tools/bypass.js"
-* Edit "plugins/tools/resize.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/ai/prompt.txt"
-+ Add "lib/package/ai/chatlog.js"
-+ Add "lib/tools/readchat.js"
-```
-</sub>
-
-<h3>17/September/2026</h3>
-<sub>
-
-```diff
-• Redesign portfolio hero section in website view for a more immersive and modern UI
-• Optimized hero components for responsiveness and performance
-
-________________________
-
-* Edit "lib/package/website/views/index.html"
-* Edit "lib/package/website/views/profile.html"
-```
-</sub>
-
-<h3>16/September/2026</h3>
-<sub>
-
-```diff
-• Refactor VoIP media session and video engine for better stability and synchronization
-• Major refactoring of connection utility to enhance resilience
-• Update Telegram sticker plugin and subbot connection logic
-• Core maintenance in main and configuration files
-
-________________________
-
-* Edit "lib/config.js"
-* Edit "lib/main.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/media/WaVideoEngine.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/sticker/telegram.js"
-* Edit "plugins/subbot/connect.js"
 ```
 </sub>

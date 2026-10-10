@@ -1,6 +1,6 @@
 {
-    "name": "HIRO-BOT",
-    "version": "1.2.2",
+    "name": "hiro",
+    "version": "1.0",
     "description": "Simple Whatsapp Bot made by HirooSy",
     "main": "lib/start.js",
     "type": "module",
@@ -11,9 +11,12 @@
     "engines": {
         "node": ">=24.x"
     },
+    "exports": {
+        "./voip": "./lib/package/voip/index.js"
+    },
     "dependencies": {
         "axios": "^1.20.0",
-        "baileys": "npm:@hiroosy/baileys-lite",
+        "baileys": "github:hiroosy/baileys-lite",
         "cheerio": "^1.2.0"
     },
     "allowScripts": {

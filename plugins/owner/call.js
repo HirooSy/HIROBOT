@@ -1,19 +1,21 @@
 import os from 'os'
 import path from 'path'
 import fs from 'fs'
-import Voip from '../../lib/package/voip/index.js'
+import Voip from 'hiro/voip'
 
 const voipInstances = new WeakMap()
 function getVoip(conn) {
     let voip = voipInstances.get(conn)
     if (!voip) {
-        voip = new Voip(conn)
+        voip = new Voip(conn, { voipLogLevel: 'info' })
         voipInstances.set(conn, voip)
     }
     return voip
 }
 
 let activeCalls = new Map()
+
+const VIDEO_EXT_RE = /\.(mp4|mov|webm|mkv|avi|m4v|3gp)(\?|#|$)/i
 
 async function downloadQuotedMedia(quoted) {
     const mime = quoted?.mimetype || ''
@@ -29,6 +31,12 @@ async function downloadQuotedMedia(quoted) {
     return filePath
 }
 
+function requireCall(m) {
+    const entry = activeCalls.get(m.chat)
+    if (!entry) throw 'No call is currently in progress in this chat.'
+    return entry
+}
+
 let handler = async (m, { conn, args, usedPrefix, command }) => {
     const voip = getVoip(conn)
 
@@ -38,14 +46,20 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         return void (await m.reply(args[0] === 'force' ? '✦ VOIP state force-reset.' : '✦ Hangup requested...'))
     }
 
+    if (command === 'voipreact') {
+        const entry = requireCall(m)
+        const emoji = args[0] || '👍'
+        const sent = entry.call.react(emoji)
+        return void (await m.reply(sent ? `✦ Reaction ${emoji} sent.` : '✦ Failed to send reaction (call is not active yet).'))
+    }
+
     if (command === 'voipsilent') {
-        const entry = activeCalls.get(m.chat)
-        if (!entry) throw 'No call is currently in progress in this chat.'
+        const entry = requireCall(m)
         const nowSilenced = await entry.call.silent()
         return void (await m.reply(nowSilenced ? '✦ Muted mic and paused video.' : '✦ Resumed.'))
     }
 
-    if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [media_url_or_path ...] [resolution] [auto] [loop] (reply to audio/video, or provide one or more URLs — mixing video and audio URLs plays them as a playlist; add "auto" to hang up automatically once the playlist finishes, "loop" to replay it from the start instead)`
+    if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [media_url_or_path ...] [resolution] [auto] [loop] (reply to audio/video, or provide one or more URLs — mixing video and audio URLs plays them as a playlist; add "auto" to hang up automatically once the playlist finishes, "loop" to replay it from the start instead)\nDuring a call: .voipsilent .voipreact <emoji> .voipend`
     if (activeCalls.has(m.chat)) throw 'A call is already in progress in this chat, wait for it to finish (or `.voipend`).'
 
     const phoneNumber = args[0].replace(/\D/g, '')
@@ -68,12 +82,10 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         media.unshift(quotedPath)
     }
 
+    const willBeVideo = media.some((src) => src !== 'silence' && VIDEO_EXT_RE.test(src))
+
     if (media.length === 0) media = 'silence'
     else if (media.length === 1) media = media[0]
-
-    const willBeVideo = (Array.isArray(media) ? media : [media]).some((src) =>
-        src !== 'silence' && /\.(mp4|mov|webm|mkv|avi|m4v|3gp)(\?|#|$)/i.test(src)
-    )
 
     const { key } = await m.reply(`✦ Calling ${phoneNumber}...${willBeVideo ? ' (video)' : ''} (Use .voipend to end call, .voipsilent to mute/pause)`)
 
@@ -97,6 +109,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             if (index === 0) return
             conn.sendMessage(m.chat, { text: `✦ Now playing item ${index + 1} (${kind}).` })
         })
+        call.on('downgraded', () => {
+            conn.sendMessage(m.chat, { text: '✦ All cameras are off, downgraded to audio.' })
+        })
         call.on('ended', (reason) => {
             activeCalls.delete(m.chat)
             const friendlyText = reason === 'declined'
@@ -106,9 +121,11 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             cleanupTempFiles()
         })
         call.on('error', (err) => {
-            activeCalls.delete(m.chat)
+            if (!voip.calls.includes(call)) {
+                activeCalls.delete(m.chat)
+                cleanupTempFiles()
+            }
             conn.reply(m.chat, `Call error: ${err?.message || err}`, m)
-            cleanupTempFiles()
         })
     } catch (e) {
         console.error('[ VOIP ] voip.call() threw:', e)
@@ -118,9 +135,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
 }
 
-handler.help = ['voipcall <number>', 'voipend', 'voipsilent']
+handler.help = ['voipcall <number>', 'voipend', 'voipsilent', 'voipreact <emoji>']
 handler.tags = ['owner']
-handler.command = /^(voipcall|voipend|voipsilent)$/i
+handler.command = /^(voipcall|voipend|voipsilent|voipreact)$/i
 handler.rowner = true
 
 export default handler

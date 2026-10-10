@@ -1,6 +1,11 @@
 import fs from 'fs'
+import axios from 'axios'
 import { tmpdir } from 'os'
 import { join } from 'path'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import http2 from 'http2'
+const execFileAsync = promisify(execFile)
 const upload = global.scraper.upload.default
 const {
   pinterest,
@@ -26,23 +31,197 @@ function cleanupSearchState() {
   }
 }
 
-function buildPreviewGrid(items, perRow = 5) {
-  const rows = []
-  for (let r = 0; r < items.length; r += perRow) {
-    const rowItems = items.slice(r, r + perRow).map((item, j) => {
-      const idx = r + j
-      const thumb = item.thumbUrl || (item.type === 'image' ? item.rawUrl : '')
-      return {
-        column: [
-          thumb ? { image: thumb, fit: 'cover', variant: 'avatar' } : { text: '[no preview]', variant: 'caption' },
-          { text: String(idx + 1), variant: 'caption' }
-        ],
-        align: 'center'
-      }
-    })
-    rows.push({ row: rowItems, justify: 'spaceBetween', align: 'start' })
+const FFMPEG_PATH = '/usr/bin/ffmpeg'
+const PREVIEW_UA = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36'
+const PREVIEW_CONCURRENCY = 30
+
+const isGifUrl = (u) => /\.gif(\?|$)/i.test(u || '')
+
+const escapeHtml = (str = '') => String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+
+function createFetcher() {
+  const sessions = new Map()
+  let h2Broken = false
+
+  const getSession = (origin) => {
+    let session = sessions.get(origin)
+    if (session && !session.closed && !session.destroyed) return session
+    session = http2.connect(origin)
+    session.on('error', () => sessions.delete(origin))
+    session.on('close', () => sessions.delete(origin))
+    sessions.set(origin, session)
+    return session
   }
-  return rows
+
+  const headers = { 'user-agent': PREVIEW_UA, 'accept': 'image/*,*/*', 'referer': 'https://id.pinterest.com/' }
+
+  const viaHttp2 = (url) => new Promise((resolve, reject) => {
+    const u = new URL(url)
+    const req = getSession(u.origin).request({ ':path': u.pathname + u.search, ...headers })
+    const chunks = []
+    let status = 0
+    let type = ''
+    const timer = setTimeout(() => {
+      req.close(http2.constants.NGHTTP2_CANCEL)
+      reject(new Error('timeout'))
+    }, 10000)
+    req.on('response', (h) => {
+      status = h[':status']
+      type = h['content-type'] || ''
+    })
+    req.on('data', (c) => chunks.push(c))
+    req.on('end', () => {
+      clearTimeout(timer)
+      if (status === 200) return resolve({ data: Buffer.concat(chunks), type })
+      reject(Object.assign(new Error(`HTTP ${status}`), { response: { status } }))
+    })
+    req.on('error', (e) => {
+      clearTimeout(timer)
+      reject(e)
+    })
+    req.end()
+  })
+
+  const viaAxios = async (url) => {
+    const res = await axios.get(url, {
+      responseType: 'arraybuffer',
+      timeout: 10000,
+      headers: { 'User-Agent': PREVIEW_UA, referer: 'https://id.pinterest.com/' }
+    })
+    return { data: res.data, type: res.headers?.['content-type'] || '' }
+  }
+
+  return {
+    async get(url) {
+      if (!h2Broken) {
+        try {
+          return await viaHttp2(url)
+        } catch (e) {
+          if (e.response?.status >= 400) throw e
+          h2Broken = true
+        }
+      }
+      return viaAxios(url)
+    },
+    close() {
+      for (const session of sessions.values()) session.close()
+      sessions.clear()
+    }
+  }
+}
+
+async function fetchToFile(url, file, fetcher) {
+  const res = await fetcher.get(url)
+  if (!res.data?.length) throw new Error('empty response')
+  fs.writeFileSync(file, res.data)
+  return String(res.type || '').split(';')[0].trim()
+}
+
+async function firstFrame(input, output) {
+  const args = ['-y']
+  if (/^https?:\/\//i.test(input)) {
+    args.push('-user_agent', PREVIEW_UA, '-headers', 'referer: https://id.pinterest.com/\r\norigin: https://id.pinterest.com/\r\n')
+  }
+  args.push('-i', input, '-frames:v', '1', '-vf', 'scale=320:-2', '-q:v', '5', output)
+  await execFileAsync(FFMPEG_PATH, args, { timeout: 30000 })
+  if (!fs.existsSync(output) || fs.statSync(output).size === 0) throw new Error('empty frame')
+}
+
+const smallThumb = (u) => /i\.pinimg\.com\/(474x|736x|originals|orig)\//i.test(u)
+  ? u.replace(/i\.pinimg\.com\/(474x|736x|originals|orig)\//i, 'i.pinimg.com/236x/')
+  : u
+
+async function savePreview(item, dir, idx, fetcher) {
+  const out = join(dir, `pin_${idx}.jpg`)
+
+  const still = item.thumbUrl && !isGifUrl(item.thumbUrl) ? item.thumbUrl
+    : (item.type === 'image' && !isGifUrl(item.rawUrl) ? item.rawUrl : null)
+
+  if (still) {
+    const small = smallThumb(still)
+    try {
+      await fetchToFile(small, out, fetcher)
+    } catch (e) {
+      if (small === still) throw e
+      await fetchToFile(still, out, fetcher)
+    }
+    return out
+  }
+
+  if (item.type === 'gif') {
+    const guess = smallThumb(item.thumbUrl || item.rawUrl).replace(/\.gif(\?.*)?$/i, '.jpg')
+    try {
+      const type = await fetchToFile(guess, out, fetcher)
+      if (/^image\/jpe?g$/i.test(type)) return out
+    } catch {}
+  }
+
+  if (item.type === 'gif' || item.type === 'video') {
+    await firstFrame(item.rawUrl, out)
+    return out
+  }
+
+  throw new Error('no preview source')
+}
+
+async function downloadPreviews(items, dir) {
+  const fetcher = createFetcher()
+  let cursor = 0
+  const worker = async () => {
+    while (cursor < items.length) {
+      const i = cursor++
+      try {
+        items[i].localPath = await savePreview(items[i], dir, i, fetcher)
+      } catch {
+        items[i].localPath = null
+      }
+    }
+  }
+  try {
+    await Promise.all(Array.from({ length: Math.min(PREVIEW_CONCURRENCY, items.length) }, worker))
+  } finally {
+    fetcher.close()
+  }
+}
+
+function localImgSrc(file) {
+  return `data:image/jpeg;base64,${fs.readFileSync(file).toString('base64')}`
+}
+
+function buildPreviewHtml(items) {
+  const typeLabel = { gif: 'GIF', video: 'VIDEO' }
+  const cells = items.map((item, i) => `
+    <div class="cell">
+      <img src="${localImgSrc(item.localPath)}" alt="${i + 1}">
+      <span class="num">${i + 1}</span>
+      ${typeLabel[item.type] ? `<span class="tag">${typeLabel[item.type]}</span>` : ''}
+    </div>`).join('')
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { padding: 8px; font-family: sans-serif; background: transparent; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .cell { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: rgba(128,128,128,.2); }
+  .cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .num { position: absolute; top: 6px; left: 6px; min-width: 24px; padding: 2px 7px; border-radius: 12px; background: rgba(0,0,0,.65); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
+  .tag { position: absolute; bottom: 6px; right: 6px; padding: 2px 6px; border-radius: 6px; background: rgba(230,0,35,.9); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+</style>
+</head>
+<body>
+  <div class="grid">${cells}
+  </div>
+</body>
+</html>`
 }
 
 async function downloadItem(conn, chatId, quoted, item, caption) {
@@ -215,31 +394,46 @@ let handler = async (m, { conn, args, command }) => {
 
   if (!items.length) throw `No ${mode} results found for: *${query}*`
 
-  cleanupSearchState()
-  const token = `${(m.sender || '').split('@')[0]}_${Date.now().toString(36)}`
-  global.pinterestSearchState[token] = { items, query, mode, timestamp: Date.now() }
+  await m.react('⏳')
 
-  const typeLabel = { image: 'Image', gif: 'GIF', video: 'Video' }
+  const dir = fs.mkdtempSync(join(tmpdir(), 'pin_'))
 
-  const rows = items.map((item, i) => ({
-    header: `${i + 1}. ${typeLabel[item.type] || 'Media'}`,
-    title: (item.title || query).slice(0, 60),
-    description: '',
-    id: `.${command} get ${token} ${i}`
-  }))
+  try {
+    await downloadPreviews(items, dir)
 
-  const caption = `- *Query:* ${query}\n- Mode: ${modeLabel[mode] || 'All'}\n- Result: ${totalResult}\n- Showing: ${items.length}`
+    const readyItems = items.filter(item => item.localPath)
+    if (!readyItems.length) throw `Failed to load previews for: *${query}*`
 
-  const widgetItems = [
-    ...buildPreviewGrid(items, 5)
-  ]
+    cleanupSearchState()
+    const token = `${(m.sender || '').split('@')[0]}_${Date.now().toString(36)}`
+    global.pinterestSearchState[token] = { items: readyItems, query, mode, timestamp: Date.now() }
 
-  await conn.sendButton(m.chat, {
-    text: caption,
-    footer: 'Pinterest',
-    widget: { align: 'center', items: widgetItems, fallback: "Can't load preview, try to use this command in private chat" },
-    nativeFlow: [{ text: 'Select', sections: [{ rows }] }]
-  }, m)
+    const typeLabel = { image: 'Image', gif: 'GIF', video: 'Video' }
+
+    const rows = readyItems.map((item, i) => ({
+      header: `${i + 1}. ${typeLabel[item.type] || 'Media'}`,
+      title: (item.title || query).slice(0, 60),
+      description: '',
+      id: `.${command} get ${token} ${i}`
+    }))
+
+    const caption = `- *Query:* ${query}\n- Mode: ${modeLabel[mode] || 'All'}\n- Result: ${totalResult}\n- Showing: ${readyItems.length}\n\nChoose the number you want to download.`
+
+    await conn.aiRich()
+      .setTitle(`Pinterest — ${query}`)
+      .addHtml(buildPreviewHtml(readyItems))
+      .send(m.chat, { quoted: m })
+
+    await conn.sendButton(m.chat, {
+      text: caption,
+      footer: 'Pinterest',
+      nativeFlow: [{ text: 'Select', sections: [{ rows }] }]
+    }, m)
+
+    await m.react('✅')
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
 }
 
 handler.before = async (m, { conn }) => {

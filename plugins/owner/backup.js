@@ -32,6 +32,8 @@ let handler = async (m, { conn }) => {
     join(cwd, 'package-lock.json'),
     join(cwd, 'data/store.json'),
     join(cwd, 'data/backups'),
+    join(cwd, 'data/ai/backups'),
+    join(cwd, 'data/ai/tmp'),
     join(cwd, 'data/reminder.json'),
     join(cwd, 'data/tunnel'),
     join(cwd, 'data/tmp'),
@@ -40,6 +42,7 @@ let handler = async (m, { conn }) => {
     join(cwd, '.agents'),
     join(cwd, '.config'),
     join(cwd, '.git'),
+    join(cwd, 'data/sessions/store.db'),
   ]
 
   await addFolderRecursively(zipAll, cwd, cwd, excludePaths)

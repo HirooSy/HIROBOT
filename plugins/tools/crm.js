@@ -42,6 +42,38 @@ const longToNum = v => {
 	return big <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(big) : big.toString()
 }
 
+const tsOf = c => {
+	const t = c.messageTimestamp
+	if (!t) return 0
+	return isLong(t) ? Number(longToNum(t)) : Number(t)
+}
+
+const DATA_URI = /data:([\w.+-]+\/[\w.+-]+);base64,([A-Za-z0-9+\/=]+)/g
+
+const collectDataUris = (str, out) => {
+	for (const match of str.matchAll(DATA_URI)) {
+		const b64 = match[2]
+		if (b64.length * 0.75 <= INLINE_MAX_BYTES) continue
+		out.set(b64, Buffer.from(b64, 'base64'))
+	}
+}
+
+const stringToCode = (str, opts) => {
+	if (!opts.urls || !str.includes(';base64,')) return JSON.stringify(str)
+	const parts = []
+	let last = 0
+	for (const match of str.matchAll(DATA_URI)) {
+		const url = opts.urls.get(match[2])
+		if (!url) continue
+		parts.push(JSON.stringify(str.slice(last, match.index)))
+		parts.push(`await _fetchUri('${url}', '${match[1]}')`)
+		last = match.index + match[0].length
+	}
+	if (!parts.length) return JSON.stringify(str)
+	parts.push(JSON.stringify(str.slice(last)))
+	return parts.join(' + ')
+}
+
 const decodeUnifiedResponse = (b64) => {
 	try {
 		const json = Buffer.from(b64, 'base64').toString('utf8')
@@ -68,8 +100,12 @@ function collectBigBuffers(value, out, key = '') {
 	if (typeof value === 'string') {
 		if (key === 'data') {
 			const decoded = decodeUnifiedResponse(value)
-			if (decoded && typeof decoded === 'object') collectBigBuffers(decoded, out, key)
+			if (decoded && typeof decoded === 'object') {
+				collectBigBuffers(decoded, out, key)
+				return
+			}
 		}
+		if (value.includes(';base64,')) collectDataUris(value, out)
 		return
 	}
 	if (Array.isArray(value)) {
@@ -109,7 +145,7 @@ export function toCode(value, opts = {}, indent = 0, key = '') {
 				if (code !== undefined) return code
 			}
 		}
-		return JSON.stringify(value)
+		return stringToCode(value, opts)
 	}
 
 	if (value instanceof Uint8Array || Buffer.isBuffer(value)) {
@@ -153,6 +189,34 @@ function bufferToCode(buf, opts) {
 	return `Buffer.from('${buf.toString('base64')}', 'base64')`
 }
 
+async function buildAlbumItems(conn, children, upload) {
+	if (!upload || !children.length) return null
+	const items = []
+	for (const c of children) {
+		const type = c.message.imageMessage ? 'image' : c.message.videoMessage ? 'video' : null
+		if (!type) return null
+		const media = c.message[`${type}Message`]
+		let buf
+		try {
+			buf = await conn.downloadM(media, type, {})
+		} catch {
+			return null
+		}
+		if (!Buffer.isBuffer(buf) || !buf.length) return null
+		let url
+		try {
+			url = await upload(buf, `crm_${Date.now()}_${items.length}.${type === 'image' ? guessExt(buf) : 'mp4'}`)
+		} catch {
+			return null
+		}
+		if (!url) return null
+		const parts = [`${type}: await _fetchBuf(${JSON.stringify(url)})`]
+		if (media.caption) parts.push(`caption: ${JSON.stringify(media.caption)}`)
+		items.push(`\t\t{ ${parts.join(', ')} }`)
+	}
+	return items
+}
+
 const contentType = msg =>
 	Object.keys(msg || {}).find(k => k !== 'messageContextInfo' && msg[k] != null)
 
@@ -175,11 +239,41 @@ let handler = async (m, { conn }) => {
 
 	if (!message) throw 'Isi pesan tidak ketemu. Pesan ini dikirim lewat relayMessage sebelum crm aktif, kirim ulang pesannya lalu coba lagi.'
 
-	// Pass 1: find big buffers, upload them all in parallel.
-	const bigBuffers = new Map() // base64 -> Buffer
-	collectBigBuffers(message, bigBuffers)
+	const children = message.albumMessage
+		? conn.loadAlbum(m.chat, qid)
+			.filter(c => c.message)
+			.sort((a, b) => tsOf(a) - tsOf(b))
+		: []
 
-	const urls = new Map() // base64 -> url
+	if (message.albumMessage && children.length) {
+		const kinds = children.map(c => (c.message.videoMessage ? 'video' : 'image'))
+		message = {
+			...message,
+			albumMessage: {
+				...message.albumMessage,
+				expectedImageCount: message.albumMessage.expectedImageCount || kinds.filter(k => k === 'image').length,
+				expectedVideoCount: message.albumMessage.expectedVideoCount || kinds.filter(k => k === 'video').length
+			}
+		}
+	}
+
+	const albumItems = await buildAlbumItems(conn, children, global.scraper?.upload?.default)
+
+	const childMessages = albumItems ? [] : children.map(c => ({
+		...c.message,
+		messageContextInfo: {
+			messageAssociation: {
+				parentMessageKey: { remoteJid: '__CHAT__', fromMe: true, id: '__ALBUM__' },
+				associationType: 1
+			}
+		}
+	}))
+
+	const bigBuffers = new Map()
+	collectBigBuffers(message, bigBuffers)
+	for (const cm of childMessages) collectBigBuffers(cm, bigBuffers)
+
+	const urls = new Map()
 	const upload = global.scraper?.upload?.default
 	if (bigBuffers.size && upload) {
 		await Promise.all(
@@ -194,14 +288,27 @@ let handler = async (m, { conn }) => {
 		)
 	}
 
-	// Pass 2: generate the code, using URL fetch placeholders wherever an upload succeeded.
 	const body = toCode(message, { urls }, 0)
-	const code = `await conn.relayMessage(m.chat, ${body}, {})`
+	let code
+	if (albumItems) {
+		code = `await conn.sendMessage(m.chat, {\n\talbum: [\n${albumItems.join(',\n')}\n\t]\n}, {})`
+	} else if (childMessages.length) {
+		const parts = [`const _album = await conn.relayMessage(m.chat, ${body}, {})`]
+		for (const cm of childMessages) {
+			const childBody = toCode(cm, { urls }, 0)
+				.replace('"__CHAT__"', 'm.chat')
+				.replace('"__ALBUM__"', '_album')
+			parts.push(`await conn.relayMessage(m.chat, ${childBody}, {})`)
+		}
+		code = parts.join('\n\n')
+	} else {
+		code = `await conn.relayMessage(m.chat, ${body}, {})`
+	}
 
-	const needsFetch = code.includes('_fetchBuf(')
-	const header = needsFetch
-		? `const _fetchBuf = async url => Buffer.from(await (await fetch(url)).arrayBuffer())\n\n`
-		: ''
+	const headerLines = []
+	if (code.includes('_fetchBuf(')) headerLines.push('const _fetchBuf = async url => Buffer.from(await (await fetch(url)).arrayBuffer())')
+	if (code.includes('_fetchUri(')) headerLines.push("const _fetchUri = async (url, mime) => `data:${mime};base64,${Buffer.from(await (await fetch(url)).arrayBuffer()).toString('base64')}`")
+	const header = headerLines.length ? headerLines.join('\n') + '\n\n' : ''
 
 	const out = header + code + '\n'
 	const MAX = 60000

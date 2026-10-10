@@ -127,8 +127,6 @@ const BASE        = "https://spotsaver.net"
 const YTM_API     = "https://music.youtube.com/youtubei/v1/search"
 const YTM_KEY     = "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30"
 const YTM_VERSION = "1.20260915.14.00"
-const Y2MATE_API  = "https://eta.etacloud.org"
-const Y2MATE_KEY  = "c6a644f406b57d0dd83837c868a7482e"
 const UA          = "Mozilla/5.0 (Linux; Android 13; SM-A536E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
 const client = axios.create({
@@ -139,18 +137,6 @@ const client = axios.create({
     "Accept-Language": "id-ID,id;q=0.9,en;q=0.8",
     "Referer": BASE + "/id/",
     "Origin": BASE
-  },
-  validateStatus: s => s < 600,
-  transformResponse: [v => v]
-})
-
-const y2mateClient = axios.create({
-  timeout: 90000,
-  headers: {
-    "User-Agent": UA,
-    "Accept": "application/json, text/plain, */*",
-    "Origin": "https://y2mate.gs",
-    "Referer": "https://y2mate.gs/"
   },
   validateStatus: s => s < 600,
   transformResponse: [v => v]
@@ -244,79 +230,6 @@ async function ytmSearch(query) {
   return out
 }
 
-async function y2mateAuth() {
-  const r = await y2mateClient.get(Y2MATE_API + "/api/v1/auth", {
-    params: { api_key: Y2MATE_KEY, _: Date.now() }
-  })
-  const d = parseJson(r.data)
-  if (!d?.key) throw new Error("y2mate auth failed: " + JSON.stringify(d).slice(0, 200))
-  return d.key
-}
-
-async function y2mateInit(key) {
-  const r = await y2mateClient.get(Y2MATE_API + "/api/v1/init", {
-    params: { _: Date.now() },
-    headers: { Authorization: "Bearer " + key }
-  })
-  const d = parseJson(r.data)
-  if (!d?.convertURL) throw new Error("y2mate init failed: " + JSON.stringify(d).slice(0, 200))
-  return d
-}
-
-async function y2mateConvert(url, videoId) {
-  const base = url.split("&v=")[0]
-  const r = await y2mateClient.get(base, { params: { v: videoId, f: "mp3", _: Date.now() } })
-  const d = parseJson(r.data)
-  if (!d) throw new Error("y2mate convert invalid response")
-  if (Number(d.error) > 0) throw new Error("y2mate convert error: " + d.error)
-  return d
-}
-
-async function y2mateProgress(progressUrl) {
-  const r = await y2mateClient.get(progressUrl, { params: { _: Date.now() } })
-  const d = parseJson(r.data)
-  if (!d) throw new Error("y2mate progress invalid response")
-  if (Number(d.error) > 0) throw new Error("y2mate progress error: " + d.error)
-  return d
-}
-
-async function y2mateGetMp3(videoId) {
-  const auth = await y2mateAuth()
-  const init = await y2mateInit(auth)
-  let currentUrl = init.convertURL
-  let downloadURL = null
-  let progressURL = null
-
-  for (let i = 0; i < 20; i++) {
-    const d = await y2mateConvert(currentUrl, videoId)
-    if (d.downloadURL) { downloadURL = d.downloadURL; break }
-    if (d.progressURL) progressURL = d.progressURL
-    if (d.redirectURL) {
-      currentUrl = d.redirectURL
-      await new Promise(x => setTimeout(x, 1500))
-      continue
-    }
-    break
-  }
-
-  if (!downloadURL && progressURL) {
-    for (let i = 0; i < 30; i++) {
-      await new Promise(x => setTimeout(x, 3000))
-      const d = await y2mateProgress(progressURL)
-      if (d.downloadURL) { downloadURL = d.downloadURL; break }
-      if (d.redirectURL) {
-        const rd = await y2mateConvert(d.redirectURL, videoId)
-        if (rd.downloadURL) { downloadURL = rd.downloadURL; break }
-        if (rd.progressURL) progressURL = rd.progressURL
-      }
-      if (Number(d.progress) >= 3) break
-    }
-  }
-
-  if (!downloadURL) throw new Error("y2mate: downloadURL not found")
-  return downloadURL + "&v=" + videoId + "&f=mp3&r=y2mate.gs"
-}
-
 const searchCache = new Map();
 const pendingSearches = new Map();
 const SEARCH_CACHE_TTL = 30_000;
@@ -387,7 +300,7 @@ async function spotifyDownloadByTrack(title, artist, album, thumbnail) {
     if (!yt.length) throw new Error('No results on YouTube Music');
     const top = yt[0];
 
-    const mp3Url = await y2mateGetMp3(top.videoId);
+    const audio = await global.scraper.ytdl.ytdl('audio', `https://www.youtube.com/watch?v=${top.videoId}`);
 
     return {
         metadata: {
@@ -397,7 +310,7 @@ async function spotifyDownloadByTrack(title, artist, album, thumbnail) {
             cover: thumbnail || null
         },
         links: {
-            mp3: mp3Url,
+            mp3: audio.buffer,
             cover: thumbnail || null
         }
     };

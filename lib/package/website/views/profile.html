@@ -6,7 +6,7 @@
   <link rel="icon" type="image/x-icon" href="" id="favicon">
   <title>Profile</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=3">
 </head>
 <body class="page-profile">
 <div class="page">
@@ -117,7 +117,7 @@
       <div class="home-grid">
 <div class="card daily-bonus-card">
           <div class="text-md font-bold">Daily Bonus</div>
-          <div class="text-sm text-muted2">500 Exp . 5 Gems</div>
+          <div class="text-sm text-muted2" id="daily-reward-label">500 Exp . 5 Gems</div>
           <button class="btn btn-small ready daily-claim-btn" id="reward-btn" onclick="claimReward()">Claim</button>
         </div>
 <div class="menu-col">
@@ -125,7 +125,7 @@
             <div class="menu-highlight" id="menu-highlight"></div>
             <button class="menu-btn" id="menu-gacha" onclick="toggleSection('gacha')">Gacha</button>
             <button class="menu-btn" id="menu-shop" onclick="toggleSection('shop')">Shop</button>
-            <button class="menu-btn" id="menu-info" onclick="toggleSection('info')">Info</button>
+            <button class="menu-btn" id="menu-subbot" onclick="toggleSection('subbot')">Subbot</button>
           </div>
           <div class="search-box">
             <span class="search-icon"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
@@ -165,7 +165,7 @@
           <div class="card shop-card">
             <div class="shop-card-header">
               <span class="shop-card-title">Limit</span>
-              <span class="shop-card-price">1 Gem / Limit</span>
+              <span class="shop-card-price" id="shop-limit-price">1 Gem / Limit</span>
             </div>
             <input type="range" class="shop-slider" id="limit-slider" min="1" max="1" value="1" oninput="onLimitSliderInput()">
             <div class="shop-card-footer">
@@ -176,7 +176,7 @@
           <div class="card shop-card">
             <div class="shop-card-header">
               <span class="shop-card-title">Premium</span>
-              <span class="shop-card-price">100 Gem / week</span>
+              <span class="shop-card-price" id="shop-premium-price">100 Gem / week</span>
             </div>
             <input type="range" class="shop-slider" id="premium-slider" min="1" max="1" value="1" oninput="onPremiumSliderInput()">
             <div class="shop-card-footer">
@@ -186,35 +186,67 @@
           </div>
         </div>
       </div>
-<div class="section-panel" id="section-info">
-        <div class="section-heading">INFO</div>
-        <div class="card">
-          <div class="card-title">Badge Info</div>
-          <div class="badge-info-list">
-            <div class="badge-info-item">
-              <span class="badge-info-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
-              <div>
-                <div class="badge-info-name">Newcomer</div>
-                <div class="badge-info-desc">0–1 month of continuous premium.</div>
+<div class="section-panel" id="section-subbot">
+        <div class="section-heading">SUBBOT</div>
+        <div class="card text-center text-muted2" id="subbot-loading" onclick="subbotRefresh()">Loading...</div>
+        <div id="subbot-body" style="display:none">
+          <div class="card" id="subbot-connect-card">
+            <div class="card-title">Connect</div>
+            <div id="subbot-idle">
+              <div class="subbot-methods">
+                <button type="button" class="active" data-method="pairing" onclick="subbotPickMethod('pairing')">Pairing code</button>
+                <button type="button" data-method="qr" onclick="subbotPickMethod('qr')">QR code</button>
+              </div>
+              <div class="subbot-hint" id="subbot-hint"></div>
+              <div class="subbot-note" id="subbot-connect-note" style="display:none">Subbot is available to premium users only.</div>
+              <button class="btn" id="subbot-connect-btn" onclick="subbotConnect()">Connect</button>
+            </div>
+            <div id="subbot-pending" style="display:none">
+              <div id="subbot-pair-view" style="display:none">
+                <button type="button" class="subbot-code waiting" id="subbot-code" onclick="subbotCopyCode()"></button>
+              </div>
+              <div id="subbot-qr-view" style="display:none">
+                <div class="subbot-qr-frame">
+                  <canvas id="subbot-qr"></canvas>
+                  <span class="subbot-qr-wait" id="subbot-qr-wait">Generating QR...</span>
+                </div>
+              </div>
+              <div class="subbot-hint" id="subbot-pending-hint"></div>
+              <div class="subbot-expiry" id="subbot-expiry"></div>
+              <button class="btn btn-secondary" onclick="subbotCancel()">Cancel</button>
+            </div>
+          </div>
+          <div class="subbot-grid" id="subbot-grid">
+            <div class="card subbot-square" id="subbot-session-card" style="display:none">
+              <div class="subbot-status" id="subbot-status" data-state="stopped"><span class="subbot-dot"></span><span id="subbot-status-text"></span></div>
+              <div class="subbot-note" id="subbot-premium-note" style="display:none">Premium required to start.</div>
+              <div class="subbot-controls">
+                <button class="btn btn-small btn-flat" id="subbot-run-btn" onclick="subbotToggleRun()">Start</button>
+                <div class="subbot-icons">
+                  <button class="btn subbot-icon-btn" id="subbot-download-btn" title="Download session" aria-label="Download session" onclick="subbotDownload()"></button>
+                  <button class="btn subbot-icon-btn subbot-delete" id="subbot-delete-btn" title="Delete session" aria-label="Delete session" onclick="subbotDelete()"></button>
+                </div>
+              </div>
+              <div class="subbot-row subbot-auto-row" title="Start this session automatically when the bot restarts.">
+                <div>
+                  <div class="subbot-row-title">Auto-connect</div>
+                  <div class="subbot-row-sub">Starts on bot restart</div>
+                </div>
+                <button type="button" class="switch" id="subbot-auto" role="switch" aria-checked="false" aria-label="Auto-connect" onclick="subbotToggleAuto()"><span class="switch-knob"></span></button>
               </div>
             </div>
-            <div class="badge-info-item">
-              <span class="badge-info-icon shimmer-gold"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
-              <div>
-                <div class="badge-info-name shimmer-gold">Gold Streak</div>
-                <div class="badge-info-desc">2+ months of continuous premium.</div>
+            <div class="card subbot-square" id="subbot-active-card">
+              <div class="subbot-card-head">
+                <div class="text-md font-bold">Active subbots</div>
+                <span class="subbot-slots" id="subbot-slots">0/0</span>
               </div>
-            </div>
-            <div class="badge-info-item">
-              <span class="badge-info-icon shimmer-diamond"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
-              <div>
-                <div class="badge-info-name shimmer-diamond">Diamond Streak</div>
-                <div class="badge-info-desc">4+ months of continuous premium.</div>
+              <div class="scroll-list-container subbot-active-wrap">
+                <div id="subbot-active-list" class="scroll-list subbot-active-list"></div>
+                <div class="top-gradient" id="subbot-top-gradient"></div>
+                <div class="bottom-gradient" id="subbot-bottom-gradient"></div>
               </div>
             </div>
           </div>
-          <div class="divider"></div>
-          <div class="badge-info-note">Missing a renewal breaks your streak, but you get a 1-day grace period after expiry to renew and keep it alive.</div>
         </div>
       </div>
 <div class="section-panel" id="section-search-results" style="display:none">
@@ -268,6 +300,40 @@
       </div>
     </div>
 <div id="tab-database" class="tab-panel">
+      <div class="card" id="settings-card">
+        <div class="card-title">Settings</div>
+        <div class="settings-tabs">
+          <button type="button" class="active" data-set-tab="gacha" onclick="settingsPickTab('gacha')">Gacha</button>
+          <button type="button" data-set-tab="daily" onclick="settingsPickTab('daily')">Daily</button>
+          <button type="button" data-set-tab="shop" onclick="settingsPickTab('shop')">Shop</button>
+          <button type="button" data-set-tab="subbot" onclick="settingsPickTab('subbot')">Subbot</button>
+        </div>
+        <div id="settings-panel-gacha">
+          <div class="set-head"><span></span><span>Chance %</span><span>Reward EXP</span></div>
+          <div id="settings-gacha-rows"></div>
+          <div class="set-note" id="settings-nomatch"></div>
+        </div>
+        <div id="settings-panel-daily" style="display:none">
+          <label class="set-field"><span>EXP reward</span><input type="text" inputmode="numeric" class="input-field" id="set-daily-exp"></label>
+          <label class="set-field"><span>Gems reward</span><input type="text" inputmode="numeric" class="input-field" id="set-daily-gems"></label>
+        </div>
+        <div id="settings-panel-shop" style="display:none">
+          <label class="set-field"><span>Limit price (Gems per limit)</span><input type="text" inputmode="numeric" class="input-field" id="set-limit-price"></label>
+          <label class="set-field"><span>Premium price (Gems per week)</span><input type="text" inputmode="numeric" class="input-field" id="set-premium-price"></label>
+        </div>
+        <div id="settings-panel-subbot" style="display:none">
+          <div class="settings-tabs">
+            <button type="button" id="settings-mode-free" onclick="settingsSetMode('free')">Free</button>
+            <button type="button" id="settings-mode-premium" onclick="settingsSetMode('premium')">Premium</button>
+          </div>
+          <div class="set-note" id="settings-subbot-hint"></div>
+        </div>
+        <div class="set-actions">
+          <button class="btn btn-small btn-secondary" onclick="resetSettingsForm()">Reset</button>
+          <button class="btn btn-small btn-flat" onclick="saveSettings()">Save</button>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-title">Gift Code Manager</div>
         <div class="text-xs text-muted2 mb-8">
@@ -304,6 +370,7 @@
       <button class="prize-modal-close" onclick="closePrizeModal()">×</button>
     </div>
     <div class="prize-list">
+      <div id="prize-items">
       <div class="prize-item"><div class="prize-icons" data-icon-row="sparkle" data-count="3"></div><div class="prize-value jackpot"><span class="shimmer-diamond">+200k EXP</span> <span style="font-size: 7px;color:var(--muted2)">0.001%</span></div></div>
       <div class="prize-item"><div class="prize-icons">7 7 7</div><div class="prize-value jackpot"><span class="shimmer-gold">+77.7k EXP</span> <span style="font-size: 7px;color:var(--muted2)">0.1%</span></div></div>
       <div class="prize-item"><div class="prize-icons" data-icon-row="diamond" data-count="3"></div><div class="prize-value positive">+10k EXP <span style="font-size: 7px;color:var(--muted2)">0.5%</span></div></div>
@@ -314,6 +381,7 @@
       <div class="prize-item"><div class="prize-icons" data-icon-row="flower" data-count="3"></div><div class="prize-value positive">+500 EXP <span style="font-size: 7px;color:var(--muted2)">4%</span></div></div>
       <div class="prize-item"><div class="prize-icons" data-icon-row="cross" data-count="3"></div><div class="prize-value negative">−300 EXP <span style="font-size: 7px;color:var(--muted2)">~30%</span></div></div>
       <div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">−200 EXP <span style="font-size: 7px;color:var(--muted2)">~57.9%</span></div></div>
+      </div>
       <div class="prize-item" style="border-top: none;margin-top:4px;padding-top:8px"><div class="prize-icons" style="font-size: 8px;color:var(--warn)"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.7l7.1-.6z"/></svg></span> PITY</div><div class="prize-value" style="font-size: 8px;color:var(--warn)">Guaranteed <span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>/7/<span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 6-5 14L7 8z"/></svg></span> every 100 losses</div></div>
     </div>
   </div>
@@ -324,6 +392,37 @@
       <div class="modal-body" id="modal-body"></div>
       <button class="modal-close" onclick="closeModal()">OK</button>
     </div>
+  </div>
+
+  <div class="premium-pop" id="premium-pop" role="dialog" aria-label="Premium info">
+    <div class="premium-pop-since" id="premium-pop-since"></div>
+    <div class="divider"></div>
+    <div class="card-title">Badge Info</div>
+    <div class="badge-info-list">
+      <div class="badge-info-item">
+        <span class="badge-info-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
+        <div>
+          <div class="badge-info-name">Newcomer</div>
+          <div class="badge-info-desc">0–1 month of continuous premium.</div>
+        </div>
+      </div>
+      <div class="badge-info-item">
+        <span class="badge-info-icon shimmer-gold"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
+        <div>
+          <div class="badge-info-name shimmer-gold">Gold Streak</div>
+          <div class="badge-info-desc">2+ months of continuous premium.</div>
+        </div>
+      </div>
+      <div class="badge-info-item">
+        <span class="badge-info-icon shimmer-diamond"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
+        <div>
+          <div class="badge-info-name shimmer-diamond">Diamond Streak</div>
+          <div class="badge-info-desc">4+ months of continuous premium.</div>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="badge-info-note">Missing a renewal breaks your streak, but you get a 1-day grace period after expiry to renew and keep it alive.</div>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -347,6 +446,8 @@ const ICONS = {
   heart:     '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.4 2.3 5 5.7 5 8 5 9.7 6.3 12 9c2.3-2.7 4-4 6.3-4 3.4 0 5.2 3.4 3.7 6.7C19.5 16.4 12 21 12 21z"/></svg>',
   spade:     '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6.5 4 9.5 4 13.5a4 4 0 0 0 6.8 2.9c-.4 2-1.5 3.4-3.3 4.6h9c-1.8-1.2-2.9-2.6-3.3-4.6A4 4 0 0 0 20 13.5C20 9.5 15 6.5 12 2z"/></svg>',
   note:      '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
+  download:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 11 12 16 17 11"/><path d="M5 20h14"/></svg>',
+  trash:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg>',
   flower:    '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="5.5" r="3"/><circle cx="12" cy="18.5" r="3"/><circle cx="5.5" cy="12" r="3"/><circle cx="18.5" cy="12" r="3"/></svg>',
   cross:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>'
 }
@@ -481,7 +582,7 @@ function switchTab(tabId) {
   document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active-panel'))
   document.getElementById(`tab-${tabId}`).classList.add('active-panel')
 
-  if (tabId === 'database' && isOwner) { loadDatabaseData(); loadGiftCodes() }
+  if (tabId === 'database' && isOwner) { loadDatabaseData(); loadGiftCodes(); loadAdminSettings() }
 }
 
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -547,7 +648,7 @@ document.addEventListener('click', (e) => {
   }
 })
 
-const SECTION_IDS = ['gacha', 'shop', 'info']
+const SECTION_IDS = ['gacha', 'shop', 'subbot']
 let activeSection = null
 
 function toggleSection(id) {
@@ -567,6 +668,7 @@ function toggleSection(id) {
     document.getElementById('menu-' + id).classList.add('active')
     activeSection = id
     if (id === 'shop') { renderLimitSlider(true); renderPremiumSlider(true) }
+    if (id === 'subbot') subbotRefresh()
 
     const btn = document.getElementById('menu-' + id)
     highlight.style.height = btn.offsetHeight + 'px'
@@ -578,8 +680,523 @@ function toggleSection(id) {
   }
 }
 
-const LIMIT_PRICE = 1
-const PREMIUM_PRICE = 100
+let premiumPopAnchor = null
+
+function positionPremiumPopover() {
+  const pop = document.getElementById('premium-pop')
+  if (!premiumPopAnchor || !pop.classList.contains('open')) return
+  const r = premiumPopAnchor.getBoundingClientRect()
+  const margin = 12
+  const pw = pop.offsetWidth
+  const ph = pop.offsetHeight
+  const left = Math.min(Math.max(margin, r.left + r.width / 2 - pw / 2), window.innerWidth - pw - margin)
+  let top = r.bottom + 10
+  let above = false
+  if (top + ph > window.innerHeight - margin) { top = r.top - ph - 10; above = true }
+  top = Math.max(margin, top)
+  pop.style.left = left + 'px'
+  pop.style.top = top + 'px'
+  pop.classList.toggle('above', above)
+  pop.style.setProperty('--arrow-x', Math.min(Math.max(16, r.left + r.width / 2 - left), pw - 16) + 'px')
+}
+
+function closePremiumPopover() {
+  document.getElementById('premium-pop').classList.remove('open')
+  premiumPopAnchor = null
+}
+
+function togglePremiumPopover(btn) {
+  const pop = document.getElementById('premium-pop')
+  if (pop.classList.contains('open') && premiumPopAnchor === btn) return closePremiumPopover()
+  document.querySelectorAll('.badge-tooltip.open').forEach(t => t.classList.remove('open'))
+  const since = Number(btn.dataset.since)
+  const sinceEl = document.getElementById('premium-pop-since')
+  if (since) {
+    const date = new Date(since).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    sinceEl.innerHTML = `<span class="pp-label">Premium since</span><span class="pp-value">${escapeHtml(date)}</span>`
+  } else {
+    sinceEl.innerHTML = '<span class="pp-value">Premium</span>'
+  }
+  premiumPopAnchor = btn
+  pop.classList.add('open')
+  positionPremiumPopover()
+}
+
+document.addEventListener('click', (e) => {
+  if (!premiumPopAnchor) return
+  if (e.target.closest('#premium-pop') || e.target.closest('.badge-premium')) return
+  closePremiumPopover()
+})
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePremiumPopover() })
+window.addEventListener('resize', positionPremiumPopover)
+window.addEventListener('scroll', positionPremiumPopover, { passive: true })
+
+let subbotData = null
+let subbotMethod = 'pairing'
+let subbotBusy = false
+let subbotPollTimer = null
+let subbotExpiryTimer = null
+let subbotDeadline = 0
+let subbotQrKey = ''
+let subbotActiveKey = ''
+
+const SUBBOT_HINTS = {
+  pairing: 'Get a code to enter in WhatsApp. It appears after you press Connect.',
+  qr: 'Get a QR code to scan in WhatsApp. It is only generated after you press Connect.'
+}
+
+function subbotHeaders(json) {
+  const h = { 'Authorization': 'Bearer ' + token }
+  if (json) h['Content-Type'] = 'application/json'
+  return h
+}
+
+function subbotShouldPoll() {
+  return activeSection === 'subbot' && !document.hidden && document.getElementById('tab-home').classList.contains('active-panel')
+}
+
+function subbotSchedulePoll() {
+  clearTimeout(subbotPollTimer)
+  subbotPollTimer = null
+  if (!subbotData) return
+  const pending = subbotData.state === 'pairing' || subbotData.state === 'connecting'
+  if (!pending && !subbotShouldPoll()) return
+  subbotPollTimer = setTimeout(() => {
+    if (!subbotShouldPoll()) return subbotSchedulePoll()
+    subbotRefresh(true)
+  }, pending ? 2000 : 15000)
+}
+
+async function subbotRefresh(silent = false) {
+  try {
+    const res = await safeFetch('/api/subbot', { headers: subbotHeaders(false) })
+    const d = await res.json()
+    if (!d.success) throw new Error(d.message || 'Failed to load subbot')
+    subbotApply(d)
+  } catch (err) {
+    if (!silent) {
+      showToast(err.message || 'Failed to load subbot', 'error')
+      if (!subbotData) document.getElementById('subbot-loading').textContent = 'Failed to load. Tap to retry.'
+    }
+    subbotSchedulePoll()
+  }
+}
+
+function subbotApply(d, quiet = false) {
+  const prev = subbotData ? subbotData.state : null
+  subbotData = d
+  subbotRender()
+  if (!quiet && prev && prev !== d.state) {
+    if (prev === 'pairing' && d.state === 'online') showToast('Subbot connected', 'success')
+    else if (prev === 'pairing' && d.state === 'none') showToast('Pairing ended. Press Connect to try again.', 'warn')
+    else if (prev === 'connecting' && d.state === 'online') showToast('Session started', 'success')
+    else if (prev === 'connecting' && d.state === 'stopped') showToast('Could not start the session. Try again.', 'warn')
+  }
+  subbotSchedulePoll()
+}
+
+function subbotFormatCode(code) {
+  return String(code).replace(/(.{4})(?=.)/g, '$1-')
+}
+
+function subbotDrawQr(matrix) {
+  const key = matrix.map(r => r.join('')).join('')
+  if (key === subbotQrKey) return
+  subbotQrKey = key
+  const quiet = 2
+  const cell = 6
+  const n = matrix.length
+  const size = (n + quiet * 2) * cell
+  const canvas = document.getElementById('subbot-qr')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, size, size)
+  ctx.fillStyle = '#000000'
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      if (matrix[y][x]) ctx.fillRect((x + quiet) * cell, (y + quiet) * cell, cell, cell)
+    }
+  }
+}
+
+function subbotTickExpiry() {
+  const el = document.getElementById('subbot-expiry')
+  const left = Math.max(0, Math.ceil((subbotDeadline - Date.now()) / 1000))
+  el.textContent = 'Expires in ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0')
+}
+
+function subbotBindScroll() {
+  const container = document.getElementById('subbot-active-list')
+  const topG = document.getElementById('subbot-top-gradient')
+  const bottomG = document.getElementById('subbot-bottom-gradient')
+  if (container._scrollHandler) container.removeEventListener('scroll', container._scrollHandler)
+  const update = () => {
+    const { scrollTop, scrollHeight, clientHeight } = container
+    topG.style.opacity = Math.min(scrollTop / 50, 1)
+    bottomG.style.opacity = scrollHeight <= clientHeight ? 0 : Math.min((scrollHeight - (scrollTop + clientHeight)) / 50, 1)
+  }
+  container._scrollHandler = update
+  container.addEventListener('scroll', update)
+  update()
+  if (container._observer) container._observer.disconnect()
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => entry.target.classList.toggle('in-view', entry.isIntersecting))
+  }, { root: container, threshold: 0.5 })
+  container.querySelectorAll('.subbot-active-item').forEach(el => observer.observe(el))
+  container._observer = observer
+}
+
+function subbotRenderActive(d) {
+  document.getElementById('subbot-slots').textContent = d.slots.used + '/' + d.slots.max
+  const list = d.active || []
+  const key = JSON.stringify(list)
+  if (key === subbotActiveKey) return
+  subbotActiveKey = key
+  const el = document.getElementById('subbot-active-list')
+  if (!list.length) {
+    el.innerHTML = '<div class="search-empty">No active subbots.</div>'
+  } else {
+    el.innerHTML = list.map(u => {
+      const label = u.name || u.masked
+      const initials = (u.name || u.masked.slice(-2)).slice(0, 2).toUpperCase()
+      const avatarHtml = u.profilePicCache
+        ? `<div class="sr-avatar-wrap"><img class="sr-avatar" src="${escapeHtml(u.profilePicCache)}" alt=""></div>`
+        : `<div class="sr-avatar-wrap"><div class="sr-avatar">${escapeHtml(initials)}</div></div>`
+      return `
+        <div class="search-result-card subbot-active-item">
+          ${avatarHtml}
+          <div class="sr-info">
+            <div class="sr-name ${getPremiumBadgeClass(u)}">${escapeHtml(label)}</div>
+            ${renderBadgeIcons(u.badge, true)}
+          </div>
+          <div class="sr-tier">
+            <div class="sr-tier-value">${escapeHtml(u.tier)}</div>
+            <div class="sr-tier-label">Tier</div>
+          </div>
+        </div>
+      `
+    }).join('')
+  }
+  subbotBindScroll()
+}
+
+function subbotRenderMethod() {
+  document.querySelectorAll('.subbot-methods button').forEach(b => b.classList.toggle('active', b.dataset.method === subbotMethod))
+  document.getElementById('subbot-hint').textContent = SUBBOT_HINTS[subbotMethod]
+}
+
+function subbotRender() {
+  const d = subbotData
+  if (!d) return
+  document.getElementById('subbot-loading').style.display = 'none'
+  document.getElementById('subbot-body').style.display = 'block'
+  subbotRenderActive(d)
+  const hasSession = d.state === 'online' || d.state === 'stopped' || d.state === 'connecting'
+  document.getElementById('subbot-session-card').style.display = hasSession ? '' : 'none'
+  document.getElementById('subbot-connect-card').style.display = hasSession ? 'none' : 'block'
+  document.getElementById('subbot-grid').classList.toggle('pair', hasSession)
+
+  if (hasSession) {
+    clearInterval(subbotExpiryTimer)
+    document.getElementById('subbot-status').dataset.state = d.state
+    document.getElementById('subbot-status-text').textContent = { online: 'Connected', stopped: 'Stopped', connecting: 'Connecting...' }[d.state]
+    const runBtn = document.getElementById('subbot-run-btn')
+    runBtn.textContent = d.state === 'online' ? 'Stop' : d.state === 'connecting' ? 'Cancel' : 'Start'
+    runBtn.className = 'btn btn-small ' + (d.state === 'stopped' ? 'btn-flat' : 'btn-secondary')
+    const blocked = d.state === 'stopped' && !d.canUse
+    runBtn.disabled = blocked
+    document.getElementById('subbot-premium-note').style.display = blocked ? 'block' : 'none'
+    const auto = document.getElementById('subbot-auto')
+    auto.classList.toggle('on', !!d.autoConnect)
+    auto.setAttribute('aria-checked', d.autoConnect ? 'true' : 'false')
+    return
+  }
+
+  const pending = d.state === 'pairing'
+  document.getElementById('subbot-idle').style.display = pending ? 'none' : 'block'
+  document.getElementById('subbot-pending').style.display = pending ? 'block' : 'none'
+  if (!pending) {
+    document.getElementById('subbot-connect-btn').disabled = !d.canUse
+    document.getElementById('subbot-connect-note').style.display = d.canUse ? 'none' : 'block'
+    clearInterval(subbotExpiryTimer)
+    subbotQrKey = ''
+    subbotRenderMethod()
+    return
+  }
+
+  const p = d.pairing
+  const isQr = p.method === 'qr'
+  document.getElementById('subbot-pair-view').style.display = isQr ? 'none' : 'block'
+  document.getElementById('subbot-qr-view').style.display = isQr ? 'block' : 'none'
+  if (isQr) {
+    const canvas = document.getElementById('subbot-qr')
+    canvas.style.display = p.qr ? 'block' : 'none'
+    document.getElementById('subbot-qr-wait').style.display = p.qr ? 'none' : 'block'
+    if (p.qr) subbotDrawQr(p.qr)
+    document.getElementById('subbot-pending-hint').textContent = 'In WhatsApp, open Linked devices > Link a device and scan this QR code. It refreshes automatically.'
+  } else {
+    const codeEl = document.getElementById('subbot-code')
+    codeEl.classList.toggle('waiting', !p.code)
+    codeEl.disabled = !p.code
+    codeEl.textContent = p.code ? subbotFormatCode(p.code) : (p.failed ? 'No code' : 'Requesting code...')
+    document.getElementById('subbot-pending-hint').textContent = p.failed
+      ? (p.error || 'Could not get a pairing code.') + ' Cancel and try again.'
+      : 'In WhatsApp, open Linked devices > Link a device > Link with phone number instead, then enter this code.'
+  }
+  subbotDeadline = Date.now() + (p.expiresIn || 0)
+  clearInterval(subbotExpiryTimer)
+  subbotExpiryTimer = setInterval(subbotTickExpiry, 1000)
+  subbotTickExpiry()
+}
+
+async function subbotCall(path, body) {
+  if (subbotBusy) return null
+  subbotBusy = true
+  document.getElementById('section-subbot').classList.add('subbot-busy')
+  try {
+    const res = await safeFetch('/api/subbot/' + path, { method: 'POST', headers: subbotHeaders(true), body: JSON.stringify(body || {}) }, 30000)
+    const d = await res.json()
+    if (!d.success) { showToast(d.message || 'Request failed', 'error'); return null }
+    subbotApply(d, true)
+    return d
+  } catch (err) {
+    showToast(err?.name === 'AbortError' ? 'Request timed out' : 'Request failed', 'error')
+    return null
+  } finally {
+    subbotBusy = false
+    document.getElementById('section-subbot').classList.remove('subbot-busy')
+  }
+}
+
+function subbotPickMethod(method) {
+  subbotMethod = method
+  subbotRenderMethod()
+}
+
+function subbotConnect() { return subbotCall('connect', { method: subbotMethod }) }
+
+function subbotCancel() { return subbotCall('cancel') }
+
+function subbotToggleRun() {
+  const state = subbotData && subbotData.state
+  if (state === 'online') return subbotCall('stop')
+  if (state === 'connecting') return subbotCall('cancel')
+  if (state === 'stopped') return subbotCall('start')
+}
+
+function subbotToggleAuto() {
+  if (!subbotData) return
+  return subbotCall('auto', { value: !subbotData.autoConnect })
+}
+
+async function subbotDelete() {
+  if (!confirm('Delete your session? The subbot will stop and the session file will be removed. Also remove the device from WhatsApp > Linked devices.')) return
+  const d = await subbotCall('delete')
+  if (d) showToast('Session deleted', 'success')
+}
+
+async function subbotDownload() {
+  try {
+    const res = await safeFetch('/api/subbot/session', { headers: subbotHeaders(false) }, 30000)
+    if ((res.headers.get('content-type') || '').includes('application/json')) {
+      const d = await res.json()
+      return showToast(d.message || 'Download failed', 'error')
+    }
+    const blob = await res.blob()
+    const match = (res.headers.get('content-disposition') || '').match(/filename="([^"]+)"/)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = match ? match[1] : 'session.session'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch {
+    showToast('Download failed', 'error')
+  }
+}
+
+async function subbotCopyCode() {
+  const code = subbotData && subbotData.pairing && subbotData.pairing.code
+  if (!code) return
+  try {
+    await navigator.clipboard.writeText(code)
+    showToast('Code copied', 'success')
+  } catch {
+    showToast('Copy failed', 'error')
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && subbotShouldPoll()) subbotRefresh(true)
+})
+document.addEventListener('DOMContentLoaded', () => {
+  subbotRenderMethod()
+  document.getElementById('subbot-download-btn').innerHTML = icon('download')
+  document.getElementById('subbot-delete-btn').innerHTML = icon('trash')
+})
+
+let siteSettings = null
+let adminDefaults = null
+let settingsMode = 'free'
+
+const PRIZE_META = {
+  '✦': { icon: 'sparkle' },
+  '7': { text: '7 7 7' },
+  '♦': { icon: 'diamond' },
+  '♣': { icon: 'club' },
+  '♥': { icon: 'heart' },
+  '♠': { icon: 'spade' },
+  '♪': { icon: 'note' },
+  '✿': { icon: 'flower' },
+  '×': { icon: 'cross' }
+}
+
+function fmtPrizeExp(n) {
+  const abs = Math.abs(n)
+  const body = abs >= 1000 ? `${Math.floor(abs / 100) / 10}k` : String(abs)
+  return (n < 0 ? '−' : '+') + body
+}
+
+function fmtChance(c) { return String(+Number(c).toFixed(3)) + '%' }
+
+function renderPrizeItems(s) {
+  const symbols = s.gacha.symbols
+  const total = symbols.reduce((a, x) => a + x.chance, 0)
+  const noMatch = Math.max(0, Math.round((100 - total) * 1000) / 1000)
+  const sub = (txt) => `<span style="font-size: 7px;color:var(--muted2)">${txt}</span>`
+  const rows = symbols.map(sym => {
+    const meta = PRIZE_META[sym.key] || {}
+    const icons = meta.icon ? Array(3).fill(icon(meta.icon)).join(' ') : escapeHtml(meta.text || sym.key)
+    let cls = sym.reward < 0 ? 'negative' : 'positive'
+    let amount = fmtPrizeExp(sym.reward) + ' EXP'
+    if (sym.key === '✦') { cls = 'jackpot'; amount = `<span class="shimmer-diamond">${amount}</span>` }
+    else if (sym.key === '7') { cls = 'jackpot'; amount = `<span class="shimmer-gold">${amount}</span>` }
+    return `<div class="prize-item"><div class="prize-icons">${icons}</div><div class="prize-value ${cls}">${amount} ${sub((sym.key === '×' ? '~' : '') + fmtChance(sym.chance))}</div></div>`
+  })
+  rows.push(`<div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">−200 EXP ${sub('~' + fmtChance(noMatch))}</div></div>`)
+  document.getElementById('prize-items').innerHTML = rows.join('')
+}
+
+function applySiteSettings(s) {
+  siteSettings = s
+  document.getElementById('daily-reward-label').textContent = `${s.daily.exp} Exp . ${s.daily.gems} Gems`
+  document.getElementById('shop-limit-price').textContent = `${s.shop.limitPrice} Gem / Limit`
+  document.getElementById('shop-premium-price').textContent = `${s.shop.premiumPrice} Gem / week`
+  LIMIT_PRICE = s.shop.limitPrice
+  PREMIUM_PRICE = s.shop.premiumPrice
+  if (activeSection === 'shop') { renderLimitSlider(false); renderPremiumSlider(false) }
+  renderPrizeItems(s)
+}
+
+async function loadSiteSettings() {
+  try {
+    const res = await safeFetch('/api/site-settings')
+    const data = await res.json()
+    if (data.success) applySiteSettings(data.settings)
+  } catch {}
+}
+
+function settingsPickTab(tab) {
+  document.querySelectorAll('.settings-tabs button[data-set-tab]').forEach(b => b.classList.toggle('active', b.dataset.setTab === tab))
+  ;['gacha', 'daily', 'shop', 'subbot'].forEach(t => {
+    document.getElementById('settings-panel-' + t).style.display = t === tab ? 'block' : 'none'
+  })
+}
+
+function settingsSetMode(mode) {
+  settingsMode = mode
+  document.getElementById('settings-mode-free').classList.toggle('active', mode === 'free')
+  document.getElementById('settings-mode-premium').classList.toggle('active', mode === 'premium')
+  document.getElementById('settings-subbot-hint').textContent = mode === 'free'
+    ? 'Everyone can connect and start a subbot.'
+    : 'Only premium users and the owner can connect or start a subbot.'
+}
+
+function settingsUpdateNoMatch() {
+  const inputs = document.querySelectorAll('#settings-gacha-rows [data-field="chance"]')
+  let total = 0
+  let valid = true
+  inputs.forEach(i => {
+    const n = Number(i.value.trim())
+    if (i.value.trim() === '' || !Number.isFinite(n) || n < 0) valid = false
+    else total += n
+  })
+  const el = document.getElementById('settings-nomatch')
+  const left = Math.round((100 - total) * 1000) / 1000
+  const bad = !valid || left < 0
+  el.classList.toggle('set-warn', bad)
+  el.textContent = !valid ? 'Chance must be a number of 0 or more.' : left < 0 ? `Total chance is ${Math.round(total * 1000) / 1000}%. It must not exceed 100%.` : `No match: ${left}%`
+}
+
+function renderSettingsForm(s) {
+  const rows = document.getElementById('settings-gacha-rows')
+  rows.innerHTML = s.gacha.symbols.map(sym => {
+    const meta = PRIZE_META[sym.key] || {}
+    const glyph = meta.icon ? icon(meta.icon) : escapeHtml(sym.key)
+    return `<div class="set-row" data-key="${escapeHtml(sym.key)}"><span class="set-sym">${glyph}</span><input type="text" inputmode="decimal" class="input-field" data-field="chance" value="${sym.chance}"><input type="text" inputmode="numeric" class="input-field" data-field="reward" value="${sym.reward}"></div>`
+  }).join('')
+  rows.querySelectorAll('input').forEach(i => i.addEventListener('input', settingsUpdateNoMatch))
+  document.getElementById('set-daily-exp').value = s.daily.exp
+  document.getElementById('set-daily-gems').value = s.daily.gems
+  document.getElementById('set-limit-price').value = s.shop.limitPrice
+  document.getElementById('set-premium-price').value = s.shop.premiumPrice
+  settingsSetMode(s.subbot.mode)
+  settingsUpdateNoMatch()
+}
+
+function settingsCollect() {
+  const val = id => document.getElementById(id).value.trim()
+  return {
+    daily: { exp: val('set-daily-exp'), gems: val('set-daily-gems') },
+    shop: { limitPrice: val('set-limit-price'), premiumPrice: val('set-premium-price') },
+    subbot: { mode: settingsMode },
+    gacha: {
+      symbols: [...document.querySelectorAll('#settings-gacha-rows .set-row')].map(r => ({
+        key: r.dataset.key,
+        chance: r.querySelector('[data-field="chance"]').value.trim(),
+        reward: r.querySelector('[data-field="reward"]').value.trim()
+      }))
+    }
+  }
+}
+
+async function loadAdminSettings() {
+  try {
+    const res = await safeFetch('/api/admin/settings', { headers: { 'Authorization': 'Bearer ' + token } })
+    const data = await res.json()
+    if (!data.success) { showToast(data.message || 'Failed to load settings.', 'error'); return }
+    adminDefaults = data.defaults
+    renderSettingsForm(data.settings)
+  } catch { showToast('Failed to load settings.', 'error') }
+}
+
+function resetSettingsForm() {
+  if (!adminDefaults) return
+  renderSettingsForm(adminDefaults)
+  showToast('Defaults loaded. Press Save to apply.', 'warn')
+}
+
+async function saveSettings() {
+  try {
+    const res = await safeFetch('/api/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(settingsCollect())
+    })
+    const data = await res.json()
+    if (!data.success) { showToast(data.message || 'Failed to save.', 'error'); return }
+    renderSettingsForm(data.settings)
+    applySiteSettings(data.settings)
+    showToast('Settings saved', 'success')
+  } catch { showToast('Connection error.', 'error') }
+}
+
+let LIMIT_PRICE = 1
+let PREMIUM_PRICE = 100
 
 function renderLimitSlider(reset) {
   const slider = document.getElementById('limit-slider')
@@ -751,7 +1368,7 @@ function getBadgeItems(badge) {
     const sinceDate = badge.premium.since
       ? new Date(badge.premium.since).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
       : ''
-    items.push({ type: 'premium', icon: 'sparkle', tooltip: sinceDate ? `Premium since ${sinceDate}` : 'Premium' })
+    items.push({ type: 'premium', icon: 'sparkle', tooltip: sinceDate ? `Premium since ${sinceDate}` : 'Premium', since: badge.premium.since || 0 })
   }
   return items
 }
@@ -771,7 +1388,11 @@ function renderTopBadgeRow(badge) {
     container.innerHTML = '<span class="badge-row-icon">–</span>'
     return
   }
-  container.innerHTML = items.map((it, i) => `
+  container.innerHTML = items.map((it, i) => it.type === 'premium' ? `
+    <div class="badge-icon-wrap">
+      <button type="button" class="badge-row-icon clickable badge-active badge-premium" data-since="${Number(it.since) || 0}" onclick="togglePremiumPopover(this)">${icon(it.icon)}</button>
+    </div>
+  ` : `
     <div class="badge-icon-wrap">
       <button type="button" class="badge-row-icon clickable badge-active badge-${it.type}" onclick="toggleBadgeTooltip(this)">${it.type === 'developer' ? escapeHtml(it.icon) : icon(it.icon)}</button>
       <div class="badge-tooltip">${escapeHtml(it.tooltip)}</div>
@@ -1448,6 +2069,7 @@ async function deleteGiftCode(code) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await fetchTierAsset()
+  await loadSiteSettings()
   loadBotName()
   await loadProfile()
   setInterval(() => { loadProfile(true) }, 30000)
