@@ -1,6 +1,57 @@
 import { ZipFile as JSZip } from '../../lib/utils/converter.js'
 import { join } from 'path'
-import { statSync, readFileSync, readdirSync } from 'fs'
+import { statSync, readFileSync, readdirSync, existsSync, rmSync } from 'fs'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+
+const execFileAsync = promisify(execFile)
+
+function dirSize(dir) {
+  let total = 0
+  for (const item of readdirSync(dir)) {
+    const fullPath = join(dir, item)
+    const stat = statSync(fullPath)
+    total += stat.isDirectory() ? dirSize(fullPath) : stat.size
+  }
+  return total
+}
+
+function formatSize(bytes) {
+  const units = ['B', 'KB', 'MB', 'GB']
+  let i = 0
+  while (bytes >= 1024 && i < units.length - 1) {
+    bytes /= 1024
+    i++
+  }
+  return `${bytes.toFixed(i ? 2 : 0)} ${units[i]}`
+}
+
+function git(cwd, args) {
+  return execFileAsync('git', args, { cwd, timeout: 180000, maxBuffer: 10 * 1024 * 1024 })
+}
+
+async function cleanupGit(cwd) {
+  const gitDir = join(cwd, '.git')
+  if (!existsSync(gitDir) || !statSync(gitDir).isDirectory()) return null
+
+  const before = dirSize(gitDir)
+
+  try {
+    await git(cwd, ['reflog', 'expire', '--expire-unreachable=now', '--all'])
+    await git(cwd, ['gc', '--aggressive', '--prune=now'])
+  } catch (e) {
+    console.error('[backup] git cleanup failed:', e.message)
+  }
+
+  const hooksDir = join(gitDir, 'hooks')
+  if (existsSync(hooksDir)) {
+    for (const file of readdirSync(hooksDir)) {
+      if (file.endsWith('.sample')) rmSync(join(hooksDir, file), { force: true })
+    }
+  }
+
+  return { before, after: dirSize(gitDir) }
+}
 
 async function addFolderRecursively(zip, folderPath, cwd, excludePaths) {
   const items = readdirSync(folderPath)
@@ -21,34 +72,49 @@ async function addFolderRecursively(zip, folderPath, cwd, excludePaths) {
 }
 
 let handler = async (m, { conn }) => {
+  m.react('⏳')
+
   const cwd = process.cwd()
-  const tmpPath = join(cwd, 'data/tmp')
+  const gitInfo = await cleanupGit(cwd)
 
   const zipAll = new JSZip()
 
   const excludePaths = [
-    tmpPath,
     join(cwd, 'node_modules'),
     join(cwd, 'package-lock.json'),
+    join(cwd, 'yarn.lock'),
     join(cwd, 'data/store.json'),
-    join(cwd, 'data/backups'),
     join(cwd, 'data/ai/backups'),
-    join(cwd, 'data/ai/tmp'),
     join(cwd, 'data/reminder.json'),
     join(cwd, 'data/tunnel'),
     join(cwd, 'data/tmp'),
-    //join(cwd, 'data'),
+    join(cwd, '.cache'),
     join(cwd, '.npm'),
     join(cwd, '.agents'),
     join(cwd, '.config'),
-    join(cwd, '.git'),
     join(cwd, 'data/sessions/store.db'),
   ]
 
   await addFolderRecursively(zipAll, cwd, cwd, excludePaths)
 
-  const allBuffer = await zipAll.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' })
-  await conn.sendMessage(m.chat, { document: allBuffer, mimetype: 'application/zip', fileName: `backup_${Date.now()}.zip` }, { quoted: m })
+  const allBuffer = await zipAll.generateAsync({
+    type: 'nodebuffer',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 9 }
+  })
+
+  const caption = gitInfo
+    ? `- .git: ${formatSize(gitInfo.before)} → ${formatSize(gitInfo.after)}\n- Zip: ${formatSize(allBuffer.length)}`
+    : `- Zip: ${formatSize(allBuffer.length)}`
+
+  await conn.sendMessage(m.chat, {
+    document: allBuffer,
+    mimetype: 'application/zip',
+    fileName: `backup_${Date.now()}.zip`,
+    caption
+  }, { quoted: m })
+
+  m.react('✅')
 }
 
 handler.command = /^(backup)$/i
