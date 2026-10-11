@@ -47,10 +47,9 @@ async function pushToGitHub(conn, m, args) {
             })
         }
 
-        const gitignorePath = path.join(ROOT, '.gitignore')
-
         const ignoreRules = [
             '.cache/',
+            '.gitignore',
             'node_modules/',
             '.env',
             'data/',
@@ -59,50 +58,47 @@ async function pushToGitHub(conn, m, args) {
             '*.bin',
             '*.pid',
             '*.bak',
+            '.git',
             '*.tar.gz',
             'package-lock.json',
             'yarn.lock',
             'pnpm-lock.json',
             '.npmrc',
             '.npm',
-            '.gitignore',
             'replit.nix',
             '.replit',
             '.github/*',
             '!.github/workflows',
             '.github/workflows/*',
             '!.github/workflows/uptimer.yml',
-            'run.js', 
+            'run.js',
         ]
 
-        if (!fs.existsSync(gitignorePath)) {
-            fs.writeFileSync(
-                gitignorePath,
-                ignoreRules.join('\n')
-            )
-        } else {
-            let content = fs.readFileSync(
-                gitignorePath,
-                'utf8'
-            )
+        // Pastikan .git sudah di-init dulu sebelum menulis ke .git/info/exclude
+        try {
+            await execAsync('git init', { cwd: ROOT })
+        } catch {}
 
-            for (const rule of ignoreRules) {
-                if (!content.includes(rule)) {
-                    content += '\n' + rule
-                }
+        // Tulis aturan ignore ke .git/info/exclude (LOKAL, tidak ikut ke-push)
+        const excludePath = path.join(ROOT, '.git', 'info', 'exclude')
+        fs.mkdirSync(path.dirname(excludePath), { recursive: true })
+
+        let excludeContent = fs.existsSync(excludePath)
+            ? fs.readFileSync(excludePath, 'utf8')
+            : ''
+
+        for (const rule of ignoreRules) {
+            // hindari duplikat sederhana
+            const lines = excludeContent.split('\n').map(l => l.trim())
+            if (!lines.includes(rule)) {
+                excludeContent += '\n' + rule
             }
-
-            fs.writeFileSync(gitignorePath, content)
         }
+
+        fs.writeFileSync(excludePath, excludeContent)
 
         const remoteUrl =
             `https://${user}:${token}@github.com/${user}/${repo}.git`
-
-        try {
-            await execAsync('git init', {
-                cwd: ROOT
-            })
-        } catch {}
 
         await execAsync(
             `git config user.email "${email}"`,
@@ -121,10 +117,7 @@ async function pushToGitHub(conn, m, args) {
         }
 
         try {
-            await execAsync(
-                'git remote remove origin',
-                { cwd: ROOT }
-            )
+            await execAsync('git remote remove origin', { cwd: ROOT })
         } catch {}
 
         await execAsync(
@@ -132,36 +125,29 @@ async function pushToGitHub(conn, m, args) {
             { cwd: ROOT }
         )
 
-        // Remove cache from git index if it was ever accidentally committed
-        try {
-            await execAsync(
-                'git rm -r --cached .cache',
-                { cwd: ROOT }
-            )
-        } catch {}
+        // Untrack file/folder yang tidak boleh ikut push
+        const untrackTargets = [
+            '.cache',
+            'node_modules',
+            '.github',
+            '.gitignore',
+            '.env',
+            'data',
+            'run.js',
+        ]
 
-        try {
-            await execAsync(
-                'git rm -r --cached node_modules',
-                { cwd: ROOT }
-            )
-        } catch {}
+        for (const target of untrackTargets) {
+            try {
+                await execAsync(
+                    `git rm -r --cached --ignore-unmatch "${target}"`,
+                    { cwd: ROOT }
+                )
+            } catch {}
+        }
 
-        // Untrack everything under .github/ first, so old/unwanted files
-        // (e.g. leftover workflows) don't linger from a previous push.
-        try {
-            await execAsync(
-                'git rm -r --cached .github',
-                { cwd: ROOT }
-            )
-        } catch {}
+        await execAsync('git add .', { cwd: ROOT })
 
-        await execAsync('git add .', {
-            cwd: ROOT
-        })
-
-        // Re-stage only the whitelisted workflow file, bypassing .gitignore,
-        // in case it hasn't been added yet.
+        // Re-stage hanya workflow uptimer.yml (whitelist)
         const uptimerWorkflow = path.join(ROOT, '.github/workflows/uptimer.yml')
         if (fs.existsSync(uptimerWorkflow)) {
             try {
@@ -173,10 +159,7 @@ async function pushToGitHub(conn, m, args) {
         }
 
         const { stdout: status } =
-            await execAsync(
-                'git status --porcelain',
-                { cwd: ROOT }
-            )
+            await execAsync('git status --porcelain', { cwd: ROOT })
 
         if (!status.trim()) {
             await conn.reply(m.chat, '✅ Nothing to upload, no changes detected.', m)
@@ -191,15 +174,9 @@ async function pushToGitHub(conn, m, args) {
             )
         } catch {}
 
-        await execAsync(
-            'git branch -M main',
-            { cwd: ROOT }
-        )
+        await execAsync('git branch -M main', { cwd: ROOT })
 
-        await execAsync(
-            'git push -u origin main --force',
-            { cwd: ROOT }
-        )
+        await execAsync('git push -u origin main --force', { cwd: ROOT })
 
         await conn.reply(
             m.chat,
@@ -223,13 +200,8 @@ async function checkGitHubStatus(conn, m) {
     m.react('🔍')
 
     try {
-        // 1. Check current branch
         const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT })
-
-        // 2. Check short status
         const { stdout: statusShort } = await execAsync('git status --short', { cwd: ROOT })
-
-        // 3. Check whether there are commits not yet pushed
         const { stdout: statusBranch } = await execAsync('git status -sb', { cwd: ROOT })
         const isAhead = statusBranch.includes('ahead')
 
