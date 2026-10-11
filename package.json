@@ -12,7 +12,8 @@
         "node": ">=24.x"
     },
     "exports": {
-        "./voip": "./lib/package/voip/index.js"
+        "./voip": "./lib/package/voip/index.js",
+        "./canvas": "./lib/utils/canvas.js"
     },
     "dependencies": {
         "axios": "^1.20.0",

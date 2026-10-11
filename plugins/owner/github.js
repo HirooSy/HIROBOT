@@ -51,7 +51,6 @@ async function pushToGitHub(conn, m, args) {
 
         const ignoreRules = [
             '.cache/',
-            '.gitignore',
             'node_modules/',
             '.env',
             'data/',
@@ -60,10 +59,7 @@ async function pushToGitHub(conn, m, args) {
             '*.bin',
             '*.pid',
             '*.bak',
-            '.git',
-            '*.zip',
             '*.tar.gz',
-            '*.log',
             'package-lock.json',
             'yarn.lock',
             'pnpm-lock.json',

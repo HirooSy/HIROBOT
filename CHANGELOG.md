@@ -1,3 +1,27 @@
+<h3>11/October/2026</h3>
+<sub>
+
+```diff
+• Fix Gemini MCP turn role mapping to send 'user' role instead of 'tool' role for function response turns
+• Update temporary directory paths and prompt guidance for file management tools
+• Enhance canvas rendering engine in canvas.js with pure JS/WASM HTML rendering and SVG support
+• Redesign profile card UI with HTML rendering and badges in profile.js
+• Remove invalid .git and .gitignore rules from GitHub upload configuration in github.js
+
+________________________
+
++ Add ".gitignore"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/prompt.txt"
+* Edit "lib/package/ai/tools/convert.js"
+* Edit "lib/start.js"
+* Edit "lib/utils/canvas.js"
+* Edit "package.json"
+* Edit "plugins/main/profile.js"
+* Edit "plugins/owner/github.js"
+```
+</sub>
+
 <h3>09/October/2026</h3>
 <sub>
 
@@ -197,42 +221,5 @@ ________________________
 * Edit "plugins/dl/spotify.js"
 * Edit "plugins/group/mute.js"
 * Edit "plugins/subbot/connect.js"
-```
-</sub>
-
-<h3>24/September/2026</h3>
-<sub>
-
-```diff
-• Massive overhaul and cleanup of core AI interactions and MCP utility
-• Comprehensive dashboard update including new styling, refined views, and server optimizations
-• Significant enhancements to VoIP and SCTP relay stability
-• Core utility refactoring for database, connection, and messaging
-• Downloader plugin updates for Spotify, Pinterest, and e621
-• Cleanup of legacy modules and minor general maintenance
-
-________________________
-
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/relay/sctp/association.js"
-* Edit "lib/package/voip/relay/sctp/wire.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/package/website/views/index.html"
-* Edit "lib/package/website/views/profile.html"
-* Edit "lib/scrapers/src/pinterest.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-- Delete "plugins/ai/mistral.js"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/dl/pinterest.js"
-* Edit "plugins/dl/spotify.js"
-* Edit "plugins/owner/backup.js"
-* Edit "plugins/subbot/connect.js"
-+ Add "lib/package/website/views/style.css"
 ```
 </sub>
