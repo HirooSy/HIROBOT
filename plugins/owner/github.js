@@ -65,6 +65,7 @@ async function pushToGitHub(conn, m, args) {
             'pnpm-lock.json',
             '.npmrc',
             '.npm',
+            '.gitignore',
             'replit.nix',
             '.replit',
             '.github/*',
