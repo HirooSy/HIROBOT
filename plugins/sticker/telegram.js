@@ -17,8 +17,7 @@ var handler = async (m, { conn, args }) => {
 		await m.reply(`⚠️ ${result.skipped} sticker(s) skipped (unsupported animated format).`)
 	}
 
-	const hasVideo = stickers.some(s => s.is_video)
-	const maxStickersPerPack = hasVideo ? 30 : 60
+	const maxStickersPerPack = 60
 	const totalPacks = Math.ceil(stickers.length / maxStickersPerPack)
 
 	for (let packIndex = 0; packIndex < totalPacks; packIndex++) {
