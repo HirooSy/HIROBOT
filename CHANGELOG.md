@@ -1,3 +1,17 @@
+<h3>12/October/2026</h3>
+<sub>
+
+```diff
+• Refactor animated sticker conversion in simple.js to use quality/fps fallback profiles and process priority optimization
+• Update Telegram sticker plugin to prioritize TELEGRAM_BOT_TOKEN environment variable and limit video sticker pack chunks to 30
+
+________________________
+
+* Edit "lib/utils/simple.js"
+* Edit "plugins/sticker/telegram.js"
+```
+</sub>
+
 <h3>11/October/2026</h3>
 <sub>
 
@@ -187,39 +201,5 @@ ________________________
 * Edit "plugins/main/menu.js"
 - Delete "plugins/sticker/premium.js"
 - Delete "plugins/sticker/smeta.js"
-```
-</sub>
-
-<h3>26/September/2026</h3>
-<sub>
-
-```diff
-• Massive refactoring of core AI MCP utility and Spotify downloader functionality
-• Significant enhancements to VoIP and SCTP relay stability
-• Core utility refactoring for messaging and handler logic
-• Implementation of new CRM and Reaction tool plugins
-• Cleanup of legacy plugins (deletemsg) and maintenance
-
-________________________
-
-+ Add "plugins/tools/crm.js"
-+ Add "plugins/tools/reaction.js"
-- Delete "plugins/owner/deletemsg.js"
-* Edit ".env.example"
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/ai/tools/media.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/media/WaVideoEngine.js"
-* Edit "lib/package/voip/relay/WaManualRelay.js"
-* Edit "lib/package/voip/relay/sctp/association.js"
-* Edit "lib/package/voip/types.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/ai/ai.js"
-* Edit "plugins/dl/spotify.js"
-* Edit "plugins/group/mute.js"
-* Edit "plugins/subbot/connect.js"
 ```
 </sub>

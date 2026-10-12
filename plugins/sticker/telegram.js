@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const BOT_TOKEN = '7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc'
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc'
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`
 const TG_FILE = `https://api.telegram.org/file/bot${BOT_TOKEN}`
 const UA = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36'
@@ -17,7 +17,8 @@ var handler = async (m, { conn, args }) => {
 		await m.reply(`⚠️ ${result.skipped} sticker(s) skipped (unsupported animated format).`)
 	}
 
-	const maxStickersPerPack = 60
+	const hasVideo = stickers.some(s => s.is_video)
+	const maxStickersPerPack = hasVideo ? 30 : 60
 	const totalPacks = Math.ceil(stickers.length / maxStickersPerPack)
 
 	for (let packIndex = 0; packIndex < totalPacks; packIndex++) {
