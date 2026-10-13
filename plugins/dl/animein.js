@@ -7,14 +7,31 @@ const {
     getStream,
     getFileSize,
     downloadEpisode,
-    formatSize
+    formatSize,
+    getLatest,
+    getPopular,
+    getByGenre,
+    getSchedule,
+    findGenre
 } = global.scraper.animein
+
+const SCHEDULE_DAYS = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
+const DAY_ALIASES = {
+    MONDAY: 'SENIN',
+    TUESDAY: 'SELASA',
+    WEDNESDAY: 'RABU',
+    THURSDAY: 'KAMIS',
+    FRIDAY: 'JUMAT',
+    "JUM'AT": 'JUMAT',
+    SATURDAY: 'SABTU',
+    SUNDAY: 'MINGGU'
+};
 
 const TMP_DIR = path.isAbsolute(process.env.TMP || '')
     ? process.env.TMP
     : path.join(process.cwd(), process.env.TMP || 'data/tmp');
 
-function sendList(conn, m, caption, rows, buttonText = 'Select') {
+function sendList(conn, m, caption, sections, buttonText = 'Select', extra = []) {
     return conn.sendButton(m.chat, {
         document: { url: 'https://animeinweb.com/favicon.ico' },
         mimetype: 'image/png',
@@ -23,8 +40,17 @@ function sendList(conn, m, caption, rows, buttonText = 'Select') {
         fileLength: '665666646645000',
         optionText: buttonText,
         optionTitle: buttonText,
-        nativeFlow: [{ text: buttonText, sections: [{ rows }] }]
+        nativeFlow: [{ text: buttonText, sections }, ...extra]
     }, m);
+}
+
+function animeRows(list, command) {
+    return list.map((a, i) => ({
+        header: `${i + 1}. ${a.title}`,
+        title: `${a.type || '-'} | ${a.status || '-'} | ${a.year || '-'}`,
+        description: `Views: ${a.views ?? '-'} | Favorites: ${a.favorites ?? '-'} | ${a.genre || '-'}`,
+        id: `.${command} info ${a.id}`
+    }));
 }
 
 function getAvailableDiskSpace(dir) {
@@ -38,10 +64,76 @@ function getAvailableDiskSpace(dir) {
 
 let handler = async (m, { conn, text, command }) => {
     if (!text) return m.reply(
-        `*ANIMEIN*\n\nUsage: .${command} <title>\n\nExample:\n.${command} pokemon`
+        `*ANIMEIN*\n\nUsage: .${command} <title / genre>\n\nExample:\n.${command} pokemon\n.${command} action\n\nOptions:\n.${command} --new\n.${command} --top\n.${command} --schedule [day]`
     );
 
     const [sub, ...args] = text.trim().split(' ');
+    const flag = sub.toLowerCase();
+
+    const sendGenre = async (genre, page) => {
+        const list = await getByGenre(genre.id, page);
+        if (!list.length) return m.reply(page ? 'No more results.' : `No anime found for genre ${genre.name}.`);
+        return sendList(
+            conn, m,
+            `*Genre: ${genre.name}* - ${list.length} result(s)${page ? ` (page ${page + 1})` : ''}`,
+            [{ title: '', rows: animeRows(list, command) }],
+            'Select Anime',
+            [{ text: '➡️ Next', id: `.${command} genre ${genre.id} ${page + 1}` }]
+        );
+    };
+
+    if (flag === '--new' || flag === '--top' || flag === '--popular') {
+        const isNew = flag === '--new';
+        const page = Math.max(0, parseInt(args[0]) || 0);
+        await m.react(isNew ? '🆕' : '🔥');
+
+        const list = await (isNew ? getLatest(page) : getPopular(page));
+        if (!list.length) return m.reply(page ? 'No more results.' : 'No results found.');
+
+        return sendList(
+            conn, m,
+            `*${isNew ? 'New' : 'Popular'} Anime* - ${list.length} result(s)${page ? ` (page ${page + 1})` : ''}`,
+            [{ title: '', rows: animeRows(list, command) }],
+            'Select Anime',
+            [{ text: '➡️ Next', id: `.${command} ${isNew ? '--new' : '--top'} ${page + 1}` }]
+        );
+    }
+
+    if (flag === '--schedule') {
+        const input = (args[0] || '').toUpperCase();
+        const day = DAY_ALIASES[input] || input;
+        if (day && !SCHEDULE_DAYS.includes(day)) {
+            return m.reply(`Invalid day.\n\nUsage: .${command} --schedule [day]\nDays: ${SCHEDULE_DAYS.join(', ')}`);
+        }
+        await m.react('📅');
+
+        const days = day ? [day] : SCHEDULE_DAYS;
+        const lists = await Promise.all(days.map(d => getSchedule(d)));
+        const sections = days
+            .map((d, i) => ({ title: d, rows: animeRows(lists[i], command) }))
+            .filter(s => s.rows.length);
+        if (!sections.length) return m.reply('No schedule found.');
+
+        const total = sections.reduce((n, s) => n + s.rows.length, 0);
+        return sendList(
+            conn, m,
+            `*Anime Schedule*${day ? ` - ${day}` : ''} - ${total} result(s)`,
+            sections,
+            'Select Anime'
+        );
+    }
+
+    if (sub === 'genre') {
+        const hasPage = args.length > 1 && /^\d+$/.test(args[args.length - 1]);
+        const page = hasPage ? parseInt(args[args.length - 1]) : 0;
+        const ref = (hasPage ? args.slice(0, -1) : args).join(' ');
+        if (!ref) return m.reply(`Usage: .${command} genre <name>`);
+        await m.react('🔍');
+
+        const genre = await findGenre(ref, { allowId: true });
+        if (!genre) return m.reply('Genre not found.');
+        return sendGenre(genre, page);
+    }
 
     if (sub === 'info') {
         const animeId = args[0];
@@ -151,33 +243,67 @@ let handler = async (m, { conn, text, command }) => {
         if (!direct.length) return m.reply('No direct servers available.');
 
         const qualityOrder = ['1080p', '720p', '480p', '360p'];
-        const target = quality
-            ? direct.find(s => s.quality === quality) || direct.sort((a, b) => qualityOrder.indexOf(a.quality) - qualityOrder.indexOf(b.quality))[0]
-            : direct.sort((a, b) => qualityOrder.indexOf(a.quality) - qualityOrder.indexOf(b.quality))[0];
+        const rank = s => {
+            const i = qualityOrder.indexOf(s.quality);
+            return i === -1 ? qualityOrder.length : i;
+        };
+        const sorted = [...direct].sort((a, b) => rank(a) - rank(b));
+        const requestedRank = quality ? qualityOrder.indexOf(quality) : -1;
+        const candidates = requestedRank === -1
+            ? sorted
+            : [
+                ...sorted.filter(s => rank(s) === requestedRank),
+                ...sorted.filter(s => rank(s) > requestedRank)
+            ];
+        if (!candidates.length) candidates.push(...sorted);
 
         const ep = stream.episode;
 
         if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
 
-        const expectedSize = await getFileSize(target.link);
-        const availableSpace = getAvailableDiskSpace(TMP_DIR);
-        if (expectedSize && availableSpace !== null) {
-            const SAFETY_MARGIN = 100 * 1024 * 1024;
-            if (expectedSize + SAFETY_MARGIN > availableSpace) {
-                await m.react('❌');
-                return m.reply(
-                    `Ruang penyimpanan server tidak cukup.\n` +
-                    `Dibutuhkan: ${formatSize(expectedSize)}\n` +
-                    `Tersedia: ${formatSize(availableSpace)}\n\n` +
-                    `Hubungi admin server untuk membersihkan storage atau menambah kuota.`
-                );
-            }
-        }
-
         const tmpPath = path.join(TMP_DIR, `animein_${episodeId}_${Date.now()}.mp4`);
 
+        let target = null;
+        let totalSize = 0;
+        let lastError = null;
+        const failures = [];
+
         try {
-            const totalSize = await downloadEpisode(target.link, tmpPath);
+            for (const candidate of candidates) {
+                try {
+                    const expectedSize = await getFileSize(candidate.link);
+                    const availableSpace = getAvailableDiskSpace(TMP_DIR);
+                    if (expectedSize && availableSpace !== null) {
+                        const SAFETY_MARGIN = 100 * 1024 * 1024;
+                        if (expectedSize + SAFETY_MARGIN > availableSpace) {
+                            await m.react('❌');
+                            return m.reply(
+                                `Ruang penyimpanan server tidak cukup.\n` +
+                                `Dibutuhkan: ${formatSize(expectedSize)}\n` +
+                                `Tersedia: ${formatSize(availableSpace)}\n\n` +
+                                `Hubungi admin server untuk membersihkan storage atau menambah kuota.`
+                            );
+                        }
+                    }
+                    totalSize = await downloadEpisode(candidate.link, tmpPath, expectedSize);
+                    target = candidate;
+                    break;
+                } catch (error) {
+                    lastError = error;
+                    failures.push(`${candidate.quality} ${candidate.name}: ${error.detail || error.message}`);
+                    if (error.code === 'ENOSPC') break;
+                }
+            }
+
+            if (!target) {
+                console.error('Download failed:', lastError);
+                return m.reply(
+                    lastError?.code === 'ENOSPC'
+                        ? `Download failed: server storage is full. Contact owner to clean up storage.`
+                        : `Download failed:\n${failures.slice(0, 6).join('\n')}${failures.length > 6 ? `\n+${failures.length - 6} more` : ''}`
+                );
+            }
+
             await m.react('✅');
 
             await conn.sendMessage(m.chat, {
@@ -189,12 +315,7 @@ let handler = async (m, { conn, text, command }) => {
 
         } catch (error) {
             console.error('Download failed:', error);
-            const isDiskFull = error.code === 'ENOSPC';
-            await m.reply(
-                isDiskFull
-                    ? `Download failed: server storage is full. Contact owner to clean up storage.`
-                    : `Download failed: ${error.message || 'Unknown error'}`
-            );
+            await m.reply(`Download failed: ${error.message || 'Unknown error'}`);
         } finally {
             if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
         }
@@ -204,19 +325,36 @@ let handler = async (m, { conn, text, command }) => {
     await m.react('🔍');
     const keyword = text.trim();
 
-    const results = await searchAnime(keyword);
+    const [results, genre] = await Promise.all([searchAnime(keyword), findGenre(keyword)]);
+
+    if (!results.length && genre) return sendGenre(genre, 0);
     if (!results.length) return m.reply('No results found.');
 
-    const rows = results.slice(0, 1000).map((a, i) => ({
-        header: `${i + 1}. ${a.title}`,
-        title: `${a.type} | ${a.status} | ${a.year}`,
-        description: `Views: ${a.views} | Favorites: ${a.favorites} | ${a.genre}`,
-        id: `.${command} info ${a.id}`
-    }));
+    const animeSection = {
+        title: genre ? 'Anime' : '',
+        rows: animeRows(results.slice(0, 1000), command)
+    };
+
+    if (!genre) {
+        return sendList(conn, m,
+            `*${keyword}* - ${results.length} result(s)`,
+            [animeSection], 'Select Anime'
+        );
+    }
+
+    const genreSection = {
+        title: 'Genre',
+        rows: [{
+            header: genre.name,
+            title: 'Genre',
+            description: `Show anime with the ${genre.name} genre`,
+            id: `.${command} genre ${genre.id}`
+        }]
+    };
 
     return sendList(conn, m,
         `*${keyword}* - ${results.length} result(s)`,
-        rows, 'Select Anime'
+        [animeSection, genreSection], 'Select'
     );
 };
 
