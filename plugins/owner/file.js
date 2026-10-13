@@ -30,17 +30,17 @@ let handler = async (m, { conn, usedPrefix, command, args, text }) => {
   // ===== SAVE (savefile / saveplugin / savemedia) =====
   if (/^(save|s)(m(edia)?|v?p(lugin)?|f(ile)?)$/i.test(cmd)) {
     if (!text) throw `
-Penggunaan: ${usedPrefix}${command} <name file>
-Contoh: ${usedPrefix}savefile main.js
-        ${usedPrefix}saveplugin owner
-        ${usedPrefix}savemedia img.png
+Usage: ${usedPrefix}${command} <name file>
+Example: ${usedPrefix}savefile main.js
+         ${usedPrefix}saveplugin owner
+         ${usedPrefix}savemedia img.png
 `.trim()
-    if (!m.quoted) throw `Balas/quote media/text yang ingin disimpan`
+    if (!m.quoted) throw `Reply/quote the media/text you want to save`
 
     if (/v?p(lugin)?/i.test(cmd)) {
       let name = `plugins/${text}.js`
       await _fs.writeFile(name, m.quoted.text)
-      return m.reply(`tersimpan di ${name}`)
+      return m.reply(`Saved to ${name}`)
     }
     if (/f(ile)?/i.test(cmd)) {
       await _fs.writeFile(text, m.quoted.text)
@@ -56,23 +56,23 @@ Contoh: ${usedPrefix}savefile main.js
 
   // ===== DELETE (df / dfp) =====
   if (cmd === 'dfp') {
-    if (!text) throw `uhm.. where the text?\n\nexample:\n${usedPrefix + command} info`
+    if (!text) throw `example:\n${usedPrefix + command} info`
     if (!pluginNames().includes(args[0])) return m.reply(`*🗃️ NOT FOUND!*\n==================================\n\n${listPluginsGrouped()}`)
     const file = join(process.cwd(), 'plugins', `${args[0]}.js`)
-    if (!fs.existsSync(file)) return m.reply(`File "${args[0]}" tidak ditemukan.`)
+    if (!fs.existsSync(file)) return m.reply(`File "${args[0]}" not found.`)
     fs.unlinkSync(file)
-    return conn.reply(m.chat, `Succes deleted "plugins/${args[0]}.js"`, m)
+    return conn.reply(m.chat, `Success deleted "plugins/${args[0]}.js"`, m)
   }
 
   if (cmd === 'df') {
-    if (!args[0]) throw 'Nama File?'
+    if (!args[0]) throw 'File Name?'
     try {
       const file = join(process.cwd(), args[0])
-      if (!fs.existsSync(file)) return m.reply(`File "${args[0]}" tidak ditemukan.`)
+      if (!fs.existsSync(file)) return m.reply(`File "${args[0]}" not found.`)
       fs.unlinkSync(file)
-      return conn.reply(m.chat, `Succes deleted "${args[0]}"`, m)
+      return conn.reply(m.chat, `Success deleted "${args[0]}"`, m)
     } catch (e) {
-      return m.reply('Terjadi error: ' + e.message)
+      return m.reply('An error occurred: ' + e.message)
     }
   }
 
@@ -81,7 +81,7 @@ Contoh: ${usedPrefix}savefile main.js
     await m.react('🔍')
     const names = pluginNames()
 
-    if (!text) throw `uhm.. where the text?\n\nexample:\n${usedPrefix + command} tools/sticker\n\n───────────────\n${listPluginsGrouped()}`
+    if (!text) throw `example:\n${usedPrefix + command} tools/sticker\n\n───────────────\n${listPluginsGrouped()}`
 
     if (!names.includes(text)) {
       return m.reply(`> *NOT FOUND!*\n───────────────\n${global.readmore}\n\n${listPluginsGrouped()}`)
@@ -101,7 +101,7 @@ handler.help = [
   ...['plugin', 'file', 'media'].map(v => `save${v} <name file>`),
   'dfp <plugin name>',
   'df <file name>',
-  'getplugin <kategori/nama>'
+  'getplugin <category/name>'
 ]
 handler.tags = ['owner']
 handler.command = /^((save|s)(m(edia)?|v?p(lugin)?|f(ile)?)|dfp?|getplugin|gp)$/i
