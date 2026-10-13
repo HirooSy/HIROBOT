@@ -1,12 +1,12 @@
 import os from 'os'
 import path from 'path'
 import fs from 'fs'
-import Voip from 'hiro/voip'
 
 const voipInstances = new WeakMap()
-function getVoip(conn) {
+async function getVoip(conn) {
     let voip = voipInstances.get(conn)
     if (!voip) {
+        const { default: Voip } = await import('hiro/voip')
         voip = new Voip(conn, { voipLogLevel: 'info' })
         voipInstances.set(conn, voip)
     }
@@ -38,7 +38,7 @@ function requireCall(m) {
 }
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
-    const voip = getVoip(conn)
+    const voip = await getVoip(conn)
 
     if (command === 'voipend') {
         await voip.end(args[0] === 'force')
