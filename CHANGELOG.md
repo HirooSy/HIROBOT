@@ -2,12 +2,14 @@
 <sub>
 
 ```diff
+• Refactor Gemini MCP image upload process by replacing deprecated guest-mode endpoint with content-push API, improving reliability and MIME type handling
 • Refactor font parsing logic by centralizing and enhancing font processing in canvas.js, removing legacy parsing code from brat.js
 • Add support for configuring external font sources in global configuration to enable custom rendering
 
 ________________________
 
 * Edit "lib/config.js"
+* Edit "lib/package/ai/mcp.js"
 * Edit "lib/scrapers/src/brat.js"
 * Edit "lib/utils/canvas.js"
 ```
