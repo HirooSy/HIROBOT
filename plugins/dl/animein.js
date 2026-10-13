@@ -15,26 +15,27 @@ const {
     findGenre
 } = global.scraper.animein
 
-const SCHEDULE_DAYS = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
+const SCHEDULE_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const DAY_ALIASES = {
-    MONDAY: 'SENIN',
-    TUESDAY: 'SELASA',
-    WEDNESDAY: 'RABU',
-    THURSDAY: 'KAMIS',
-    FRIDAY: 'JUMAT',
-    "JUM'AT": 'JUMAT',
-    SATURDAY: 'SABTU',
-    SUNDAY: 'MINGGU'
+    SENIN: 'MONDAY',
+    SELASA: 'TUESDAY',
+    RABU: 'WEDNESDAY',
+    KAMIS: 'THURSDAY',
+    JUMAT: 'FRIDAY',
+    "JUM'AT": 'FRIDAY',
+    SABTU: 'SATURDAY',
+    MINGGU: 'SUNDAY'
 };
 
 const TMP_DIR = path.isAbsolute(process.env.TMP || '')
     ? process.env.TMP
     : path.join(process.cwd(), process.env.TMP || 'data/tmp');
 
-function sendList(conn, m, caption, sections, buttonText = 'Select', extra = []) {
+async function sendList(conn, m, caption, sections, buttonText = 'Select', extra = []) {
     return conn.sendButton(m.chat, {
         document: { url: 'https://animeinweb.com/favicon.ico' },
-        mimetype: 'image/png',
+        jpegThumbnail: await conn.resize( Buffer.from(await (await fetch("https://files.catbox.moe/3a97sc.jpg")).arrayBuffer()), 100, 100),
+        mimetype: 'image/webp',
         fileName: 'ANIMEIN',
         caption,
         fileLength: '665666646645000',
@@ -192,7 +193,8 @@ let handler = async (m, { conn, text, command }) => {
 
             return conn.sendButton(m.chat, {
                 document: { url: 'https://animeinweb.com/favicon.ico' },
-                mimetype: 'image/png',
+                jpegThumbnail: await conn.resize( Buffer.from(await (await fetch("https://files.catbox.moe/3a97sc.jpg")).arrayBuffer()), 100, 100),
+                mimetype: 'image/webp',
                 fileName: 'ANIMEIN',
                 caption: pageCaption,
                 fileLength: '665666646645000',
@@ -220,7 +222,8 @@ let handler = async (m, { conn, text, command }) => {
 
         return conn.sendButton(m.chat, {
             document: { url: 'https://animeinweb.com/favicon.ico' },
-            mimetype: 'image/png',
+            jpegThumbnail: await conn.resize( Buffer.from(await (await fetch("https://files.catbox.moe/3a97sc.jpg")).arrayBuffer()), 100, 100),
+            mimetype: 'image/webp',
             fileName: 'ANIMEIN',
             caption: pageCaption,
             fileLength: '665666646645000',
@@ -230,7 +233,6 @@ let handler = async (m, { conn, text, command }) => {
         }, m);
     }
 
-    // ── DOWNLOAD ──
     if (sub === 'dl') {
         const [episodeId, quality] = args;
         if (!episodeId) return;
@@ -278,10 +280,10 @@ let handler = async (m, { conn, text, command }) => {
                         if (expectedSize + SAFETY_MARGIN > availableSpace) {
                             await m.react('❌');
                             return m.reply(
-                                `Ruang penyimpanan server tidak cukup.\n` +
-                                `Dibutuhkan: ${formatSize(expectedSize)}\n` +
-                                `Tersedia: ${formatSize(availableSpace)}\n\n` +
-                                `Hubungi admin server untuk membersihkan storage atau menambah kuota.`
+                                `Server storage is not enough.\n` +
+                                `Required: ${formatSize(expectedSize)}\n` +
+                                `Available: ${formatSize(availableSpace)}\n\n` +
+                                `Contact the server admin to clean up storage or increase the quota.`
                             );
                         }
                     }
