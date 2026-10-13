@@ -1,3 +1,18 @@
+<h3>13/October/2026</h3>
+<sub>
+
+```diff
+• Refactor font parsing logic by centralizing and enhancing font processing in canvas.js, removing legacy parsing code from brat.js
+• Add support for configuring external font sources in global configuration to enable custom rendering
+
+________________________
+
+* Edit "lib/config.js"
+* Edit "lib/scrapers/src/brat.js"
+* Edit "lib/utils/canvas.js"
+```
+</sub>
+
 <h3>12/October/2026</h3>
 <sub>
 
