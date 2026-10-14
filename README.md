@@ -8,7 +8,7 @@
 > Please read the [<code>LICENSE</code>](https://github.com/HirooSy/HIROBOT/blob/main/LICENSE) before using this project! You're free to recode it, but do not sell or claim this project as your own. <b>Do not change the License.</b> if you modify it, <b>please credit me in your License.</b>
 
 > [!NOTE]
-> High-performance WhatsApp bot with AI agent, VoIP calling capabilities, and a website feature. Built with Baileys and NodeJS v24+.
+> High-performance WhatsApp bot with AI agent, VoIP calling capabilities, and a website feature. Built with Baileys and NodeJS v18+.
 > 
 > ---
 > 
@@ -783,11 +783,11 @@ call(m.sender, media, "720p").silent()
     </tr>
     <tr>
       <td><b>NodeJS</b></td>
-      <td colspan="2">24 or higher <br> <code>pkg install nodejs</code></td>
+      <td colspan="2">>=18<br> <code>pkg install nodejs</code></td>
     </tr>
     <tr>
       <td><b>Python</b></td>
-      <td colspan="2">Python 3.10+ <br> <code>pkg install python</code></td>
+      <td colspan="2">3.10+ <br> <code>pkg install python</code></td>
     </tr>
     <tr>
       <td><b>FFMPEG</b></td>
