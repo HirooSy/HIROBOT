@@ -89,7 +89,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   }
 }
 
-handler.help = ['sticker', 's'].map(v => v + ` (caption|reply media|reply album|url) [name|author]`)
+handler.help = ['sticker', 's'].map(v => v + ` [name|author]`)
 handler.tags = ['sticker']
 handler.command = /^s(tic?ker)?(gif)?(wm)?$/i
 
