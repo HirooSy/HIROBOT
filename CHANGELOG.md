@@ -1,3 +1,17 @@
+<h3>15/October/2026</h3>
+<sub>
+
+```diff
+• Implement upload fallback from Savedly to local server in upload scraper
+• Update upload plugin to incorporate fallback mechanism and improved status handling
+
+________________________
+
+* Edit "lib/scrapers/src/upload.js"
+* Edit "plugins/tools/upload.js"
+```
+</sub>
+
 <h3>14/October/2026</h3>
 <sub>
 
