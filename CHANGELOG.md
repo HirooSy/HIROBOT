@@ -4,11 +4,15 @@
 ```diff
 • Implement upload fallback from Savedly to local server in upload scraper
 • Update upload plugin to incorporate fallback mechanism and improved status handling
+• Add Sticker.ly scraper for search and fetching sticker packs
+• Add Stickerly plugin to search and download sticker packs
 
 ________________________
 
 * Edit "lib/scrapers/src/upload.js"
 * Edit "plugins/tools/upload.js"
++ Add "lib/scrapers/src/stickerly.js"
++ Add "plugins/sticker/stickerly.js"
 ```
 </sub>
 
