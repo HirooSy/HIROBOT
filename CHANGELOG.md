@@ -6,8 +6,11 @@
 • Enhance GeminiGuest streaming with robust JSON parsing and improved error handling for quota/auth issues
 • Add image generation support via GeminiGuest and update scraper structures
 • Improve hot-reload efficiency by excluding scraper source directories and adding better watcher management
+• Refactor database engine with complex adapter system (MongoDB, SQL) and auto-compaction
+• Update bot startup and connection routines for stability
 ________________________
 
+* Edit "README.md"
 * Edit "lib/config.js"
 * Edit "lib/package/ai/mcp.js"
 * Edit "lib/package/ai/tools/media.js"
@@ -15,7 +18,11 @@ ________________________
 * Edit "lib/scrapers/index.js"
 * Edit "lib/scrapers/src/ai-image.js"
 * Edit "lib/start.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/database.js"
 * Edit "lib/utils/reload.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
 + Add "plugins/tools/stabilize.js"
 ```
 </sub>

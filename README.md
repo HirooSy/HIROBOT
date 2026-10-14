@@ -17,7 +17,7 @@
 > - [x] AI Agent Using Gemini.
 > - [x] Audio & Video Call.
 > - [x] Multi Sessions.
-> - [x] Database node:sqlite / Mongodb / MySql2.
+> - [x] Database native sql / Mongodb / MySql2.
 > - [x] Support AI Rich and Button Message.
 > - [x] Cloudflared Tunnel Website.
 > - [x] Lightweight & High-performance.
