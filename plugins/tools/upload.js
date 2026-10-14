@@ -12,7 +12,7 @@ let handler = async (m, { conn, command, usedPrefix }) => {
     const url = await upload(buffer, filename);
 
     const isLocal = global.opts?.server && url.startsWith(global.opts.server);
-    const status = isLocal ? 'Expired In 7 Days' : 'Never Expires';
+    const status = isLocal ? 'Expired In 7 Days' : '7 days with no views';
 
     await conn.sendButton(m.chat, {
         text: `${formatSize(buffer.length)} • ${status}`,
