@@ -1,3 +1,26 @@
+<h3>14/October/2026</h3>
+<sub>
+
+```diff
+• Refactor reload system to include syntax checking before restart and improved library debouncing
+• Enhance GeminiGuest streaming with robust JSON parsing and improved error handling for quota/auth issues
+• Add image generation support via GeminiGuest and update scraper structures
+• Improve hot-reload efficiency by excluding scraper source directories and adding better watcher management
+________________________
+
+* Edit "lib/config.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/tools/media.js"
+* Edit "lib/package/ai/tools/web.js"
+* Edit "lib/scrapers/index.js"
+* Edit "lib/scrapers/src/ai-image.js"
++ Add "lib/scrapers/src/ai_image.js"
+* Edit "lib/start.js"
+* Edit "lib/utils/reload.js"
++ Add "plugins/tools/stabilize.js"
+```
+</sub>
+
 <h3>13/October/2026</h3>
 <sub>
 
@@ -143,80 +166,5 @@ ________________________
 * Edit "plugins/owner/backup.js"
 * Edit "plugins/sticker/sticker.js"
 * Edit "plugins/tools/crm.js"
-```
-</sub>
-
-<h3>04/October/2026</h3>
-<sub>
-
-```diff
-• Major refactoring of VoIP engine and media handling to improve stability and performance in call sessions
-• Added screen sharing signaling and refined audio/video engine handling for better quality
-• Updated E621 scraper to adapt to API changes and maintain functionality
-• General stability and performance improvements across utility modules and plugins
-
-________________________
-
-* Edit "lib/package/voip/WaVoipCoordinator.js"
-* Edit "lib/package/voip/call/WaCallManager.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/call/call-state.js"
-* Edit "lib/package/voip/index.js"
-* Edit "lib/package/voip/media/WaAudioEngine.js"
-* Edit "lib/package/voip/media/WaVideoEngine.js"
-* Edit "lib/package/voip/media/audio-codec.js"
-* Edit "lib/package/voip/media/h264.js"
-* Edit "lib/package/voip/relay/WaManualRelay.js"
-* Edit "lib/package/voip/relay/dtls/handshake.js"
-* Edit "lib/package/voip/relay/sctp/association.js"
-* Edit "lib/package/voip/relay/sctp/wire.js"
-* Edit "lib/package/voip/relay/stun.js"
-* Edit "lib/package/voip/shim/baileys-resolve.js"
-* Edit "lib/package/voip/shim/core.js"
-* Edit "lib/package/voip/signaling/bridge.js"
-* Edit "lib/package/voip/signaling/signaling.js"
-* Edit "lib/package/voip/types.js"
-* Edit "lib/package/voip/voipClient.js"
-* Edit "lib/scrapers/src/e621.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/owner/backup.js"
-* Edit "plugins/owner/call.js"
-* Edit "plugins/tools/alightmotion.js"
-+ Add "lib/package/voip/app-data/"
-+ Add "lib/package/voip/media/audio-reorder.js"
-+ Add "lib/package/voip/media/mlow-codec.js"
-+ Add "lib/package/voip/protobuf.js"
-+ Add "lib/package/voip/signaling/screen-share.js"
-```
-</sub>
-
-<h3>28/September/2026</h3>
-<sub>
-
-```diff
-• Major refactoring and optimization of downloader plugins for E621, Pinterest, Reddit, and Spotify
-• Core utility maintenance including improvements to website server and simple helpers
-• Cleanup of legacy game and sticker plugins to reduce bot footprint
-• Update to main menu plugin for better navigation
-
-________________________
-
-* Edit "README.md"
-* Edit "lib/package/voip/relay/sctp/association.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/scrapers/src/e621.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/dl/pinterest.js"
-* Edit "plugins/dl/reddit.js"
-* Edit "plugins/dl/spotify.js"
-- Delete "plugins/game/dino.js"
-* Edit "plugins/main/menu.js"
-- Delete "plugins/sticker/premium.js"
-- Delete "plugins/sticker/smeta.js"
 ```
 </sub>
