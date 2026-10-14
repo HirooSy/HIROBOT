@@ -51,7 +51,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 }
 
 handler.help = ['stickerly <keyword/link>']
-handler.tags = ['dl']
+handler.tags = ['sticker']
 handler.command = /^(stickerly)$/i
 handler.ai = {
     risk: 'low',
