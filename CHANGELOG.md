@@ -14,7 +14,6 @@ ________________________
 * Edit "lib/package/ai/tools/web.js"
 * Edit "lib/scrapers/index.js"
 * Edit "lib/scrapers/src/ai-image.js"
-+ Add "lib/scrapers/src/ai_image.js"
 * Edit "lib/start.js"
 * Edit "lib/utils/reload.js"
 + Add "plugins/tools/stabilize.js"
