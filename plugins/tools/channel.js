@@ -299,7 +299,7 @@ let handler = async (m, ctx) => {
     return statusChannel(m, ctx)
 }
 
-handler.help = ['upch|upchannel <link> [question] (reply)', 'statsch|statschannel|statusch|statuschannel <link> [followers|admins|insights]']
+handler.help = ['upchannel', 'statuschannel'].map(v => v + " <url>")
 handler.tags = ['tools']
 handler.command = /^(upch(annel)?|statsch(annel)?|statusch(annel)?)$/i
 handler.owner = true

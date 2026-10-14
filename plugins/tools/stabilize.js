@@ -140,9 +140,9 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     }
 }
 
-handler.help = ['stabilize [low|normal|high|tripod|3-30]']
+handler.help = ['stabilize']
 handler.tags = ['tools']
-handler.command = /^(stabilize|stabilvid|stabilin|stabil|stabi|vidstab)$/i
+handler.command = /^(stabilize)$/i
 handler.limit = true
 
 export default handler
