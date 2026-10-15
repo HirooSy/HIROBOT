@@ -19,9 +19,7 @@ function parseSSEResponse(rawData) {
       try {
         const parsed = JSON.parse(trimmed.slice(6));
         if (parsed.content) fullText += parsed.content;
-      } catch {
-        // baris bukan JSON valid, abaikan
-      }
+      } catch { }
     }
   }
 
