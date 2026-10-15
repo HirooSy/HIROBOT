@@ -300,7 +300,7 @@ let handler = async (m, ctx) => {
 }
 
 handler.help = ['upchannel', 'statuschannel'].map(v => v + " <url>")
-handler.tags = ['tools']
+handler.tags = ['info']
 handler.command = /^(upch(annel)?|statsch(annel)?|statusch(annel)?)$/i
 handler.owner = true
 handler.ai = { risk: 'low', description: 'send a replied message (media, audio, poll, question) to a WhatsApp channel, or check channel stats (followers, views, reactions)' }

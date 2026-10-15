@@ -143,7 +143,7 @@ const defaultMenu = {
     }
 
     // ===========================[ ARRAY PLUGINS ]=================
-    const totalreg  = Object.keys(db.data.users).length
+    const totalreg  = Object.keys(db.data.users).filter(k => !k.startsWith('bf:')).length
     const rtotalreg = Object.values(db.data.users).filter(u => u.registered === true).length
     const help = Object.values(plugins)
       .filter(plugin => !plugin.disabled)
