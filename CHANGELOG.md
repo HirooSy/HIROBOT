@@ -2,6 +2,9 @@
 <sub>
 
 ```diff
+• Gate destructive AI file tools (write_file, delete_file, move_file) outside the project: owner-only, opt-in via settings.ai.allowOutsideWrites, explicit confirmation
+• Resolve symlinks with realpath before the containment check
+• Add node:test tests for the path guard
 • Implement upload fallback from Savedly to local server in upload scraper
 • Update upload plugin to incorporate fallback mechanism and improved status handling
 • Add Sticker.ly scraper for search and fetching sticker packs
@@ -9,6 +12,12 @@
 
 ________________________
 
++ Add "lib/package/ai/pathguard.js"
++ Add "test/pathguard.test.js"
+* Edit "lib/package/ai/tools/files.js"
+* Edit "lib/config.js"
+* Edit "package.json"
+* Edit "README.md"
 * Edit "lib/scrapers/src/upload.js"
 * Edit "plugins/tools/upload.js"
 + Add "lib/scrapers/src/stickerly.js"

@@ -6,7 +6,8 @@
     "type": "module",
     "license": "SEE LICENSE IN LICENSE",
     "scripts": {
-        "start": "node lib/start.js"
+        "start": "node lib/start.js",
+        "test": "node --test test/*.test.js"
     },
     "engines": {
         "node": ">=18.17.0"

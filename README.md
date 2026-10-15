@@ -67,6 +67,13 @@ HIROBOT
   <summary align=left><b>About AI Agent</b></summary>
 <p align=center>──────────────</p>
 
+<h4 align=center >AI Tool Security Model</h4>
+
+> The AI agent's file tools run with the bot process's own permissions (owner-level access).
+> - `read_file`, `list_files`, `search_files`, `send_as_file` and `send_codeblock` can access any path on the machine (e.g. phone storage on Termux).
+> - `write_file`, `delete_file` and `move_file` work freely inside the project folder. Outside it (symlinks are resolved with `realpath` first) they require the owner, `ai.allowOutsideWrites: true` in `lib/config.js` (or `AI_ALLOW_OUTSIDE_WRITES=true`), and explicit confirmation for each call.
+> - Run the bot as an unprivileged user, not root/Administrator.
+
 <h4 align=center >How AutoHeal Works?</h4>
 
 > ```mermaid
