@@ -2,6 +2,38 @@
 <sub>
 
 ```diff
+• Implement robust path resolution and security checks for AI file operations to prevent arbitrary access outside project root (https://github.com/HirooSy/HIROBOT/pull/6)
+• Refactor connection settings to enable history loading by default
+• Remove channel management plugin
+• Refactor tiered configuration settings to improve capacity tracking
+• Cleanup unused constants and refine error threshold logic in connection main.js
+• Refactor web server infrastructure and routes
+• Remove legacy creator plugin
+• Add new owner contact plugin
+
+________________________
+
+* Edit "lib/config.js"
+* Edit "lib/package/ai/tools/files.js"
+- Delete "plugins/tools/channel.js"
++ Add "plugins/main/channel.js"
+* Edit "lib/config.js"
+* Edit "lib/main.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/simple.js"
+- Delete "plugins/main/creator.js"
+* Edit "plugins/main/menu.js"
+* Edit "plugins/main/profile.js"
++ Add "plugins/main/owner.js"
+```
+</sub>
+
+<h3>15/October/2026</h3>
+<sub>
+
+```diff
 • Implement upload fallback from Savedly to local server in upload scraper
 • Update upload plugin to incorporate fallback mechanism and improved status handling
 • Add Sticker.ly scraper for search and fetching sticker packs

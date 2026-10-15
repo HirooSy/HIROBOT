@@ -20,7 +20,6 @@ const ICON = {
 };
 
 const SIZE = 714;
-const CARD_H = Math.round(SIZE * 7 / 12);
 
 const getAvatar = async (url) => {
     if (!url || typeof url !== 'string') return null;
@@ -47,7 +46,7 @@ const buildHtml = ({ name, avatar, badges }) => {
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:${SIZE}px;height:${SIZE}px;background:#0d0e14;font-family:Poppins,Inter,'DejaVu Sans',sans-serif}
 .wrap{width:${SIZE}px;height:${SIZE}px;display:flex;align-items:center;background:#0d0e14}
-.card{width:${SIZE}px;height:${CARD_H}px;display:flex;overflow:hidden;background:#0d0e14}
+.card{width:${SIZE}px;height:${Math.round(SIZE * 7 / 12)}px;display:flex;overflow:hidden;background:#0d0e14}
 .photo{width:280px;height:100%;flex:none;background:#1b1d2b}
 .panel{flex:1;height:100%;padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#171923 0%,#0d0e14 70%)}
 .name{width:100%;text-align:center;font-weight:700;font-size:${size}px;letter-spacing:2px;color:#fff;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -65,8 +64,8 @@ let handler = async (m, { conn, isPrems, isOwner }) => {
 
     let limit = isOwner || isPrems ? '♾ ' + user.limit : user.limit;
     let tier = global.settings.tier;
-    let requiredExp = tier.exp_required[user.level + 1] || user.exp;
-    let tierUp = user.level >= tier.name.length + 1 ? 'MAX !' : user.exp > requiredExp ? 'UPGRADE !' : `${toSimple(user.exp)} / ${toSimple(requiredExp)}`;
+    let requiredExp = tier[user.level + 1]?.expRequired || user.exp;
+    let tierUp = user.level >= Object.keys(tier).length + 1 ? 'MAX !' : user.exp > requiredExp ? 'UPGRADE !' : `${toSimple(user.exp)} / ${toSimple(requiredExp)}`;
 
     let badges = [];
     if (isOwner || user.badge?.developer) badges.push('dev');
@@ -81,7 +80,7 @@ let handler = async (m, { conn, isPrems, isOwner }) => {
 - \`Status :\` ${isOwner ? 'Owner' : isPrems ? 'Premium User' : 'User'}
 - \`Registered :\` ${user.registered}
 - \`Device :\` ${getDevice(m.id)}
-- \`Tier :\` ${tier.name[user.level]}
+- \`Tier :\` ${tier[user.level]?.name}
 - \`Exp :\` ${tierUp}
 - \`Gem :\` ${toSimple(user.gems || 0)}
 - \`Limit :\` ${limit}`;
