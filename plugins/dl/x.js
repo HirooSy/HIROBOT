@@ -81,6 +81,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             url: input,
             caption: twitterData.description,
             allLinks: videoUrls.map(v => v.link),
+            allTypes: videoUrls.map(v => v.type),
             isGif: twitterData.type === 'gif',
             timeout: setTimeout(() => delete conn.twitter[m.sender], 160000)
         };
@@ -95,7 +96,7 @@ handler.before = async (m, { conn }) => {
     conn.twitter = conn.twitter || {};
     if (!(m.sender in conn.twitter)) return;
 
-    const { caption, allLinks, timeout, isGif } = conn.twitter[m.sender];
+    const { caption, allLinks, allTypes, timeout, isGif } = conn.twitter[m.sender];
     const input = m.text.match(/\d+/g);
     if (!input) return;
 
@@ -116,7 +117,8 @@ handler.before = async (m, { conn }) => {
                     if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
                 }
             } else {
-                const ext = i.includes('.mp3') ? 'mp3' : (i.includes('.jpg') || i.includes('.jpeg')) ? 'jpg' : 'mp4';
+                const byType = { MP3: 'mp3', JPG: 'jpg', MP4: 'mp4' }[allTypes?.[index]];
+                const ext = byType || (i.includes('.mp3') ? 'mp3' : (i.includes('.jpg') || i.includes('.jpeg')) ? 'jpg' : 'mp4');
                 if (ext === 'mp3') {
                     await conn.sendMessage(m.chat, { audio: { url: i }, mimetype: 'audio/mpeg', caption: `` }, { quoted: m });
                 } else if (ext === 'jpg') {
