@@ -19,7 +19,7 @@ let handler = async (m, { conn, text, usedPrefix }) => {
 			}
 
 	 await conn.groupParticipantsUpdate(m.chat, [user], 'promote')
- 	conn.reply(m.chat, `Berhasil menjadi sebagai admin group @${number}`, null)
+ 	conn.reply(m.chat, `Successfully promoted @${number} to group admin`, null)
 
 }
 handler.help = ['promote <@user>']

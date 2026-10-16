@@ -221,7 +221,7 @@ const contentType = msg =>
 	Object.keys(msg || {}).find(k => k !== 'messageContextInfo' && msg[k] != null)
 
 let handler = async (m, { conn }) => {
-	if (!m.quoted) throw 'Reply pesan yang mau diambil kodenya.\nContoh: reply pesan button lalu ketik *.crm*'
+	if (!m.quoted) throw 'Reply to the message whose code you want to get.\nExample: reply to a button message, then type *.crm*'
 
 	const qid = m.quoted.id
 	let message = cache.get(qid)
@@ -237,7 +237,7 @@ let handler = async (m, { conn }) => {
 		if (t && !(t === 'conversation' && !raw.conversation)) message = raw
 	}
 
-	if (!message) throw 'Isi pesan tidak ketemu. Pesan ini dikirim lewat relayMessage sebelum crm aktif, kirim ulang pesannya lalu coba lagi.'
+	if (!message) throw 'Message content not found. This message was sent via relayMessage before crm was active, so resend it and try again.'
 
 	const children = message.albumMessage
 		? conn.loadAlbum(m.chat, qid)

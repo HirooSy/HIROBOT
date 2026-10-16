@@ -6,7 +6,7 @@ const handler = async (m, { conn, text }) => {
 	}
 
 	if (!text) {
-		return m.reply('Masukkan teks pengganti.');
+		return m.reply('Enter the replacement text.');
 	}
 
 	const stanzaId = m.quoted.id; 

@@ -28,7 +28,7 @@ ${usedPrefix + command} demote @user`)
             act = 'demote'
             break
         default:
-            throw new Error(`Event "${event}" tidak dikenali`)
+            throw new Error(`Event "${event}" is not recognized`)
     }
     if (act) return conn.participantsUpdate({
         id: m.chat,

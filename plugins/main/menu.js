@@ -17,10 +17,10 @@ const defaultMenu = {
   if (!arrayTags.includes(teks)) teks = '404'
 
   const tagMap = {
-    all:        { main: 'Main', group: 'Grup', internet: 'Internet', adult:'Adult', downloader: 'Downloader', database: 'Database', sticker: 'Stiker', tools: 'Tools', subbot:'Sub-bot', ai: 'Artificial Intelligence', owner: 'Owner', info: 'Info' },
+    all:        { main: 'Main', group: 'Group', internet: 'Internet', adult:'Adult', downloader: 'Downloader', database: 'Database', sticker: 'Sticker', tools: 'Tools', subbot:'Sub-bot', ai: 'Artificial Intelligence', owner: 'Owner', info: 'Info' },
     main:       { main: 'Main' },
     ai:         { ai: 'Artificial Intelligence' },
-    sticker:    { sticker: 'Stiker' },
+    sticker:    { sticker: 'Sticker' },
     group:      { group: 'Group', admin: `Admin ${global.opts['restrict'] ? '' : '(Disabled)'}` },
     adult:      { adult: 'Adult' },
     subbot:    { subbot: 'Sub-bot' },
@@ -36,7 +36,7 @@ const defaultMenu = {
   try {
 
     // ===========================[ DATA ]===========================
-    const mode      = global.opts['self'] ? 'Private' : 'Publik'
+    const mode      = global.opts['self'] ? 'Private' : 'Public'
     const _package  = JSON.parse(await promises.readFile(join(process.cwd() + '/package.json')).catch(_ => '{}')) || {}
     const { level, age, exp, limit, registered, money } = db.data.users[m.sender]
     const name      = db.data.users[m.sender].name
@@ -52,7 +52,7 @@ const defaultMenu = {
         message: {
           contactMessage: {
             displayName: name,
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${name}\nitem1.TEL;waid=${m.sender.split('@')[0]}:${m.sender.split('@')[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`,
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${name}\nitem1.TEL;waid=${m.sender.split('@')[0]}:${m.sender.split('@')[0]}\nitem1.X-ABLabel:Mobile\nEND:VCARD`,
           },
         },
       },

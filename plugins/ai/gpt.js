@@ -72,7 +72,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
   if (!text) {
     return conn.reply(
       m.chat,
-      `*GPT-5 (Hotbot)*\n\n▸ ${usedPrefix + command} <pertanyaan>\n▸ ${usedPrefix + command} reset`,
+      `*GPT-5 (Hotbot)*\n\n▸ ${usedPrefix + command} <question>\n▸ ${usedPrefix + command} reset`,
       m
     );
   }

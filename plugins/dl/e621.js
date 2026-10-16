@@ -19,7 +19,7 @@ function getTmpDir() {
         fs.accessSync(TMP_DIR, fs.constants.W_OK);
         return TMP_DIR;
     } catch (e) {
-        console.error('[e621] Gagal buat folder tmp:', e);
+        console.error('[e621] Failed to create tmp folder:', e);
         return './tmp';
     }
 }
@@ -503,10 +503,10 @@ async function sendGallery(conn, m, { type, keywords, poolId, label, posts, page
                 .addHtml(html)
                 .send(m.chat, { quoted: m });
         } catch (err) {
-            await m.reply(`Preview gagal dikirim: ${err.message || err}`);
+            await m.reply(`Failed to send preview: ${err.message || err}`);
         }
         if (okCount === 0) {
-            await m.reply(`Preview gambar gagal di-download (0/${posts.length}). ${previews.failures[0] || ''}`.trim());
+            await m.reply(`Failed to download preview images (0/${posts.length}). ${previews.failures[0] || ''}`.trim());
         }
 
         await conn.sendButton(m.chat, {

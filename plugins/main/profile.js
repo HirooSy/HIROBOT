@@ -60,7 +60,7 @@ html,body{width:${SIZE}px;height:${SIZE}px;background:#0d0e14;font-family:Poppin
 
 let handler = async (m, { conn, isPrems, isOwner }) => {
     let user = db.data.users[m.sender];
-    if (!user) return m.reply('Profil tidak ditemukan.');
+    if (!user) return m.reply('Profile not found.');
 
     let limit = isOwner || isPrems ? '♾ ' + user.limit : user.limit;
     let tier = global.settings.tier;

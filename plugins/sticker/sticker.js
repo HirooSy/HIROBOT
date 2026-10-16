@@ -54,9 +54,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         if (i < totalPacks - 1) await new Promise(resolve => setTimeout(resolve, 1000))
       }
     } else if (/webp|image|video/g.test(mime)) {
-      if (/video/g.test(mime)) if ((q.msg || q).seconds > 11) return m.reply('Maksimal 10 detik!')
+      if (/video/g.test(mime)) if ((q.msg || q).seconds > 11) return m.reply('Maximum 10 seconds!')
       let img = await q.download?.()
-      if (!img) throw `> Reply or caption image/video/stiker`
+      if (!img) throw `> Reply or caption image/video/sticker`
       try {
         await conn.sendSticker(m.chat, img, { packname: scap.name, author: scap.author }, m)
         sent = true
@@ -80,7 +80,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
       await conn.sendSticker(m.chat, false, { packname: scap.name, author: scap.author, url: out }, m)
       sent = true
     } else if (args[0] && !args[0].includes('|')) {
-      return m.reply('> URL tidak valid!')
+      return m.reply('> Invalid URL!')
     }
   } catch (e) {
     console.error(e)

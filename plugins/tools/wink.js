@@ -8,7 +8,7 @@ const HEADERS = {
 }
 
 export async function enhance(imageInput) {
-  if (!imageInput) throw new Error('Input gambar wajib diisi (URL atau path file lokal).')
+  if (!imageInput) throw new Error('Image input is required (URL or local file path).')
 
   let buf = null
   if (typeof imageInput === 'string' && imageInput.startsWith('http')) {
@@ -19,7 +19,7 @@ export async function enhance(imageInput) {
     buf = imageInput
   }
   if (!buf) {
-    throw new Error('Gagal membaca file/URL gambar.')
+    throw new Error('Failed to read image file/URL.')
   }
 
   const policyRes = await axios.get('https://strategy.app.meitudata.com/upload/policy?app=xiuxiu-pro&count=1&suffix=jpeg&type=ai_quality', {
@@ -28,7 +28,7 @@ export async function enhance(imageInput) {
   })
 
   const qiniu = policyRes.data?.[0]?.qiniu
-  if (!qiniu?.token) throw new Error('Gagal mendapatkan token upload.')
+  if (!qiniu?.token) throw new Error('Failed to get upload token.')
 
   const form = new FormData()
   form.append('token', qiniu.token)
@@ -38,7 +38,7 @@ export async function enhance(imageInput) {
   const upRes = await fetch('https://up-qagw.meitudata.com/', { method: 'POST', body: form })
   const upData = await upRes.json()
   const cloudUrl = upData?.data
-  if (!cloudUrl) throw new Error('Gagal upload gambar ke cloud Meitu.')
+  if (!cloudUrl) throw new Error('Failed to upload image to Meitu cloud.')
 
   const gid = '1a08f8' + crypto.randomBytes(6).toString('hex')
   const taskRes = await axios.post(`https://webapi.designkit.cn/v3/mtlab/image_restoration_async?gid=${gid}`, {
@@ -58,7 +58,7 @@ export async function enhance(imageInput) {
   })
 
   const msgId = taskRes.data?.data?.msg_id || taskRes.data?.msg_id
-  if (!msgId) throw new Error('Gagal membuat tugas AI.')
+  if (!msgId) throw new Error('Failed to create AI task.')
 
   let resultInfo = null
   for (let i = 0; i < 30; i++) {

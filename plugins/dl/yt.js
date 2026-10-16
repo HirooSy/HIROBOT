@@ -5,7 +5,7 @@ const { ytdl } = global.scraper.ytdl
 
 let handler = async(m, { conn, usedPrefix, text, args, command }) => {
 let chat = db.data.chats[m.chat]
-let fkon = { key: { fromMe: false, participant: m.sender, ...(m.chat ? { remoteJid: '16504228206@s.whatsapp.net' } : {}) }, message: { contactMessage: { displayName: `${await conn.getName(m.sender)}`, vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${await conn.getName(m.sender)}\nitem1.TEL;waid=6283143393763:6283143393763\nitem1.X-ABLabel:Ponsel\nEND:VCARD`}}}
+let fkon = { key: { fromMe: false, participant: m.sender, ...(m.chat ? { remoteJid: '16504228206@s.whatsapp.net' } : {}) }, message: { contactMessage: { displayName: `${await conn.getName(m.sender)}`, vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${await conn.getName(m.sender)}\nitem1.TEL;waid=6283143393763:6283143393763\nitem1.X-ABLabel:Mobile\nEND:VCARD`}}}
 
 /*Play*/
 if (command == "play") {
@@ -44,7 +44,7 @@ if (command == "play") {
 //--------------------- AUDIO AND VIDEO --------------
 if (/^yt(a|v|audio|video|mp4|mp3)$/i.test(command)) {
        let links = isLink(text);
-       if (!text || !links) return m.reply(`*How To Use:* \`${usedPrefix + command} <your_link>\`\n\nContoh: \`${usedPrefix + command} https://youtube.com/watch?v=xxxx\``)
+       if (!text || !links) return m.reply(`*How To Use:* \`${usedPrefix + command} <your_link>\`\n\nExample: \`${usedPrefix + command} https://youtube.com/watch?v=xxxx\``)
        var isAudio = /yt(a|audio|mp3)/.test(command)
        try {
          var data = await ytdl((isAudio ? "audio" : "video"), links[0]);
@@ -64,7 +64,7 @@ if (/^yt(s|search)$/i.test(command)) {
     var data = s.all.filter(v => v.type == 'video').slice(0, 10)
     var res = data.map((v, i) => {
         return `> [ ${i + 1} ] ${v.title}\n- *Author:* ${v.author.name}\n- *Publish:* ${v.ago}\n- *Duration:* ${v.timestamp}\n- *Views:* ${(parseInt(v.views)).toSimpleNumber()}\n- ${(v.url).replace("https://", '')}`}).join("\n\n")
-        conn.reply(m.chat, res, { key: { fromMe: false, participant: m.sender, ...(m.chat ? { remoteJid: '16504228206@s.whatsapp.net' } : {}) }, message: { contactMessage: { displayName: `YOUTUBE SEARCH`, vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${await conn.getName(m.sender)}\nitem1.TEL;waid=6283143393763:6283143393763\nitem1.X-ABLabel:Ponsel\nEND:VCARD`}}})
+        conn.reply(m.chat, res, { key: { fromMe: false, participant: m.sender, ...(m.chat ? { remoteJid: '16504228206@s.whatsapp.net' } : {}) }, message: { contactMessage: { displayName: `YOUTUBE SEARCH`, vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${await conn.getName(m.sender)}\nitem1.TEL;waid=6283143393763:6283143393763\nitem1.X-ABLabel:Mobile\nEND:VCARD`}}})
     }
 
 }
