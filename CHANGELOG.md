@@ -1,3 +1,34 @@
+<h3>16/October/2026</h3>
+<sub>
+
+```diff
+• Fix Native SQL bloated issue (please update baileys version)
+• Fix Gemini guest's (keyless version) tool vision to video/audio
+• Add auto update baileys version in main.js
+• Some minor changes 
+• Add ability to AI to react facebook contents
+________________________
+
+* Edit lib/main.js
+* Edit lib/package/ai/mcp.js
+* Edit lib/package/ai/prompt.txt
+* Edit lib/package/ai/tools/files.js
+* Edit lib/package/ai/tools/group.js
+* Edit lib/package/ai/tools/media.js
+* Edit lib/package/ai/tools/messaging.js
+* Edit lib/package/ai/tools/plugin.js
+* Edit lib/package/ai/tools/reminder.js
+* Edit lib/package/ai/tools/system.js
+* Edit lib/package/ai/tools/web.js
+* Edit lib/scrapers/src/x.js
+* Edit lib/scrapers/src/ytdl.js
+* Edit lib/utils/database.js
+* Edit plugins/ai/aicheck.js
+* Edit plugins/ai/notrack.js
+* Edit plugins/dl/x.js
+```
+</sub>
+
 <h3>15/October/2026</h3>
 <sub>
 
@@ -181,46 +212,5 @@ ________________________
 * Edit "lib/scrapers/src/ai-image.js"
 * Edit "lib/utils/connection.js"
 * Edit "plugins/subbot/connect.js"
-```
-</sub>
-
-<h3>07/October/2026</h3>
-<sub>
-
-```diff
-• Complete migration of AI Agent tool definitions, prompt guidance, and chat log parsing structures to English for global standardization
-• Implement robust multi-key API rotation, classification of Gemini failures (transient, auth, rate limit/quota, fatal), and automatic retry backoffs with dynamic sleep delays
-• Add new modular tools: 'convert_file' (supporting LibreOffice, ffmpeg, and Pandoc conversions), 'create_zip'/'extract_zip' (with recursive directory skipping and temporary storage management), and 'html_design'/'html_preview' (enabling live interactive web sandbox rendering directly in chat)
-• Enhance in-memory message store with 'loadAlbum' functionality and retain parent-sibling 'messageContextInfo' associations during message ingest
-• Refactor Code-to-Message (CRM) utility to automatically detect and reconstruct message albums via 'loadAlbum' and extract base64 data URIs from message strings
-• Add support for custom sticker styling (splitting names and authors with '|') in the sticker creation command
-• Optimize system shutdown routines to cleanly persist message store files on signal execution
-• Introduce AI-only output marking mechanism (`AI_ONLY_MARKER`) in MCP to reliably strip raw metadata and format internal plugin executions cleanly for users
-• Refactor plugin execution responses to wrap raw command outputs within specific parsing boundaries (`PLUGIN_OUT_START` and `PLUGIN_OUT_END`)
-
-________________________
-
-+ Add "lib/package/ai/tools/convert.js"
-+ Add "lib/package/ai/tools/html.js"
-* Edit "lib/main.js"
-* Edit "lib/package/ai/chatlog.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/ai/prompt.txt"
-* Edit "lib/package/ai/tools/database.js"
-* Edit "lib/package/ai/tools/files.js"
-* Edit "lib/package/ai/tools/group.js"
-* Edit "lib/package/ai/tools/media.js"
-* Edit "lib/package/ai/tools/memory.js"
-* Edit "lib/package/ai/tools/messaging.js"
-* Edit "lib/package/ai/tools/plugin.js"
-* Edit "lib/package/ai/tools/readchat.js"
-* Edit "lib/package/ai/tools/reminder.js"
-* Edit "lib/package/ai/tools/system.js"
-* Edit "lib/package/ai/tools/web.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/simple.js"
-* Edit "plugins/owner/backup.js"
-* Edit "plugins/sticker/sticker.js"
-* Edit "plugins/tools/crm.js"
 ```
 </sub>

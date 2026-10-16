@@ -25,7 +25,7 @@ function formatResult(data) {
 
 const handler = async (m, { conn, text, usedPrefix, command }) => {
   if (!text) {
-    return conn.reply(m.chat, `Masukkan teks.\nContoh: ${usedPrefix + command} teks kamu`, m);
+    return conn.reply(m.chat, `Enter some text.\nExample: ${usedPrefix + command} your text`, m);
   }
 
   try {

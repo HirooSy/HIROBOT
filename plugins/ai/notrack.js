@@ -65,7 +65,7 @@ export async function notrackChat({
               fullAnswer = evt.content;
             } else if (evt.type === 'error') {
               hasError = true;
-              reject(new Error(evt.content || 'Terjadi kesalahan dari NoTrack AI'));
+              reject(new Error(evt.content || 'An error occurred from NoTrack AI'));
             }
           } catch (e) {
           }
@@ -83,7 +83,7 @@ export async function notrackChat({
   });
 
   if (!fullAnswer.trim()) {
-    throw new Error('NoTrack AI tidak memberikan respon jawaban');
+    throw new Error('NoTrack AI did not return a response');
   }
 
   return {
