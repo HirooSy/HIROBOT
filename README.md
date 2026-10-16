@@ -1,7 +1,9 @@
 <div align=center>
 <a href="#"><img src="https://files.catbox.moe/tl36qw.png"/></a> 
 
-  <a href="https://github.com/whiskeysockets/baileys"><img height="22" src="https://img.shields.io/badge/Baileys-000000?style=for-the-badge&logo=whatsapp&logoColor=green"/></a><a href="#"><img height="22" src="https://img.shields.io/badge/NodeJS-000000.svg?&style=for-the-badge&logo=node.js&logoColor=green"/></a><a href="https://gemini.google.com"><img height="22" src="https://img.shields.io/badge/Gemini-000000?style=for-the-badge&logo=googlegemini&logoColor=blue"/></a><a href="https://cloudflare.com"><img height="22" src="https://img.shields.io/badge/Cloudflare-000000?style=for-the-badge&logo=Cloudflare&logoColor=orange"/></a>
+  <a href="https://ko-fi.com/hiroosy"><img src="https://img.shields.io/badge/Sponsor-000000?style=for-the-badge&logo=githubsponsors"/></a>
+  <a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img src="https://img.shields.io/badge/Change_log-000000.svg?&style=for-the-badge&logo=lmstudio&logoColor=white"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/NodeJS_%3E%3D18-000000.svg?&style=for-the-badge&logo=node.js&labelColor=000000&logoColor=green"/></a>
 </div>
 
 > [!IMPORTANT]
@@ -57,10 +59,7 @@ HIROBOT
 </sub>
 
   </td>
-</table>
-
-<div align=center><a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img height="20" src="https://img.shields.io/badge/Change_log-006600.svg?&style=for-the-badge&logo=files&logoColor=white"/></a>
-  <a href="https://github.com/HirooSy/HIROBOT/discussions"><img height="20" src="https://img.shields.io/badge/Discussion-ffffff.svg?&style=for-the-badge&logo=livechat&logoColor=black"/></a></div><br>
+</table><br>
 
 
 <details> 
