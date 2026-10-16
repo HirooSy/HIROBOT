@@ -17,7 +17,7 @@
     },
     "dependencies": {
         "axios": "^1.20.0",
-        "baileys": "github:hiroosy/baileys-lite",
+        "baileys": "npm:@hiroosy/baileys-lite@^0.3.2",
         "cheerio": "1.0.0"
     },
     "allowScripts": {
