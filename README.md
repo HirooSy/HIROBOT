@@ -778,15 +778,15 @@ call(m.sender, media, "720p").silent()
     <tr>
       <td rowspan="4"><b>REQUIREMENT</b></td>
       <td><b>Server</b></td>
-      <td colspan="2">100% CPU Limit, 700MB RAM, 1GB Storage<br> <code>-</code></td>
+      <td colspan="2">100% CPU Limit, 500MB RAM, and 1GB Storage<br> <code>-</code></td>
     </tr>
     <tr>
       <td><b>NodeJS</b></td>
       <td colspan="2">>=18<br> <code>pkg install nodejs</code></td>
     </tr>
     <tr>
-      <td><b>Python</b></td>
-      <td colspan="2">3.10+ <br> <code>pkg install python</code></td>
+      <td><b>Python</b> <i><sub>(Optional)</sub></i></td>
+      <td colspan="2">>=3.10 <br> <code>pkg install python</code></td>
     </tr>
     <tr>
       <td><b>FFMPEG</b></td>
