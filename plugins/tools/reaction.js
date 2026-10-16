@@ -7,11 +7,11 @@ const handler = async (m, { args }) => {
   const [link, emoji] = args
 
   if (!link || !emoji) {
-    return m.reply("Penggunaan: .react <link> <emoji>")
+    return m.reply("Usage: .react <link> <emoji>")
   }
 
   try {
-    m.reply("Sedang memproses reaksi...")
+    m.reply("Processing reaction...")
     const res = await axios.post(`${BASE_URL}/react`, {
       link,
       emoji
@@ -24,9 +24,9 @@ const handler = async (m, { args }) => {
     })
 
     if (res.status === 200) {
-      m.reply(`Berhasil! Reaksi ${emoji} telah dikirim ke ${link}.`)
+      m.reply(`Success! Reaction ${emoji} has been sent to ${link}.`)
     } else {
-      m.reply(`Gagal: ${JSON.stringify(res.data)}`)
+      m.reply(`Failed: ${JSON.stringify(res.data)}`)
     }
   } catch (error) {
     m.reply(`Error: ${error.message}`)

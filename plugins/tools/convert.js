@@ -11,20 +11,20 @@ let handler = async (m, { conn, usedPrefix, command }) => {
         if (!/sticker/.test(mime)) throw notStickerMessage
         let media = await q.download()
         let url = await webp2png(media).catch(_ => null)
-        if (!url) throw 'Gagal mengonversi stiker ke gambar'
+        if (!url) throw 'Failed to convert sticker to image'
         let out = Buffer.from(await (await fetch(url)).arrayBuffer())
         await conn.sendFile(m.chat, out, 'out.png', null, m)
     }
 
     if (command == "tovideo") {
-        if (!m.quoted) throw `Balas stiker/audio yang ingin diubah menjadi video dengan perintah ${usedPrefix + command}`
+        if (!m.quoted) throw `Reply to a sticker/audio you want to convert to video with the command ${usedPrefix + command}`
         let mime = m.quoted.mimetype || ''
-        if (!/webp|audio/.test(mime)) throw `Balas stiker/audio yang ingin diubah menjadi video dengan perintah ${usedPrefix + command}`
+        if (!/webp|audio/.test(mime)) throw `Reply to a sticker/audio you want to convert to video with the command ${usedPrefix + command}`
         let media = await m.quoted.download()
         let out = Buffer.alloc(0)
         if (/webp/.test(mime)) {
             let url = await webp2mp4(media).catch(_ => null)
-            if (!url) throw 'Gagal mengonversi stiker ke video'
+            if (!url) throw 'Failed to convert sticker to video'
             out = Buffer.from(await (await fetch(url)).arrayBuffer())
         } else if (/audio/.test(mime)) {
             out = await ffmpeg(media, [

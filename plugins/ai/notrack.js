@@ -114,7 +114,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
   if (!text) {
     return conn.reply(
       m.chat,
-      `*NoTrack AI*\n\n▸ ${usedPrefix + command} <pertanyaan>\n▸ ${usedPrefix + command} reset`,
+      `*NoTrack AI*\n\n▸ ${usedPrefix + command} <question>\n▸ ${usedPrefix + command} reset`,
       m
     );
   }

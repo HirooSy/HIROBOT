@@ -327,7 +327,7 @@ let handler = async (m, { conn }) => {
         await m.react("🟢")
 
     } catch (e) {
-        await m.reply(`❌ Speedtest gagal:\n${e.message}`)
+        await m.reply(`❌ Speedtest failed:\n${e.message}`)
         await m.react("🔴")
     }
 }

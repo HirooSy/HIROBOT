@@ -2,13 +2,13 @@ let handler = async (m, { conn, usedPrefix: _p,command, text }) => {
 let chat = db.data.chats[m.chat]
     if (/setwelcome/i.test(command)) {
     	if (!text) return m.reply(`
-> Contoh Penggunaan: ${_p + command} <text & options>
+> Usage example: ${_p + command} <text & options>
 > *Options :*
   - @user
   - @subject
   - @decription
 
-> *Contoh Text :*
+> *Text example:*
    Welcome To @subject, @user!`)
         m.reply('successfully applied as welcome')
         chat.sWelcome = text
@@ -16,13 +16,13 @@ let chat = db.data.chats[m.chat]
 
     if (/setbye/i.test(command)) {
        if (!text) return m.reply(`
-> Contoh Penggunaan: ${_p + command} <text & options>
+> Usage example: ${_p + command} <text & options>
 > *Options :*
   - @user
   - @subject
   - @decription
 
-> *Contoh Text :*
+> *Text example:*
    Bye @user!`)
          m.reply('successfully applied as bye')
          chat.sBye = text }

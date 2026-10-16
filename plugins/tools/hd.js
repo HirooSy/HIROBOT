@@ -113,13 +113,13 @@ async function runUpscale(uploadedPath, api_name) {
     }
   }
 
-  if (!completedEvent) throw new Error('Tidak menerima hasil dari server (timeout/SSE terputus)')
-  if (!completedEvent.success) throw new Error('Server gagal memproses gambar')
+  if (!completedEvent) throw new Error('No result received from server (timeout/SSE disconnected)')
+  if (!completedEvent.success) throw new Error('Server failed to process the image')
 
   // outputs: [8, 9] -> ambil komponen pertama (preview gambar)
   const outputData = completedEvent.output?.data
   if (!outputData || !outputData[0]) {
-    throw new Error('Format hasil tidak sesuai ekspektasi')
+    throw new Error('Result format is not as expected')
   }
 
   const fileData = outputData[0]

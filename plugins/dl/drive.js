@@ -24,7 +24,7 @@ async function gdrive(url) {
     const { id, type } = extracted;
 
     if (type === 'docs_video') {
-        return { status: false, error: 'Video yang diupload ke Google Docs/Slides tidak dapat didownload — Google memerlukan login untuk mengaksesnya. Coba minta pengirim upload ulang ke Google Drive biasa.' };
+        return { status: false, error: 'Videos uploaded to Google Docs/Slides cannot be downloaded — Google requires a login to access them. Ask the sender to upload it again to regular Google Drive.' };
     }
 
     try {
@@ -62,15 +62,15 @@ async function gdrive(url) {
 }
 
 let handler = async (m, { conn, args, usedPrefix: prefix, command }) => {
-    if (!args[0]) return m.reply(`Mana URL-nya?\n${prefix + command} https://drive.google.com/...`);
+    if (!args[0]) return m.reply(`Please provide a URL.\n${prefix + command} https://drive.google.com/...`);
 
     const url = args[0].trim();
-    if (!isGdriveUrl(url)) return m.reply('> URL tidak valid, pastikan dari drive.google.com atau docs.google.com');
+    if (!isGdriveUrl(url)) return m.reply('> Invalid URL, make sure it is from drive.google.com or docs.google.com');
 
     await m.react('⬇️');
 
     const result = await gdrive(url);
-    if (!result.status) return m.reply(`> *Gagal:* ${result.error}`);
+    if (!result.status) return m.reply(`> *Failed:* ${result.error}`);
 
     const { fileName, fileSize, mimetype, downloadUrl } = result;
 
@@ -101,7 +101,7 @@ let handler = async (m, { conn, args, usedPrefix: prefix, command }) => {
         }
         await m.react('✅');
     } catch (err) {
-        await m.reply(`> *Gagal kirim file:* ${err.message}`);
+        await m.reply(`> *Failed to send file:* ${err.message}`);
     }
 };
 

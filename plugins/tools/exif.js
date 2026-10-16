@@ -23,7 +23,7 @@ let handler = async (m) => {
     if (/sticker/.test(m.quoted.mtype)) {
         const buffer = await m.quoted.download()
         const exif = readWebpExifChunk(buffer)
-        if (!exif) return m.reply('Sticker ini tidak memiliki EXIF data.')
+        if (!exif) return m.reply('This sticker has no EXIF data.')
 
         // A raw '{' byte (0x7b) can appear inside the binary TIFF header by
         // coincidence, so try every occurrence and keep the first one that
@@ -41,7 +41,7 @@ let handler = async (m) => {
             }
         }
 
-        if (!parsed) return m.reply('EXIF data ditemukan, tapi tidak berisi JSON yang valid.')
+        if (!parsed) return m.reply('EXIF data found, but it does not contain valid JSON.')
         m.reply(format(parsed))
     }
 }

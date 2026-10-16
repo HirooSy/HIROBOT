@@ -112,7 +112,7 @@ async function sendMagicLink(email) {
 
 async function verifyLink(email, rawLink) {
     const c = extractCode(rawLink)
-    if (!c) return { ok: false, why: 'oobCode tidak ditemukan di link' }
+    if (!c) return { ok: false, why: 'oobCode not found in link' }
     try {
         const a = await makeClient(H1).post(
             `${IDT}/emailLinkSignin?key=${KEY}`,

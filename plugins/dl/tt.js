@@ -17,7 +17,7 @@ let handler = async (m, { conn, args, command }) => {
                 for (const img of data.images) conn.sendFile(m.chat, img, 'tiktok.png', null, null)
             } else {
                 const videoUrl = data.play || data.hdplay || data.wmplay;
-                if (!videoUrl) throw new Error('Tidak ada URL video dari tikwm untuk link ini');
+                if (!videoUrl) throw new Error('No video URL from tikwm for this link');
                 const boostedBuffer = await tiktokBoostVolume(videoUrl);
                 await conn.sendFile(m.chat, boostedBuffer, 'tiktok.mp4', caption, m)
             }

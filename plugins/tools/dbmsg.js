@@ -6,9 +6,9 @@ let handler = async (m, { conn, command, usedPrefix, text }) => {
 			    let M = proto.WebMessageInfo
 			    let which = command.replace(/add/i, '')
 			    if (!m.quoted) return;
-			    if (!text) throw `Usage: ${usedPrefix + command} <teks>\nExample:\n${usedPrefix + command} tes`
+			    if (!text) throw `Usage: ${usedPrefix + command} <text>\nExample:\n${usedPrefix + command} test`
 			    let msgs = db.data.msgs
-			    if (text in msgs) throw `'${text}' telah terdaftar!`
+			    if (text in msgs) throw `'${text}' is already registered!`
 			    msgs[text] = M.fromObject(await m.getQuotedObj()).toJSON()
 			await conn.react(m.chat, "✅", { remoteJid: m.key.remoteJid, id: m.key.id, fromMe: false, participant: m.key.participant})
 			}
@@ -55,7 +55,7 @@ let handler = async (m, { conn, command, usedPrefix, text }) => {
 > Get :  \`\`\`.getmsg [text]\`\`\` `, m)
 			}
 }
-handler.help = ['add', 'del', 'list', 'get'].map(v => v + 'msg <teks>')
+handler.help = ['add', 'del', 'list', 'get'].map(v => v + 'msg <text>')
 handler.tags = ['database']
 handler.command = /^(get|add|del|list)(vn|msg|video|audio|img|stic?ker|gif)$/
 

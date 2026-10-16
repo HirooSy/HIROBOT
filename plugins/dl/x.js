@@ -75,7 +75,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
         // Fallback: anything else (e.g. single non-multi image + separate mp3, etc.) — keep menu selection.
         const menu = videoUrls.map((item, i) => `*_${i + 1}. ${item.type} - ${item.quality}_*`).join('\n');
-        await conn.reply(m.chat, `Pilih konten dengan mengetik nomor:\n${menu}`, m);
+        await conn.reply(m.chat, `Choose content by typing its number:\n${menu}`, m);
 
         conn.twitter[m.sender] = {
             url: input,
