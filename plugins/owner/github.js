@@ -70,7 +70,7 @@ async function pushToGitHub(conn, m, args) {
             '.github/*',
             '!.github/workflows',
             '.github/workflows/*',
-            '!.github/workflows/uptimer.yml',
+            '!.github/FUNDING.yml',
             'run.js',
         ]
 
