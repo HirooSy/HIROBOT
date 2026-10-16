@@ -67,35 +67,21 @@ async function pushToGitHub(conn, m, args) {
             '.npm',
             'replit.nix',
             '.replit',
-            '.github/*',
-            '!.github/workflows',
-            '.github/workflows/*',
-            '!.github/FUNDING.yml',
             'run.js',
+            '.github/*',
+            '!.github/workflows/',
+            '.github/workflows/*',
+            '!.github/workflows/uptimer.yml',
+            '!.github/FUNDING.yml',
         ]
 
-        // Pastikan .git sudah di-init dulu sebelum menulis ke .git/info/exclude
         try {
             await execAsync('git init', { cwd: ROOT })
         } catch {}
 
-        // Tulis aturan ignore ke .git/info/exclude (LOKAL, tidak ikut ke-push)
         const excludePath = path.join(ROOT, '.git', 'info', 'exclude')
         fs.mkdirSync(path.dirname(excludePath), { recursive: true })
-
-        let excludeContent = fs.existsSync(excludePath)
-            ? fs.readFileSync(excludePath, 'utf8')
-            : ''
-
-        for (const rule of ignoreRules) {
-            // hindari duplikat sederhana
-            const lines = excludeContent.split('\n').map(l => l.trim())
-            if (!lines.includes(rule)) {
-                excludeContent += '\n' + rule
-            }
-        }
-
-        fs.writeFileSync(excludePath, excludeContent)
+        fs.writeFileSync(excludePath, ignoreRules.join('\n') + '\n')
 
         const remoteUrl =
             `https://${user}:${token}@github.com/${user}/${repo}.git`
@@ -125,7 +111,6 @@ async function pushToGitHub(conn, m, args) {
             { cwd: ROOT }
         )
 
-        // Untrack file/folder yang tidak boleh ikut push
         const untrackTargets = [
             '.cache',
             'node_modules',
@@ -147,15 +132,23 @@ async function pushToGitHub(conn, m, args) {
 
         await execAsync('git add .', { cwd: ROOT })
 
-        // Re-stage hanya workflow uptimer.yml (whitelist)
-        const uptimerWorkflow = path.join(ROOT, '.github/workflows/uptimer.yml')
-        if (fs.existsSync(uptimerWorkflow)) {
-            try {
-                await execAsync(
-                    'git add -f .github/workflows/uptimer.yml',
-                    { cwd: ROOT }
-                )
-            } catch {}
+        const whitelistFiles = [
+            '.github/FUNDING.yml',
+            '.github/workflows/uptimer.yml',
+        ]
+
+        for (const file of whitelistFiles) {
+            const fullPath = path.join(ROOT, file)
+            if (fs.existsSync(fullPath)) {
+                try {
+                    await execAsync(
+                        `git add -f "${file}"`,
+                        { cwd: ROOT }
+                    )
+                } catch (e) {
+                    console.error(`[gitpush] Failed to force-add ${file}:`, e.message)
+                }
+            }
         }
 
         const { stdout: status } =
