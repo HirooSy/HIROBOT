@@ -28,3 +28,12 @@ function card(embed, target, data, linked, tiers) {
     ]
   })
 }
+
+handler.command = ['profile']
+handler.description = 'Show your profile'
+handler.tags = ['Info']
+handler.options = [
+  { name: 'user', description: 'Another user to look up', type: 'user' }
+]
+
+export default handler

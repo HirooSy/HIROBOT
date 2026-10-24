@@ -4,6 +4,8 @@
 ```diff
 • Massive project refactor: migrated all plugins to commands structure, modernized handler, and significantly updated website server and scraper modules
 • Clean up unused plugins and optimize project structure
+• Update README.md with Discord-WhatsApp bridge documentation
+• Cleanup and minor refinement of Discord profile and core handler logic
 
 ________________________
 
@@ -32,6 +34,7 @@ ________________________
 * Edit "lib/utils/reload.js"
 * Edit "lib/utils/simple.js"
 * Edit "package.json"
+* Edit "commands/discord/main/profile.js"
 - Delete "plugins/ai/ai.js"
 - Delete "plugins/ai/aicheck.js"
 - Delete "plugins/ai/bing.js"

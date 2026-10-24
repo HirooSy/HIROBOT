@@ -10,12 +10,13 @@
 > Please read the [<code>LICENSE</code>](https://github.com/HirooSy/HIROBOT/blob/main/LICENSE) before using this project! You're free to recode it, but do not sell or claim this project as your own. <b>Do not change the License.</b> if you modify it, <b>please credit me in your License.</b>
 
 > [!NOTE]
-> High-performance WhatsApp bot with AI agent, VoIP calling capabilities, and a website feature. Built with Baileys and NodeJS v18+.
+> High-performance Discord & WhatsApp bot with AI agent, VoIP calling capabilities, and a website feature. Built with Baileys and NodeJS v18+.
 > 
 > ---
 > 
 > <p align=center><b>Features:</b></p>
 > 
+> - [x] Bridge Discord-Whatsapp.
 > - [x] AI Agent Using Gemini.
 > - [x] Audio & Video Call.
 > - [x] Multi Sessions.
@@ -35,7 +36,8 @@
 HIROBOT
 ├── 📁lib
 │   ├── 📁package
-│   │   ├── 📁ai            
+│   │   ├── 📁ai
+│   │   ├── 📁discord
 │   │   ├── 📁voip           # Call
 │   │   └── 📁website
 │   │       ├── 📁views      # HTML folder
@@ -50,10 +52,9 @@ HIROBOT
 │   ├── 📁tunnel
 │   └── 📁tmp
 ├── 📁commands
-│   ├── 📁discord          # slash commands
-│   └── 📁whatsapp         # plugins by category
+│   ├── 📁discord          
+│   └── 📁whatsapp         
 ├── 📄.env                 # your tokens
-├── 📄CHANGELOG.md
 ├── 📄LICENSE
 ├── 📄package.json
 └── 📄README.md
@@ -339,58 +340,6 @@ export default [
 ```
 
 </sub>
-</details>
-
-<details>
-   <summary align=left><b>About Discord Bot</b></summary>
-<p align=center>──────────────</p>
-
-Choose what to run in `lib/config.js`:
-
-```js
-global.settings.bot = { whatsapp: true, discord: true }
-```
-
-- `whatsapp: true, discord: false` runs only the WhatsApp bot
-- `whatsapp: false, discord: true` runs only the Discord bot (the website still works, but connecting a new Discord account needs the WhatsApp bot because the code is sent through WhatsApp)
-- both `true` runs everything
-
-The `discord.js` package is optional and is not listed in `package.json`. It is installed automatically the first time the bot starts with `discord: true`, so nothing extra is installed when Discord is off. Discord login on the website is only available while `discord` is `true` and the Discord client id and secret are set.
-
-Setup:
-
-1. Create an application at the Discord Developer Portal, add a bot, and copy the token into `DISCORD_TOKEN`
-2. Copy the application's client id and client secret into `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`
-3. Under OAuth2 add the redirect `https://your-domain/api/discord/callback` (or set the exact URL in `DISCORD_REDIRECT_URI`)
-4. Optional: `DISCORD_GUILD_ID` registers slash commands to one server instantly, `DISCORD_OWNER` is a comma separated list of Discord user ids with owner access
-
-Every command works both as a slash command and with the prefix from `global.settings.system.prefix` in `lib/config.js` (for example `.menu`, `!ping`), or by mentioning the bot (`@bot ping`). Prefix commands in servers need the **Message Content Intent** (Developer Portal > Bot > Privileged Gateway Intents); without it they only work in DMs and when mentioning the bot.
-
-Many WhatsApp commands are bridged to Discord automatically from `commands/whatsapp` (the AI agent `ai`, downloaders, image tools, `brat`, `speedtest`, ...). The AI agent also works on Discord with the same tools except the WhatsApp-only ones (groups, reminders, forwarding, plugins). `aichat on` lets people talk to it without a prefix by mentioning the bot or replying to it (always on in DMs). Console logging of Discord activity uses `lib/utils/print.js`, shared with the WhatsApp handler. Attach a file or reply to a message with a file for commands that need media. Selection lists and buttons become Discord menus. Commands that depend on WhatsApp itself (stickers, groups, channels, subbot, view once, owner shell tools, NSFW downloaders) are not bridged. Discord has a 100 slash command limit, extra commands stay available with the prefix.
-
-Commands live in `commands/discord`, one file per slash command. Subfolders are loaded recursively and files hot reload when added, edited or deleted:
-
-```js
-export default {
-  name: 'hello',
-  description: 'Say hello',
-  options: [{ name: 'name', description: 'Who to greet', type: 'string' }],
-  cooldown: 3000,
-  limit: 1,
-  async run({ args, user, reply }) {
-    await reply(`Hello ${args.name || 'there'}, you have ${user.limit} limit left`)
-  }
-}
-```
-
-Supported flags: `owner`, `group` (server only), `private` (DM only), `linked` (needs a connected WhatsApp account), `limit`, `cooldown`, `exp`, `hidden`.
-
-Accounts:
-
-- A Discord user who has not connected WhatsApp is stored temporarily in `db.data.discord[discordId]`
-- When the user connects both accounts, the data is merged into `db.data.users[jid]`, `discordID` is saved there, and the `db.data.discord[discordId]` entry is deleted
-- Connect from the website: log in with Discord and enter your WhatsApp number, password and the code sent to it, or from the profile page of an existing account press Connect on the Discord card
-
 </details>
 
 <details>
@@ -859,30 +808,19 @@ call(m.sender, media, "720p").silent()
 <sub>
   
 ```env
-OWNER=6281234567890,6281234567890
-MODERATOR=6281234567890,6281234567890
-
-# Support mongodb/MySql2/Local file sql
-# • mongodb+srv://...
-# • mysql://...
-# • dont fill it to use local file sql
+# Read .env.examplr for explanations 
+OWNER=
+MODERATOR=
 DATABASE=
 
 AI_PERSONALITY=
-
-# Gemini API Key (Free, Get from aistudio.google.com)
-# Accepts single string or Array for fallback
 AI_KEYS=
 
 DISCORD_TOKEN=
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
 DISCORD_REDIRECT_URI=
-DISCORD_GUILD_ID=
 DISCORD_OWNER=
-
-# OPTIONAL ENV
-#__________________________________________________
 
 GIT_CLASSIC_KEY=
 GIT_TOKEN=
@@ -890,17 +828,11 @@ GIT_USER=
 GIT_EMAIL=
 GIT_REPO=
 
-# TUNNEL / CUSTOM DOMAIN (optional)
-#__________________________________________________
-# See README.md -> "About Website" for full explanation of each scenario.
-
 CF_KV_TOKEN=
 CF_ACCOUNT_ID=
 CF_KV_NAMESPACE_ID=
-
 CF_TOKEN=
 CF_HOSTNAME=
-
 HOSTNAME_PUBLIC=
 ```
 </sub>
@@ -919,7 +851,7 @@ $ node .
 
 <div align=center>
 
-  <a href="#"><img height="25" align=right src="https://img.shields.io/badge/Size-25_MB-black?style=for-the-badge"/> </a>
+  <a href="#"><img height="25" align=right src="https://img.shields.io/badge/Size-35_MB-black?style=for-the-badge"/> </a>
   
   <a href="https://wispbyte.com"><img height="25" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=4chan&logoColor=blue"/></a>
 
