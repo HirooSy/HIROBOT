@@ -51,7 +51,7 @@ HIROBOT
 │   ├── 📁sessions
 │   ├── 📁tunnel
 │   └── 📁tmp
-├── 📁commands
+├── 📁plugins
 │   ├── 📁discord          
 │   └── 📁whatsapp         
 ├── 📄.env                 # your tokens
