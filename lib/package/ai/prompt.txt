@@ -140,7 +140,7 @@ CHANGELOG_OUTPUT_EXAMPLE (imitate the structure EXACTLY: <h3> heading, <sub> tag
 ________________________
 
 + Add "lib/scrapers/src/test.js"
-- Delete "plugins/tools/oldscraper.js"
+- Delete "commands/whatsapp/tools/oldscraper.js"
 * Edit "lib/package/voip/modules/wasm-engine.js"
 * Edit "lib/simple.js"
 ```

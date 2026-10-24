@@ -114,6 +114,14 @@
 
       <div class="divider-lg"></div>
 
+      <div class="card discord-card" id="discord-card" style="display:none">
+        <div>
+          <div class="card-title">Discord</div>
+          <div class="text-sm text-muted2" id="discord-status"></div>
+        </div>
+        <button type="button" class="btn btn-small btn-discord" id="discord-btn" onclick="connectDiscord()">Connect</button>
+      </div>
+
       <div class="home-grid">
 <div class="card daily-bonus-card">
           <div class="text-md font-bold">Daily Bonus</div>
@@ -1501,6 +1509,50 @@ function updateTierDisplay() {
   }
 }
 
+let discordEnabled = null
+
+async function renderDiscordCard(u) {
+  const card = document.getElementById('discord-card')
+  const status = document.getElementById('discord-status')
+  const btn = document.getElementById('discord-btn')
+  if (!card) return
+  if (u.discordID) {
+    card.style.display = 'flex'
+    status.textContent = u.discordName ? `Connected as ${u.discordName}` : 'Connected'
+    btn.style.display = 'none'
+    return
+  }
+  if (discordEnabled === null) {
+    try {
+      const res = await safeFetch('/api/discord/config')
+      discordEnabled = (await res.json()).enabled === true
+    } catch { discordEnabled = false }
+  }
+  if (!discordEnabled) { card.style.display = 'none'; return }
+  card.style.display = 'flex'
+  status.textContent = 'Not connected'
+  btn.style.display = ''
+  btn.disabled = false
+}
+
+async function connectDiscord() {
+  const btn = document.getElementById('discord-btn')
+  btn.disabled = true
+  try {
+    const res = await safeFetch('/api/discord/link', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } })
+    const data = await res.json()
+    if (!data.success) {
+      document.getElementById('discord-status').textContent = data.message || 'Failed to connect'
+      btn.disabled = false
+      return
+    }
+    safeRedirect(data.url)
+  } catch {
+    document.getElementById('discord-status').textContent = 'Failed to connect'
+    btn.disabled = false
+  }
+}
+
 async function loadProfile(silent = false) {
   try {
     const res = await safeFetch('/api/profile', { headers: token ? { 'Authorization': 'Bearer ' + token } : {} })
@@ -1513,6 +1565,7 @@ async function loadProfile(silent = false) {
     currentLevel = u.level ?? 0
     currentLimit = u.limit ?? 0
     currentGems = u.gems ?? 0
+    renderDiscordCard(u)
 
     try {
       const ownerRes = await safeFetch('/api/check-owner', { headers: { 'Authorization': 'Bearer ' + token } })

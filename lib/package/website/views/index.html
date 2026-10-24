@@ -104,6 +104,7 @@
           </div>
         </div>
         <button class="btn panel-card" id="login-btn" onclick="doLogin()">Login</button>
+        <button type="button" class="btn panel-card btn-discord discord-login-btn" onclick="location.href='/api/discord/login'" style="display:none">Continue with Discord</button>
       </div>
 
       <div id="register-panel" class="form-panel">
@@ -145,6 +146,7 @@
           </div>
         </div>
         <button class="btn panel-card" id="register-btn" onclick="doRegister()">Register</button>
+        <button type="button" class="btn panel-card btn-discord discord-login-btn" onclick="location.href='/api/discord/login'" style="display:none">Continue with Discord</button>
       </div>
       </div>
     </div>
@@ -952,6 +954,13 @@
     });
   });
 })();
+(async () => {
+  try {
+    const res = await safeFetch('/api/discord/config')
+    const data = await res.json()
+    if (data.enabled) document.querySelectorAll('.discord-login-btn').forEach(btn => { btn.style.display = '' })
+  } catch {}
+})()
 </script>
 </body>
 </html>

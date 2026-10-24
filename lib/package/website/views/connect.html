@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Connect WhatsApp</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .page-connect { background: var(--bg); color: #e8e8e8; font-family: var(--font); min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+    .page-connect .box { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px 20px; }
+    .page-connect .who { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .page-connect .who img { width: 48px; height: 48px; border-radius: 50%; background: #222; object-fit: cover; }
+    .page-connect .who-name { font-size: 14px; font-weight: 700; }
+    .page-connect .who-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .page-connect h1 { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+    .page-connect p.hint { font-size: 11px; line-height: 1.6; color: var(--muted); margin-bottom: 16px; }
+    .page-connect label { display: block; font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin: 12px 0 6px; }
+    .page-connect input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: #fff; font-family: var(--font); font-size: 13px; outline: none; }
+    .page-connect input:focus { border-color: #5865f2; }
+    .page-connect .go { width: 100%; margin-top: 16px; background: #5865f2; color: #fff; border: none; border-radius: 10px; padding: 12px; font-family: var(--font); font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; }
+    .page-connect .go:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-connect .link { margin-top: 12px; background: none; border: none; color: var(--muted); font-family: var(--font); font-size: 10px; cursor: pointer; text-decoration: underline; width: 100%; }
+    .page-connect .msg { display: none; margin-top: 14px; padding: 10px; border-radius: 8px; font-size: 10px; line-height: 1.5; }
+    .page-connect .msg.show { display: block; }
+    .page-connect .msg.err { background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.2); color: var(--error); }
+    .page-connect .msg.ok { background: rgba(68,255,102,0.1); border: 1px solid rgba(68,255,102,0.2); color: var(--success); }
+    .page-connect .step { display: none; }
+    .page-connect .step.active { display: block; }
+  </style>
+</head>
+<body class="page-connect">
+  <div class="box">
+    <div class="who">
+      <img id="avatar" alt="">
+      <div>
+        <div class="who-name" id="name"></div>
+        <div class="who-sub" id="sub"></div>
+      </div>
+    </div>
+
+    <div class="step" id="step-phone">
+      <h1>Connect WhatsApp</h1>
+      <p class="hint">Enter your WhatsApp number and password. If this number has no account yet, the password you enter will be used for the new account. Your progress from Discord is merged into it.</p>
+      <label for="phone">WhatsApp Number</label>
+      <input type="tel" id="phone" inputmode="numeric" placeholder="628123456789" autocomplete="tel">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="min. 6 characters for a new account" autocomplete="current-password">
+      <button class="go" id="send-btn" onclick="sendCode()">Send code</button>
+    </div>
+
+    <div class="step" id="step-code">
+      <h1>Verify</h1>
+      <p class="hint">Enter the 6 digit code sent to your WhatsApp.</p>
+      <label for="code">Code</label>
+      <input type="text" id="code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+      <button class="go" id="verify-btn" onclick="verifyCode()">Connect</button>
+      <button class="link" onclick="resendCode()">Resend code</button>
+      <button class="link" onclick="showStep('phone')">Use another number</button>
+    </div>
+
+    <div class="step" id="step-unavailable">
+      <h1>Unavailable</h1>
+      <p class="hint">The WhatsApp bot is not running right now, so verification codes cannot be sent. Please try again later.</p>
+    </div>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+<script>
+  const token = localStorage.getItem('token')
+  let pendingToken = ''
+  let phoneDigits = ''
+
+  async function api(method, url, body) {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': '1', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      body: body ? JSON.stringify(body) : undefined
+    })
+    return res.json()
+  }
+
+  function showMsg(text, ok = false) {
+    const el = document.getElementById('msg')
+    el.textContent = text
+    el.className = 'msg show ' + (ok ? 'ok' : 'err')
+  }
+
+  function hideMsg() {
+    document.getElementById('msg').className = 'msg'
+  }
+
+  function showStep(name) {
+    hideMsg()
+    for (const el of document.querySelectorAll('.step')) el.classList.remove('active')
+    document.getElementById('step-' + name).classList.add('active')
+  }
+
+  async function init() {
+    if (!token) return location.replace('/')
+    try {
+      const data = await api('GET', '/api/discord/me')
+      if (!data.success) {
+        localStorage.clear()
+        return location.replace('/')
+      }
+      if (data.linked) return location.replace('/profile')
+      document.getElementById('avatar').src = data.discord.avatar
+      document.getElementById('name').textContent = data.discord.name
+      document.getElementById('sub').textContent = `${data.discord.exp} EXP · ${data.discord.limit} limit`
+      showStep(data.whatsappAvailable ? 'phone' : 'unavailable')
+    } catch {
+      showStep('unavailable')
+      showMsg('Could not reach the server. Please reload the page.')
+    }
+  }
+
+  async function sendCode() {
+    const btn = document.getElementById('send-btn')
+    const phone = document.getElementById('phone').value.replace(/\D/g, '')
+    const password = document.getElementById('password').value
+    if (!phone || !password) return showMsg('Enter your number and password.')
+    btn.disabled = true
+    hideMsg()
+    try {
+      const data = await api('POST', '/api/discord/connect', { phone, password })
+      if (!data.success) return showMsg(data.message || 'Failed to send the code.')
+      pendingToken = data.pendingToken
+      phoneDigits = data.phone || phone
+      showStep('code')
+      showMsg('Code sent to your WhatsApp.', true)
+    } catch {
+      showMsg('Could not reach the server. Please try again.')
+    } finally {
+      btn.disabled = false
+    }
+  }
+
+  async function verifyCode() {
+    const btn = document.getElementById('verify-btn')
+    const code = document.getElementById('code').value.trim()
+    if (code.length !== 6) return showMsg('Enter the 6 digit code.')
+    btn.disabled = true
+    hideMsg()
+    try {
+      const data = await api('POST', '/api/discord/verify', { phone: phoneDigits, pendingToken, code })
+      if (!data.success) return showMsg(data.message || 'Verification failed.')
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('phone', data.phone || phoneDigits)
+      showMsg('Accounts connected.', true)
+      setTimeout(() => location.replace('/profile'), 600)
+    } catch {
+      showMsg('Could not reach the server. Please try again.')
+    } finally {
+      btn.disabled = false
+    }
+  }
+
+  async function resendCode() {
+    hideMsg()
+    try {
+      const data = await api('POST', '/api/resend-otp', { phone: phoneDigits })
+      if (!data.success) return showMsg(data.message || 'Failed to resend the code.')
+      pendingToken = data.pendingToken
+      showMsg('Code resent.', true)
+    } catch {
+      showMsg('Could not reach the server. Please try again.')
+    }
+  }
+
+  init()
+</script>
+</body>
+</html>

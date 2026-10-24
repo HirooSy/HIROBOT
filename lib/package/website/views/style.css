@@ -3011,3 +3011,34 @@ button {
 .page-profile .tierup-btn { width: 100%; }
 .page-profile .section-heading { font-size: 17px; letter-spacing: 6px; }
 }
+
+
+.page-index .btn-discord {
+  background: #5865f2;
+  color: #ffffff;
+}
+
+.page-profile .discord-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page-profile .discord-card .card-title {
+  margin-bottom: 6px;
+}
+
+.page-profile .discord-card .btn-discord {
+  background: #5865f2;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.page-profile .discord-card .btn-discord:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

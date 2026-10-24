@@ -1,7 +1,7 @@
 {
     "name": "hiro",
     "version": "1.0",
-    "description": "Simple Whatsapp Bot made by HirooSy",
+    "description": "Simple Whatsapp & Discord Bot made by HirooSy",
     "main": "lib/start.js",
     "type": "module",
     "license": "SEE LICENSE IN LICENSE",

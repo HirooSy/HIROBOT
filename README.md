@@ -49,7 +49,9 @@ HIROBOT
 │   ├── 📁sessions
 │   ├── 📁tunnel
 │   └── 📁tmp
-├── 📁plugins
+├── 📁commands
+│   ├── 📁discord          # slash commands
+│   └── 📁whatsapp         # plugins by category
 ├── 📄.env                 # your tokens
 ├── 📄CHANGELOG.md
 ├── 📄LICENSE
@@ -337,6 +339,58 @@ export default [
 ```
 
 </sub>
+</details>
+
+<details>
+   <summary align=left><b>About Discord Bot</b></summary>
+<p align=center>──────────────</p>
+
+Choose what to run in `lib/config.js`:
+
+```js
+global.settings.bot = { whatsapp: true, discord: true }
+```
+
+- `whatsapp: true, discord: false` runs only the WhatsApp bot
+- `whatsapp: false, discord: true` runs only the Discord bot (the website still works, but connecting a new Discord account needs the WhatsApp bot because the code is sent through WhatsApp)
+- both `true` runs everything
+
+The `discord.js` package is optional and is not listed in `package.json`. It is installed automatically the first time the bot starts with `discord: true`, so nothing extra is installed when Discord is off. Discord login on the website is only available while `discord` is `true` and the Discord client id and secret are set.
+
+Setup:
+
+1. Create an application at the Discord Developer Portal, add a bot, and copy the token into `DISCORD_TOKEN`
+2. Copy the application's client id and client secret into `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`
+3. Under OAuth2 add the redirect `https://your-domain/api/discord/callback` (or set the exact URL in `DISCORD_REDIRECT_URI`)
+4. Optional: `DISCORD_GUILD_ID` registers slash commands to one server instantly, `DISCORD_OWNER` is a comma separated list of Discord user ids with owner access
+
+Every command works both as a slash command and with the prefix from `global.settings.system.prefix` in `lib/config.js` (for example `.menu`, `!ping`), or by mentioning the bot (`@bot ping`). Prefix commands in servers need the **Message Content Intent** (Developer Portal > Bot > Privileged Gateway Intents); without it they only work in DMs and when mentioning the bot.
+
+Many WhatsApp commands are bridged to Discord automatically from `commands/whatsapp` (the AI agent `ai`, downloaders, image tools, `brat`, `speedtest`, ...). The AI agent also works on Discord with the same tools except the WhatsApp-only ones (groups, reminders, forwarding, plugins). `aichat on` lets people talk to it without a prefix by mentioning the bot or replying to it (always on in DMs). Console logging of Discord activity uses `lib/utils/print.js`, shared with the WhatsApp handler. Attach a file or reply to a message with a file for commands that need media. Selection lists and buttons become Discord menus. Commands that depend on WhatsApp itself (stickers, groups, channels, subbot, view once, owner shell tools, NSFW downloaders) are not bridged. Discord has a 100 slash command limit, extra commands stay available with the prefix.
+
+Commands live in `commands/discord`, one file per slash command. Subfolders are loaded recursively and files hot reload when added, edited or deleted:
+
+```js
+export default {
+  name: 'hello',
+  description: 'Say hello',
+  options: [{ name: 'name', description: 'Who to greet', type: 'string' }],
+  cooldown: 3000,
+  limit: 1,
+  async run({ args, user, reply }) {
+    await reply(`Hello ${args.name || 'there'}, you have ${user.limit} limit left`)
+  }
+}
+```
+
+Supported flags: `owner`, `group` (server only), `private` (DM only), `linked` (needs a connected WhatsApp account), `limit`, `cooldown`, `exp`, `hidden`.
+
+Accounts:
+
+- A Discord user who has not connected WhatsApp is stored temporarily in `db.data.discord[discordId]`
+- When the user connects both accounts, the data is merged into `db.data.users[jid]`, `discordID` is saved there, and the `db.data.discord[discordId]` entry is deleted
+- Connect from the website: log in with Discord and enter your WhatsApp number, password and the code sent to it, or from the profile page of an existing account press Connect on the Discord card
+
 </details>
 
 <details>
@@ -819,6 +873,13 @@ AI_PERSONALITY=
 # Gemini API Key (Free, Get from aistudio.google.com)
 # Accepts single string or Array for fallback
 AI_KEYS=
+
+DISCORD_TOKEN=
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_REDIRECT_URI=
+DISCORD_GUILD_ID=
+DISCORD_OWNER=
 
 # OPTIONAL ENV
 #__________________________________________________
