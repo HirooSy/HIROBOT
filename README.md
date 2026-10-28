@@ -51,8 +51,6 @@ HIROBOT
 │   ├── 📁tunnel
 │   └── 📁tmp
 ├── 📁plugins
-│   ├── 📁discord          
-│   └── 📁whatsapp         
 ├── 📄.env                 # your tokens
 ├── 📄LICENSE
 ├── 📄package.json
