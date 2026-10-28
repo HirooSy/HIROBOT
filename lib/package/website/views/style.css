@@ -140,8 +140,8 @@ button {
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.14);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       font-size: 12px;
       color: var(--muted);
       margin: 0 0 22px;
@@ -224,8 +224,8 @@ button {
       border-radius: 12px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.16);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 18px rgba(0, 0, 0, 0.25);
       color: #f0f0f0;
       font-weight: 600;
@@ -615,8 +615,8 @@ button {
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 20px;
       overflow: hidden;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.5);
       animation: slideUp 0.28s ease;
       position: relative;
@@ -998,8 +998,8 @@ button {
 .page-index .modal-glass {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.14);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 32px rgba(0, 0, 0, 0.45);
     }
 
@@ -1013,8 +1013,8 @@ button {
       border-radius: 14px;
       background: rgba(255, 255, 255, 0.07);
       border: 1px solid rgba(255, 255, 255, 0.14);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
     }
 
@@ -1031,8 +1031,8 @@ button {
 .page-index .otp-input-glass {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.14);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
@@ -3041,4 +3041,36 @@ button {
 .page-profile .discord-card .btn-discord:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+
+.page-profile .discord-card .btn-whatsapp {
+  background: #25d366;
+  color: #04120a;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.page-profile .discord-card .btn-whatsapp:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .page-index *,
+  .page-profile * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-index *,
+  .page-profile * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

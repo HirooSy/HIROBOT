@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Login</title>
   <link rel="icon" type="image/x-icon" href="" id="favicon">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="/style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 </head>
 <body class="page-index">
 
@@ -658,15 +661,16 @@
 
   const canvas = document.getElementById('ghostFibersCanvas');
   const wrap = canvas.parentElement;
-  const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false }) ||
+  const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false, antialias: false, depth: false, stencil: false, powerPreference: 'low-power' }) ||
              canvas.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
 
   if (!gl) {
-    console.warn('WebGL not supported, Orb background skipped.');
     return;
   }
 
   gl.clearColor(0, 0, 0, 0);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   const VERT = `
     precision highp float;
@@ -844,9 +848,6 @@
     const s = gl.createShader(type);
     gl.shaderSource(s, src);
     gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-      console.error(gl.getShaderInfoLog(s));
-    }
     return s;
   }
 
@@ -893,56 +894,92 @@
     return [0, 0, 0];
   }
 
+  const RENDER_SCALE = 0.5;
+  const FRAME_MS = 1000 / 30;
+  const bg = hexToVec3(CONFIG.backgroundColor);
+
+  gl.uniform1f(U.hue, CONFIG.hue);
+  gl.uniform1f(U.hoverIntensity, CONFIG.hoverIntensity);
+  gl.uniform3f(U.backgroundColor, bg[0], bg[1], bg[2]);
+
   function resize() {
-    const dpr = window.devicePixelRatio || 1;
     const width = wrap.clientWidth;
     const height = wrap.clientHeight;
-    canvas.width = Math.max(1, Math.floor(width * dpr));
-    canvas.height = Math.max(1, Math.floor(height * dpr));
+    canvas.width = Math.max(1, Math.floor(width * RENDER_SCALE));
+    canvas.height = Math.max(1, Math.floor(height * RENDER_SCALE));
     canvas.style.width = width + 'px';
     canvas.style.height = height + 'px';
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.uniform3f(U.iResolution, canvas.width, canvas.height, canvas.width / canvas.height);
+    draw(lastFrameTime);
   }
-
-  const ro = new ResizeObserver(resize);
-  ro.observe(wrap);
-  window.addEventListener('resize', resize);
-  resize();
 
   let targetHover = 0;
 
   let lastTime = 0;
+  let lastFrameTime = 0;
   let currentRot = 0;
   let hoverValue = 0;
   const rotationSpeed = 0.3;
 
+  let rafId = 0;
+  let inView = true;
+  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function draw(t) {
+    gl.uniform1f(U.iTime, t * 0.001);
+    gl.uniform1f(U.hover, hoverValue);
+    gl.uniform1f(U.rot, currentRot);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
   function update(t) {
-    requestAnimationFrame(update);
+    rafId = requestAnimationFrame(update);
+    if (t - lastFrameTime < FRAME_MS) return;
     const dt = (t - lastTime) * 0.001;
     lastTime = t;
-
-    gl.uniform1f(U.iTime, t * 0.001);
-    gl.uniform1f(U.hue, CONFIG.hue);
-    gl.uniform1f(U.hoverIntensity, CONFIG.hoverIntensity);
-    const bg = hexToVec3(CONFIG.backgroundColor);
-    gl.uniform3f(U.backgroundColor, bg[0], bg[1], bg[2]);
+    lastFrameTime = t;
 
     const effectiveHover = CONFIG.forceHoverState ? 1 : targetHover;
     hoverValue += (effectiveHover - hoverValue) * 0.1;
-    gl.uniform1f(U.hover, hoverValue);
 
     if (CONFIG.rotateOnHover && effectiveHover > 0.5) {
       currentRot += dt * rotationSpeed;
     }
-    gl.uniform1f(U.rot, currentRot);
-
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    draw(t);
   }
-  requestAnimationFrame(update);
+
+  function start() {
+    if (rafId || reducedMotion) return;
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(update);
+  }
+
+  function stop() {
+    if (!rafId) return;
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+  }
+
+  function sync() {
+    if (inView && !document.hidden) start();
+    else stop();
+  }
+
+  const ro = new ResizeObserver(resize);
+  ro.observe(wrap);
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entries => {
+      inView = entries[entries.length - 1].isIntersecting;
+      sync();
+    }).observe(wrap);
+  }
+
+  document.addEventListener('visibilitychange', sync);
+  resize();
+  sync();
 })();
 </script>
 <script>

@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="icon" type="image/x-icon" href="" id="favicon">
   <title>Profile</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/></noscript>
   <link rel="stylesheet" href="/style.css?v=3">
 </head>
 <body class="page-profile">
@@ -120,6 +123,14 @@
           <div class="text-sm text-muted2" id="discord-status"></div>
         </div>
         <button type="button" class="btn btn-small btn-discord" id="discord-btn" onclick="connectDiscord()">Connect</button>
+      </div>
+
+      <div class="card discord-card whatsapp-card" id="whatsapp-card" style="display:none">
+        <div>
+          <div class="card-title">WhatsApp</div>
+          <div class="text-sm text-muted2" id="whatsapp-status">Not connected</div>
+        </div>
+        <button type="button" class="btn btn-small btn-whatsapp" id="whatsapp-btn" onclick="connectWhatsapp()">Connect</button>
       </div>
 
       <div class="home-grid">
@@ -275,7 +286,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="pw-card">
         <div class="card-title">Change Password</div>
         <input type="password" id="pw-old" class="input-field" placeholder="Current password">
         <input type="password" id="pw-new" class="input-field mt-8" placeholder="New password">
@@ -779,6 +790,10 @@ async function subbotRefresh(silent = false) {
   try {
     const res = await safeFetch('/api/subbot', { headers: subbotHeaders(false) })
     const d = await res.json()
+    if (d.needWhatsapp) {
+      document.getElementById('subbot-loading').textContent = d.message
+      return
+    }
     if (!d.success) throw new Error(d.message || 'Failed to load subbot')
     subbotApply(d)
   } catch (err) {
@@ -1535,6 +1550,18 @@ async function renderDiscordCard(u) {
   btn.disabled = false
 }
 
+function renderWhatsappCard(u) {
+  const card = document.getElementById('whatsapp-card')
+  const pwCard = document.getElementById('pw-card')
+  const linked = u.whatsappLinked !== false
+  if (card) card.style.display = linked ? 'none' : 'flex'
+  if (pwCard) pwCard.style.display = linked ? '' : 'none'
+}
+
+function connectWhatsapp() {
+  safeRedirect('/connect')
+}
+
 async function connectDiscord() {
   const btn = document.getElementById('discord-btn')
   btn.disabled = true
@@ -1559,6 +1586,8 @@ async function loadProfile(silent = false) {
     const data = await res.json()
     if (!data.success) { localStorage.clear(); return safeRedirect('/') }
 
+    await bootDeps
+
     const u = data.user
     if (!phone) phone = u.phone || u.number || ''
     currentExp = u.exp ?? 0
@@ -1566,13 +1595,10 @@ async function loadProfile(silent = false) {
     currentLimit = u.limit ?? 0
     currentGems = u.gems ?? 0
     renderDiscordCard(u)
+    renderWhatsappCard(u)
 
-    try {
-      const ownerRes = await safeFetch('/api/check-owner', { headers: { 'Authorization': 'Bearer ' + token } })
-      const ownerData = await ownerRes.json()
-      isOwner = ownerData.isOwner === true
-      document.getElementById('db-tab').style.display = isOwner ? 'block' : 'none'
-    } catch {}
+    isOwner = u.isOwner === true
+    document.getElementById('db-tab').style.display = isOwner ? 'block' : 'none'
 
     if (!silent) {
       const displayName = (u.name && u.name !== phone) ? u.name : phone
@@ -1642,7 +1668,6 @@ async function loadProfile(silent = false) {
       renderNotifications(u.notification || [])
     }
   } catch (err) {
-    console.error('[loadProfile]', err)
     if (!silent) {
       const isTimeout = err?.name === 'AbortError'
       document.getElementById('loading').innerHTML = isTimeout
@@ -2120,12 +2145,14 @@ async function deleteGiftCode(code) {
   } catch { showToast('Connection error.', 'error') }
 }
 
+let bootDeps = Promise.resolve()
+
 document.addEventListener('DOMContentLoaded', async () => {
-  await fetchTierAsset()
-  await loadSiteSettings()
+  bootDeps = Promise.all([fetchTierAsset(), loadSiteSettings()])
   loadBotName()
   await loadProfile()
-  setInterval(() => { loadProfile(true) }, 30000)
+  setInterval(() => { if (!document.hidden) loadProfile(true) }, 30000)
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadProfile(true) })
 })
 </script>
 </body>
