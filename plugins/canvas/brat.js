@@ -38,7 +38,7 @@ handler.help = [
     { command: 'brat', name: 'text', description: 'Text for the brat image', type: 'string', required: true },
     { command: 'bratvid', name: 'text', description: 'Text for the animated brat image', type: 'string', required: true }
 ]
-handler.tags = ['sticker'];
+handler.tags = ['canvas', 'sticker'];
 handler.command = ['brat', 'bratvid']
 handler.description = {
     brat: 'Make a brat image from text',
