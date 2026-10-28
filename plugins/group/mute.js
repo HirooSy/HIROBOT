@@ -1,0 +1,177 @@
+import { delay } from 'baileys';
+
+function findParticipant(groupMetadata, taggedJid) {
+    return (groupMetadata?.participants || []).find(
+        p => p.id === taggedJid || p.phoneNumber === taggedJid
+    )
+}
+
+function isMuted(chat, jid) {
+    return (chat.mutedMembers || []).some(u => u.id === jid || u.phoneNumber === jid)
+}
+
+let handler = async (m, { conn, command, args, groupMetadata, platform }) => {
+  if (platform == 'discord') {
+    const target = await m.guild.members.fetch(args.user.id).catch(() => null)
+    if (!target) return m.reply({ ephemeral: true, content: 'That user is not in this server.' })
+    if (command == 'unmute') {
+      try {
+        await target.timeout(null)
+        await m.reply(`<@${target.id}> unmuted.`)
+      } catch {
+        await m.reply({ ephemeral: true, content: 'I could not unmute that member, check my permissions and role position.' })
+      }
+      return
+    }
+    const minutes = Math.min(Math.max(Number(args.minutes) || 10, 1), 40320)
+    try {
+      await target.timeout(minutes * 60 * 1000, `Muted by ${m.member?.user?.tag || 'bot'}`)
+      await m.reply(`<@${target.id}> muted for ${minutes} minute(s).`)
+    } catch {
+      await m.reply({ ephemeral: true, content: 'I could not mute that member, check my permissions and role position.' })
+    }
+    return
+  }
+    if (!m.mentionedJid?.length) {
+        return m.reply(`Tag someone you want to ${command}. Example: /${command} @user`)
+    }
+
+    const freshMeta = await conn.groupMetadata(m.chat).catch(() => groupMetadata)
+
+    db.data.chats[m.chat] ??= {}
+    const chat = db.data.chats[m.chat]
+    chat.mutedMembers ??= []
+
+    const results = []
+    for (const taggedJid of m.mentionedJid) {
+        const participant = findParticipant(freshMeta, taggedJid)
+        if (!participant) {
+            results.push(`[FAIL] @${taggedJid.split('@')[0]} not found in this group.`)
+            continue
+        }
+        if (participant.admin) {
+            results.push(`[WARNING] @${taggedJid.split('@')[0]} admin, can't be muted.`)
+            continue
+        }
+
+        if (command === 'mute') {
+            if (isMuted(chat, participant.id)) {
+                results.push(`@${taggedJid.split('@')[0]} already muted.`)
+                continue
+            }
+            chat.mutedMembers.push({ id: participant.id, phoneNumber: participant.phoneNumber })
+            results.push(`@${taggedJid.split('@')[0]} muted.`)
+        } else {
+            const before = chat.mutedMembers.length
+            chat.mutedMembers = chat.mutedMembers.filter(
+                u => u.id !== participant.id && u.phoneNumber !== participant.phoneNumber
+            )
+            results.push(
+                chat.mutedMembers.length < before
+                    ? `@${taggedJid.split('@')[0]} unmuted.`
+                    : `[INFO] @${taggedJid.split('@')[0]} not muted yet.`
+            )
+        }
+    }
+
+    await conn.sendMessage(m.chat, {
+        text: results.join('\n'),
+        mentions: m.mentionedJid,
+    }, { quoted: m })
+}
+
+handler.help = [
+  'mute @user',
+  'unmute @user',
+  { command: 'mute', name: 'user', description: 'Member to mute', type: 'user', required: true },
+  { command: 'mute', name: 'minutes', description: 'Duration in minutes (default 10)', type: 'integer', min_value: 1, max_value: 40320 },
+  { command: 'unmute', name: 'user', description: 'Member to unmute', type: 'user', required: true }
+]
+handler.tags = ['group']
+handler.command = ['mute', 'unmute']
+handler.description = {
+  mute: 'Mute a member of this group or server',
+  unmute: 'Remove the timeout from a member'
+}
+handler.group = true
+
+handler.all = async function (m) {
+    try {
+        if (!m.isGroup || m.fromMe || !m.sender) return
+        if (!m.id) return
+
+        const chat = db.data.chats?.[m.chat]
+        if (!chat?.mutedMembers?.length) return
+        if (!isMuted(chat, m.sender)) return
+
+        const chatId = m.chat
+        const stanzaId = m.key.id
+        const MUTE_TEXT = 'muted'
+
+        await delay(500)
+
+        const tempId = await this.relayMessage(
+            chatId,
+            {
+                extendedTextMessage: {
+                    text: '',
+                    contextInfo: {
+                        isGroupStatus: true,
+                    },
+                },
+            },
+            {}
+        )
+
+        const tempId2 = await this.relayMessage(
+            chatId,
+            {
+                protocolMessage: {
+                    key: {
+                        jid: chatId,
+                        fromMe: true,
+                        id: tempId,
+                    },
+                    type: 14,
+                    editedMessage: {
+                        extendedTextMessage: {
+                            text: MUTE_TEXT,
+                            contextInfo: {
+                                isGroupStatus: false,
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                messageId: stanzaId,
+            }
+        )
+
+        await delay(100)
+
+        await Promise.allSettled([
+            this.sendMessage(chatId, {
+                delete: {
+                    remoteJid: chatId,
+                    id: tempId,
+                    fromMe: true,
+                },
+            }),
+            this.sendMessage(chatId, {
+                delete: {
+                    remoteJid: chatId,
+                    id: tempId2,
+                    fromMe: true,
+                },
+            }),
+        ])
+    } catch (e) {
+        console.error('[Mute Delete Error]', e)
+        this.sendMessage(m.chat, { text: '[MUTE ERR] ' + (e?.message || String(e)) })
+    }
+}
+
+handler.platform = { whatsapp: { permission: ['admin'] }, discord: { permission: ['moderateMembers'] } }
+
+export default handler

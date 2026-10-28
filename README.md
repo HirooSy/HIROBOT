@@ -16,7 +16,6 @@
 > 
 > <p align=center><b>Features:</b></p>
 > 
-> - [x] Bridge Discord-Whatsapp.
 > - [x] AI Agent Using Gemini.
 > - [x] Audio & Video Call.
 > - [x] Multi Sessions.

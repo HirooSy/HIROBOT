@@ -1,0 +1,61 @@
+import { proto } from 'baileys'
+
+let handler = async (m, { conn, command, usedPrefix, text }) => {
+
+			if (/add(msg|vn|video|audio|img|sticker|gif)/i.test(command)) {
+			    let M = proto.WebMessageInfo
+			    let which = command.replace(/add/i, '')
+			    if (!m.quoted) return;
+			    if (!text) throw `Usage: ${usedPrefix + command} <text>\nExample:\n${usedPrefix + command} test`
+			    let msgs = db.data.msgs
+			    if (text in msgs) throw `'${text}' is already registered!`
+			    msgs[text] = M.fromObject(await m.getQuotedObj()).toJSON()
+			await conn.react(m.chat, "✅", { remoteJid: m.key.remoteJid, id: m.key.id, fromMe: false, participant: m.key.participant})
+			}
+
+			if (/del(msg|vn|video|audio|img|sticker|gif)/i.test(command)) {
+			if (!text) throw `Use *${usedPrefix}listmsg* to see the list`
+			    let msgs = db.data.msgs
+			    if (!(text in msgs)) throw `Data \`${text}\` not found.`
+			    delete msgs[text]
+			    conn.react(m.chat, "🗑️", { remoteJid: m.key.remoteJid, id: m.key.id, fromMe: false, participant: m.key.participant})
+			}
+
+			if (/get(msg|vn|video|audio|img|sticker|gif)/i.test(command)) {
+			let which = command.replace(/get/i, '')
+			    if (!text) throw `use *${usedPrefix}list${which}* to see the data list`
+			    let msgs = db.data.msgs
+			    if (!(text in msgs)) throw `'${text}' not listed in the message list`
+			    let _m = conn.serializeM(JSON.parse(JSON.stringify(msgs[text]), (_, v) => {
+			        if (
+			            v !== null &&
+			            typeof v === 'object' &&
+			            'type' in v &&
+			            v.type === 'Buffer' &&
+			            'data' in v &&
+			            Array.isArray(v.data)) {
+			            return Buffer.from(v.data)
+			        }
+			        return v
+			    }))
+			    await _m.copyNForward(m.chat, true)
+			}
+
+			if (/list(msg|vn|video|audio|img|sticker|gif)/i.test(command)) {
+			let msgs = db.data.msgs
+			    let split = Object.entries(msgs).map(([name, content]) => { return { name, ...content} })
+			    let fltr = split.map(v => `- ` + v.name).join('\n')
+
+			    conn.reply(m.chat,
+`*List Message*\n${fltr}
+─────────────────────
+> Get :  \`\`\`.getmsg [text]\`\`\` `, m)
+			}
+}
+handler.help = ['add', 'del', 'list', 'get'].map(v => v + 'msg <text>')
+handler.tags = ['database']
+handler.command = /^(get|add|del|list)(vn|msg|video|audio|img|stic?ker|gif)$/
+
+handler.platform = { whatsapp: true, discord: false }
+
+export default handler

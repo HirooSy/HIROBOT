@@ -1,0 +1,56 @@
+const { webp2png } = global.scraper.ezgif
+import { jimp } from '../../lib/utils/canvas.js'
+import { S_WHATSAPP_NET, downloadMediaMessage, areJidsSameUser } from 'baileys'
+import Connection from '../../lib/utils/connection.js'
+
+let handler = async (m, { conn, args }) => {
+  let q = m.quoted || m;
+  let mime = q.mimetype || q.mediaType || '';
+
+  const setProfilePicture = async (imageBuffer) => {
+    return conn.query({
+      tag: 'iq',
+      attrs: { to: S_WHATSAPP_NET, type: 'set', xmlns: 'w:profile:picture' },
+      content: [{ tag: 'picture', attrs: { type: 'image' }, content: imageBuffer }]
+    }).then(m.reply('Success'))
+};
+
+  if (/image/.test(mime)) {
+    let rawBuffer;
+    try {
+      rawBuffer = await q.download();
+    } catch {
+      rawBuffer = await downloadMediaMessage(
+        { key: m.key, message: m.message },
+        'buffer',
+        {},
+        { reuploadRequest: conn.updateMediaMessage }
+      );
+    }
+    let url = /webp/.test(mime) ? await webp2png(rawBuffer) : rawBuffer;
+    let image = await generateProfilePicture(url)
+    await setProfilePicture(image);
+  } else {
+    throw 'Where\'s the media?';
+  }
+};
+
+handler.help = ['setbotpp'];
+handler.command = /^setbotpp$/i;
+handler.ai = { risk: 'low', description: "change bot's profile picture" }
+
+handler.platform = { whatsapp: { permission: ['owner'] }, discord: false }
+
+export default handler;
+
+async function generateProfilePicture(mediaUpload) {
+  const bufferOrFilePath = Buffer.isBuffer(mediaUpload)
+    ? mediaUpload
+    : typeof mediaUpload === 'object' && 'url' in mediaUpload
+    ? mediaUpload.url.toString()
+    : typeof mediaUpload === 'string'
+    ? mediaUpload
+    : Buffer.from(mediaUpload.stream);
+
+  return jimp.resize(bufferOrFilePath, 720, 720, { fit: 'inside', out: 'jpeg' });
+}
