@@ -1,6 +1,6 @@
 import { flowToDiscord, renderGrid } from '../../lib/package/discord/payload.js'
 import fs from 'fs'
-import axios from '../../lib/package/axios.js'
+import axios from 'hiro/axios'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { execFile } from 'child_process'

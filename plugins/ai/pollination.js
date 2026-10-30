@@ -1,4 +1,4 @@
-import axios from '../../lib/package/axios.js';
+import axios from 'hiro/axios';
 
 const POLLINATIONS_URL = 'https://text.pollinations.ai/openai';
 const POLLINATIONS_HEADERS = {

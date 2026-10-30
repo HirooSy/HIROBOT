@@ -2,10 +2,8 @@
 <sub>
 
 ```diff
-• Remove obsolete canvas utility module
-• Refactor scraper and plugin directory structure for modularity
-• Update package dependencies and optimize core handlers
-• Clean up and modernize bot utility modules
+• Refactor and restructure canvas plugin and categories
+• General project refactoring and cleanup of scrapers and utilities for enhanced stability
 
 ________________________
 

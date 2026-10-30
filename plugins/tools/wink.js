@@ -1,4 +1,4 @@
-import axios from '../../lib/package/axios.js'
+import axios from 'hiro/axios'
 import crypto from 'crypto'
 
 const sendOut = (conn, m, payload) => m.platform === 'discord'

@@ -1,4 +1,4 @@
-import axios from '../../lib/package/axios.js'
+import axios from 'hiro/axios'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc'
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`

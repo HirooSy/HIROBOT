@@ -1,4 +1,4 @@
-import axios from '../../lib/package/axios.js';
+import axios from 'hiro/axios';
 import { waToDiscord } from '../../lib/package/discord/text.js';
 import { flowToDiscord } from '../../lib/package/discord/payload.js';
 import { img2pdf } from '../../lib/utils/converter.js';

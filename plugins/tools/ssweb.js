@@ -1,4 +1,4 @@
-import axios from '../../lib/package/axios.js';
+import axios from 'hiro/axios';
 
 let handler = async (m, { conn, text, command, usedPrefix, platform }) => {
   if (!text) return m.reply(`- Input url.\n${usedPrefix + command} <url> -<desktop/phone/tablet>`)

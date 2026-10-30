@@ -1,6 +1,6 @@
 import { getDevice } from 'baileys';
-import axios from '../../lib/package/axios.js';
-import { canvas } from '../../lib/package/canvas.js';
+import axios from 'hiro/axios';
+import { canvas } from 'hiro/canvas';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 

@@ -1,5 +1,5 @@
-import axios from '../../lib/package/axios.js';
-import * as cheerio from '../../lib/package/cheerio.js';
+import axios from 'hiro/axios';
+import * as cheerio from 'hiro/cheerio';
 import * as fs from 'fs';
 
 const { gifToMp4, fixVideoMetadata } = global.scraper.x;

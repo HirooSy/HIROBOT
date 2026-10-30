@@ -1,4 +1,4 @@
-import { default as axios } from '../../lib/package/axios.js';
+import { default as axios } from 'hiro/axios';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';

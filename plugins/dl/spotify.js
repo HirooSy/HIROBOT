@@ -1,4 +1,4 @@
-import axios from "../../lib/package/axios.js";
+import axios from "hiro/axios";
 import { URL_REGEX } from 'baileys';
 
 let handler = async(m, { conn, usedPrefix, command, text, platform }) => {
