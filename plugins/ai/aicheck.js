@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../../lib/package/axios.js';
 
 const HEADERS = {
   'accept': '*/*',

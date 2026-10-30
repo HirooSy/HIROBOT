@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../../lib/package/axios.js'
 
 const BASE_URL = "https://reaction-whatsapp.edgeone.dev"
 const API_KEY = "9J88DPLJ"

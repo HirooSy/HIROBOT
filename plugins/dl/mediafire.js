@@ -1,4 +1,4 @@
-const cheerio = (await import("cheerio"));
+const cheerio = (await import("../../lib/package/cheerio.js"));
 
 const sendOut = (conn, m, payload) => m.platform === 'discord'
     ? conn.discord(m.chat, payload)

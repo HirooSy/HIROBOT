@@ -1,4 +1,4 @@
-import { default as axios } from 'axios';
+import { default as axios } from '../../lib/package/axios.js';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
@@ -7,7 +7,7 @@ import { tmpdir } from 'os';
 import http2 from 'http2';
 import { img2pdf, ZipFile } from '../../lib/utils/converter.js';
 import { waToDiscord } from '../../lib/package/discord/text.js';
-import { flowToDiscord } from '../../lib/package/discord/payload.js';
+import { flowToDiscord, renderGrid, ratingFooter } from '../../lib/package/discord/payload.js';
 
 const e621 = global.scraper.e621;
 
@@ -101,6 +101,7 @@ function mapE621Post(post) {
         url: post.file?.url || null,
         pageUrl: `https://e621.net/posts/${post.id}`,
         previewUrl: post.preview?.url || post.sample?.url || null,
+        sampleUrl: post.sample?.url || null,
         ext: post.file?.ext || 'unknown',
         size: post.file?.size || 0,
         rating: post.rating || '?',
@@ -110,17 +111,19 @@ function mapE621Post(post) {
 }
 
 const PAGE_SIZE = 30;
+const DISCORD_PAGE_SIZE = 25;
+const pageSizeOf = platform => platform === 'discord' ? DISCORD_PAGE_SIZE : PAGE_SIZE;
 
-async function searchTagsAccurate(keywords, page) {
+async function searchTagsAccurate(keywords, page, size = PAGE_SIZE) {
     try {
         const res = await axios.get('https://e621.net/posts.json', {
-            params: { tags: keywords, limit: PAGE_SIZE, page },
+            params: { tags: keywords, limit: size, page },
             headers: e621.getHeaders(),
             timeout: 15000
         });
         const raw = res.data?.posts || [];
         if (!raw.length) return { posts: [], hasNext: false };
-        const hasNext = raw.length >= PAGE_SIZE;
+        const hasNext = raw.length >= size;
         return { posts: raw.map(mapE621Post), hasNext };
     } catch (error) {
         console.error('[e621] tagsSearch error:', error.message);
@@ -395,7 +398,7 @@ async function shrinkIfLarge(result, dir, idx) {
     return result;
 }
 
-async function downloadPreviews(posts, dir) {
+async function downloadPreviews(posts, dir, { shrink = true } = {}) {
     const results = new Array(posts.length).fill(null);
     results.failures = [];
     const failures = results.failures;
@@ -405,7 +408,8 @@ async function downloadPreviews(posts, dir) {
         while (cursor < posts.length) {
             const i = cursor++;
             try {
-                results[i] = await shrinkIfLarge(await savePreview(posts[i], dir, i, fetcher), dir, i);
+                const saved = await savePreview(posts[i], dir, i, fetcher);
+                results[i] = shrink ? await shrinkIfLarge(saved, dir, i) : saved;
             } catch (e) {
                 results[i] = null;
                 failures.push(`#${i + 1}: ${e.response?.status ? 'HTTP ' + e.response.status : (e.message || e)}`);
@@ -501,19 +505,40 @@ async function sendGallery(conn, m, { type, keywords, poolId, label, posts, page
     const caption = `- ${label}\n- *Page:* ${page}\n- *Showing:* ${posts.length}\n\nChoose the number you want to download.`;
     const nativeFlow = [{ text: '\u0000', sections: [{ rows }] }, ...navFlow];
 
+    if (m.platform === 'discord') {
+        const chunks = [{ text: `Select 1-${rows.length}`, sections: [{ rows: rows.slice(0, 25) }] }];
+        const { button, select } = flowToDiscord([...chunks, ...navFlow]);
+        const discordDir = fs.mkdtempSync(path.join(tmpdir(), 'e621_'));
+        try {
+            const previews = await downloadPreviews(posts, discordDir, { shrink: false });
+            const cells = posts.map((post, i) => {
+                const ext = (post.ext || '').toLowerCase();
+                return {
+                    number: i + 1,
+                    src: previews[i] ? localImgSrc(previews[i]) : null,
+                    empty: (post.ext || '?').toUpperCase(),
+                    tag: LABELED_EXTS.includes(ext) ? ext.toUpperCase() : '',
+                    footer: ratingFooter(post.rating, post.favCount)
+                };
+            });
+            const image = await renderGrid(cells, { columns: 5, cell: 180 });
+            await conn.discord(m.chat, {
+                image,
+                fileName: 'e621.jpg',
+                text: waToDiscord(caption),
+                button,
+                select
+            });
+        } finally {
+            fs.rmSync(discordDir, { recursive: true, force: true });
+        }
+        return;
+    }
+
     const dir = fs.mkdtempSync(path.join(tmpdir(), 'e621_'));
     try {
         const previews = await downloadPreviews(posts, dir);
         const okCount = previews.filter(Boolean).length;
-
-        if (m.platform === 'discord') {
-            await conn.discord(m.chat, {
-                text: waToDiscord(caption),
-                image: previews.filter(Boolean).slice(0, 4),
-                ...flowToDiscord(nativeFlow)
-            });
-            return;
-        }
 
         try {
             const html = buildPreviewHtml(posts, previews);
@@ -571,13 +596,13 @@ let handler = async (m, { conn, text, command, platform }) => {
 
             let posts, hasNext, label;
             if (state.type === 'pool') {
-                const poolPage = await e621.getPoolPage(state.poolId, targetPage);
+                const poolPage = await e621.getPoolPage(state.poolId, targetPage, pageSizeOf(platform));
                 if (!poolPage || !poolPage.posts.length) return m.reply(`No posts on page ${targetPage}.`);
                 posts = poolPage.posts;
                 hasNext = poolPage.totalPages > targetPage;
                 label = `*Pool:* ${poolPage.name}`;
             } else {
-                const { posts: fetchedPosts, hasNext: fetchedHasNext } = await searchTagsAccurate(state.keywords, targetPage);
+                const { posts: fetchedPosts, hasNext: fetchedHasNext } = await searchTagsAccurate(state.keywords, targetPage, pageSizeOf(platform));
                 if (!fetchedPosts.length) return m.reply(`No results on page ${targetPage}.`);
                 posts = fetchedPosts;
                 hasNext = fetchedHasNext;
@@ -644,7 +669,7 @@ let handler = async (m, { conn, text, command, platform }) => {
             const poolId = poolMatch[1];
             const page = 1;
 
-            const poolPage = await e621.getPoolPage(poolId, page);
+            const poolPage = await e621.getPoolPage(poolId, page, pageSizeOf(platform));
             if (!poolPage) return m.reply('Pool not found or invalid URL.');
             if (!poolPage.posts.length) return m.reply('This pool has no posts.');
 
@@ -680,7 +705,7 @@ let handler = async (m, { conn, text, command, platform }) => {
             page = Math.max(1, parseInt(pageMatch[2]));
         }
 
-        const { posts, hasNext } = await searchTagsAccurate(keywords, page);
+        const { posts, hasNext } = await searchTagsAccurate(keywords, page, pageSizeOf(platform));
         if (!posts.length) return m.reply(`No results found${page > 1 ? ` on page ${page}` : ''}.`);
 
         await sendGallery(conn, m, {

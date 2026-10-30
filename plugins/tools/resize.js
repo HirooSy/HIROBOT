@@ -1,5 +1,5 @@
-import { jimp } from '../../lib/utils/canvas.js';
-import axios from 'axios';
+import { jimp } from '../../lib/package/canvas.js';
+import axios from '../../lib/package/axios.js';
 import Helper from '../../lib/utils/helper.js';
 const { fileTypeFromBuffer } = Helper;
 

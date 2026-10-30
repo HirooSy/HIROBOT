@@ -1,3 +1,73 @@
+<h3>31/October/2026</h3>
+<sub>
+
+```diff
+• Remove obsolete canvas utility module
+• Refactor scraper and plugin directory structure for modularity
+• Update package dependencies and optimize core handlers
+• Clean up and modernize bot utility modules
+
+________________________
+
++ Add "lib/package/axios.js"
++ Add "lib/package/canvas.js"
++ Add "lib/package/cheerio.js"
+- Delete "lib/utils/canvas.js"
+* Edit "lib/package/ai/platform.js"
+* Edit "lib/package/ai/tools/plugin.js"
+* Edit "lib/package/discord/payload.js"
+* Edit "lib/package/voip/index.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/scrapers/src/ai-image.js"
+* Edit "lib/scrapers/src/animein.js"
+* Edit "lib/scrapers/src/apkpure.js"
+* Edit "lib/scrapers/src/brat.js"
+* Edit "lib/scrapers/src/e621.js"
+* Edit "lib/scrapers/src/ezgif.js"
+* Edit "lib/scrapers/src/facebook.js"
+* Edit "lib/scrapers/src/ig.js"
+* Edit "lib/scrapers/src/nano.js"
+* Edit "lib/scrapers/src/pinterest.js"
+* Edit "lib/scrapers/src/tiktok.js"
+* Edit "lib/scrapers/src/x.js"
+* Edit "lib/scrapers/src/ytsearch.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/converter.js"
+* Edit "lib/utils/database.js"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/ai/aicheck.js"
+* Edit "plugins/ai/bing.js"
+* Edit "plugins/ai/gpt.js"
+* Edit "plugins/ai/notrack.js"
+* Edit "plugins/ai/pollination.js"
+* Edit "plugins/dl/drive.js"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/dl/mediafire.js"
+* Edit "plugins/dl/pinterest.js"
+* Edit "plugins/dl/pornhub.js"
+* Edit "plugins/dl/reddit.js"
+* Edit "plugins/dl/shinigami.js"
+* Edit "plugins/dl/spotify.js"
+* Edit "plugins/dl/yt.js"
+* Edit "plugins/group/role.js"
+* Edit "plugins/main/profile.js"
+* Edit "plugins/owner/files.js"
+* Edit "plugins/owner/setpp.js"
+* Edit "plugins/sticker/telegram.js"
+* Edit "plugins/tools/alightmotion.js"
+* Edit "plugins/tools/fetch.js"
+* Edit "plugins/tools/hd.js"
+* Edit "plugins/tools/iloveimg.js"
+* Edit "plugins/tools/reaction.js"
+* Edit "plugins/tools/removebg.js"
+* Edit "plugins/tools/resize.js"
+* Edit "plugins/tools/ssweb.js"
+* Edit "plugins/tools/wink.js"
+```
+</sub>
+
 <h3>29/October/2026</h3>
 <sub>
 
@@ -227,33 +297,3 @@ ________________________
 + Add "plugins/sticker/stickerly.js"
 ```
 </sub>
-
-<h3>14/October/2026</h3>
-<sub>
-
-```diff
-• Refactor reload system to include syntax checking before restart and improved library debouncing
-• Enhance GeminiGuest streaming with robust JSON parsing and improved error handling for quota/auth issues
-• Add image generation support via GeminiGuest and update scraper structures
-• Improve hot-reload efficiency by excluding scraper source directories and adding better watcher management
-• Refactor database engine with complex adapter system (MongoDB, SQL) and auto-compaction
-• Update bot startup and connection routines for stability
-________________________
-
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/ai/tools/media.js"
-* Edit "lib/package/ai/tools/web.js"
-* Edit "lib/scrapers/index.js"
-* Edit "lib/scrapers/src/ai-image.js"
-* Edit "lib/start.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/utils/reload.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-+ Add "plugins/tools/stabilize.js"
-```
-</sub>
-

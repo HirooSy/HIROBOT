@@ -1,8 +1,6 @@
 const { search: yts } = global.scraper.ytsearch
 const { ytdl } = global.scraper.ytdl
 
-const DISCORD_LIMIT = 24 * 1024 * 1024
-
 function isLink(text) {
     return String(text || '').match(/https?:\/\/\S+/gi)
 }
@@ -42,7 +40,7 @@ let handler = async (m, { conn, usedPrefix, text, command, platform }) => {
         const data = await ytdl(isAudio ? 'audio' : 'video', links[0])
         const filename = isAudio ? 'YouTube.mp3' : 'YouTube.mp4'
         if (platform === 'discord') {
-            if (data.buffer.length > DISCORD_LIMIT) return m.reply('The file is too large to upload on Discord.')
+            if (data.buffer.length > 24 * 1024 * 1024) return m.reply('The file is too large to upload on Discord.')
             return conn.discord(m.chat, { [isAudio ? 'audio' : 'video']: data.buffer, fileName: filename })
         }
         await conn.sendMessage(m.chat, {

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../../lib/package/axios.js';
 import { format } from 'util';
 
 let handler = async (m, { conn, text, platform }) => {

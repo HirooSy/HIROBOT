@@ -8,12 +8,14 @@ const _fs = fs.promises
 const exec = promisify(_exec).bind(cp)
 
 const pluginNames = () =>
-  Object.keys(plugins).map(v => v.replace(/^plugins\/whatsapp\//, '').replace(/\.js$/, ''))
+  Object.keys(plugins).map(v => v.replace(/^plugins\//, '').replace(/\.js$/, ''))
 
 const listPluginsGrouped = () => {
   let grouped = {}
   for (let name of pluginNames()) {
-    let [category, pluginName] = name.includes('/') ? name.split('/') : ['general', name]
+    let parts = name.split('/')
+    let category = parts.length > 1 ? parts[0] : 'general'
+    let pluginName = parts.length > 1 ? parts.slice(1).join('/') : parts[0]
     if (!grouped[category]) grouped[category] = []
     grouped[category].push(pluginName)
   }

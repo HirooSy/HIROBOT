@@ -1,5 +1,5 @@
 const { webp2png } = global.scraper.ezgif
-import { jimp } from '../../lib/utils/canvas.js'
+import { jimp } from '../../lib/package/canvas.js'
 import { S_WHATSAPP_NET, downloadMediaMessage, areJidsSameUser } from 'baileys'
 import Connection from '../../lib/utils/connection.js'
 

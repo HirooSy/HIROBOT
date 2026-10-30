@@ -1,6 +1,6 @@
-import { flowToDiscord } from '../../lib/package/discord/payload.js'
+import { flowToDiscord, renderGrid } from '../../lib/package/discord/payload.js'
 import fs from 'fs'
-import axios from 'axios'
+import axios from '../../lib/package/axios.js'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { execFile } from 'child_process'
@@ -391,7 +391,7 @@ let handler = async (m, { conn, args: rawArgs, text, command, platform }) => {
 
   const totalResult = filteredPins.length
 
-  const maxResults = 30
+  const maxResults = platform === 'discord' ? 25 : 30
 
   const shuffled = filteredPins
     .sort(() => Math.random() - 0.5)
@@ -415,6 +415,8 @@ let handler = async (m, { conn, args: rawArgs, text, command, platform }) => {
   }
 
   if (!items.length) throw `No ${mode} results found for: *${query}*`
+
+  if (platform === 'discord') items.splice(25)
 
   await m.react('⏳')
 
@@ -442,10 +444,18 @@ let handler = async (m, { conn, args: rawArgs, text, command, platform }) => {
     const caption = `- *Query:* ${query}\n- Mode: ${modeLabel[mode] || 'All'}\n- Result: ${totalResult}\n- Showing: ${readyItems.length}\n\nChoose the number you want to download.`
 
     if (platform === 'discord') {
+      const chunks = [{ text: 'Select', sections: [{ rows: rows.slice(0, 25) }] }]
+      const cells = readyItems.map((item, i) => ({
+        number: i + 1,
+        src: localImgSrc(item.localPath),
+        tag: item.type === 'image' ? '' : (typeLabel[item.type] || '').toUpperCase()
+      }))
+      const image = await renderGrid(cells, { columns: 5, cell: 200 })
       await conn.discord(m.chat, {
+        image,
+        fileName: 'pinterest.jpg',
         text: caption.replace(/\*([^*\n]+)\*/g, '**$1**'),
-        image: readyItems.slice(0, 4).map(item => item.localPath),
-        ...flowToDiscord([{ text: 'Select', sections: [{ rows }] }])
+        ...flowToDiscord(chunks)
       })
       await m.react('✅')
       return

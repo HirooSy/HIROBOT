@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../../lib/package/axios.js'
 import { randomBytes, randomInt } from 'crypto'
 
 const KEY = 'AIzaSyDtG1AU22ErnQD60AzBAcaknySiz9_CEq0'

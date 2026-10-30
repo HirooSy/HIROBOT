@@ -18,7 +18,7 @@ let handler = async (m, { conn, text, usedPrefix, command, platform }) => {
         if (!urls?.length) throw new Error('No image was returned by Bing.')
 
         if (platform === 'discord') {
-            await conn.discord(m.chat, { image: urls, text: prompt })
+            await conn.discord(m.chat, { gallery: { text: prompt, images: urls } })
             await m.react('✅')
             return
         }

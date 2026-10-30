@@ -1,5 +1,3 @@
-const READ_ONLY = ['roles', 'roleinfo']
-
 function listOf(list) {
   const text = list.map(role => `<@&${role.id}>`).join(' ')
   return text.length > 3900 ? `${text.slice(0, 3900)}…` : text
@@ -322,7 +320,7 @@ handler.help = [
 
 handler.platform = {
   whatsapp: false,
-  discord: { permission: (args, name) => (READ_ONLY.includes(name) ? null : ['manageRoles']) }
+  discord: { permission: (args, name) => (['roles', 'roleinfo'].includes(name) ? null : ['manageRoles']) }
 }
 
 export default handler

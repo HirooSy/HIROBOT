@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../../lib/package/axios.js'
 
 const sendOut = (conn, m, payload) => m.platform === 'discord'
     ? conn.discord(m.chat, payload)

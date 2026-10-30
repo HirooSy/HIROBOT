@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../../lib/package/axios.js';
 import crypto from 'crypto';
 
 const HOTBOT_URL = 'https://www.hotbot.com/api/chat';
