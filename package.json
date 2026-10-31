@@ -15,7 +15,8 @@
         "./voip": "./lib/package/voip/index.js",
         "./canvas": "./lib/package/canvas.js",
         "./axios": "./lib/package/axios.js",
-        "./cheerio": "./lib/package/cheerio.js"
+        "./cheerio": "./lib/package/cheerio.js",
+        "./chrome": "./lib/package/chrome/index.js"
     },
     "dependencies": {
         "baileys": "npm:@hiroosy/baileys-lite@^0.3.5"

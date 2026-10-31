@@ -1,7 +1,7 @@
 import axios from 'hiro/axios'
 
 const BASE_URL = "https://reaction-whatsapp.edgeone.dev"
-const API_KEY = "9J88DPLJ"
+const API_KEY = "A87NVHMT"
 
 const handler = async (m, { args }) => {
   const [link, emoji] = args

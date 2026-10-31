@@ -1,3 +1,39 @@
+<h3>01/November/2026</h3>
+<sub>
+
+```diff
+• Add pure JS Chrome/Playwright browser automation module package
+• Add sticker reaction support and payload handling to react helper methods
+• Add username resolution fallback to LID-to-number mapping resolution
+
+________________________
+
++ Add "lib/package/chrome/browser.js"
++ Add "lib/package/chrome/challenge.js"
++ Add "lib/package/chrome/context.js"
++ Add "lib/package/chrome/dom.js"
++ Add "lib/package/chrome/engine/"
++ Add "lib/package/chrome/errors.js"
++ Add "lib/package/chrome/index.js"
++ Add "lib/package/chrome/input.js"
++ Add "lib/package/chrome/launcher.js"
++ Add "lib/package/chrome/locator.js"
++ Add "lib/package/chrome/messages.js"
++ Add "lib/package/chrome/network.js"
++ Add "lib/package/chrome/page.js"
++ Add "lib/package/chrome/recaptcha.js"
++ Add "lib/package/chrome/solver.js"
++ Add "lib/package/chrome/stealth.js"
++ Add "lib/package/chrome/transport.js"
++ Add "lib/package/chrome/util.js"
+* Edit "README.md"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/tools/reaction.js"
+```
+</sub>
+
 <h3>31/October/2026</h3>
 <sub>
 
@@ -174,7 +210,6 @@ ________________________
 * Edit "lib/package/ai/prompt.txt"
 * Edit "lib/package/ai/tools/messaging.js"
 * Edit "lib/scrapers/src/ai-image.js"
-* Edit "lib/scrapers/src/brat.js"
 * Edit "lib/scrapers/src/nano.js"
 * Edit "lib/scrapers/src/pinterest.js"
 * Edit "lib/scrapers/src/tiktok.js"
@@ -275,23 +310,5 @@ ________________________
 * Edit "plugins/main/menu.js"
 * Edit "plugins/main/profile.js"
 + Add "plugins/main/owner.js"
-```
-</sub>
-
-<h3>15/October/2026</h3>
-<sub>
-
-```diff
-• Implement upload fallback from Savedly to local server in upload scraper
-• Update upload plugin to incorporate fallback mechanism and improved status handling
-• Add Sticker.ly scraper for search and fetching sticker packs
-• Add Stickerly plugin to search and download sticker packs
-
-________________________
-
-* Edit "lib/scrapers/src/upload.js"
-* Edit "plugins/tools/upload.js"
-+ Add "lib/scrapers/src/stickerly.js"
-+ Add "plugins/sticker/stickerly.js"
 ```
 </sub>

@@ -438,6 +438,7 @@ conn.sendContact(m.chat, [
 ], m)
 
 conn.react(m.chat, '👍', m.key)
+conn.react(m.chat, { sticker: buffer }, m.key)
 ```
 </sub></details>
 
