@@ -36,11 +36,15 @@ HIROBOT
 ├── 📁lib
 │   ├── 📁package
 │   │   ├── 📁ai
+│   │   ├── 📁chrome
 │   │   ├── 📁discord
 │   │   ├── 📁voip           # Call
-│   │   └── 📁website
-│   │       ├── 📁views      # HTML folder
-│   │       └── 📄server.js
+│   │   ├── 📁website
+│   │   │   ├── 📁views      # HTML folder
+│   │   │   └── 📄server.js
+│   │   ├── 📄axios.js
+│   │   ├── 📄cheerio.js
+│   │   └── 📄canvas.js
 │   ├── 📁scrapers
 │   ├── 📁utils
 │   ├── 📄config.js        # bot's preference
