@@ -1,47 +1,76 @@
-import axios from 'hiro/axios';
-import * as cheerio from 'hiro/cheerio';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
+import axios from 'hiro/axios'
+import * as cheerio from 'hiro/cheerio'
+import * as fs from 'fs'
+import * as path from 'path'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 
-const execFileAsync = promisify(execFile);
-const FFMPEG_PATH = '/usr/bin/ffmpeg';
-
-const TMP_DIR = path.join(process.cwd(), 'data/tmp');
+const execFileAsync = promisify(execFile)
+const FFMPEG_PATH = '/usr/bin/ffmpeg'
+const TMP_DIR = path.join(process.cwd(), 'data/tmp')
 
 const PH_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Language': 'en-US,en;q=0.9',
     'Referer': 'https://www.pornhub.com',
-};
+    'Cookie': 'accessAgeDisclaimerPH=2; accessPH=1; cookieConsent=1; platform=pc'
+}
 
-function ensureTmp() {
-    try {
-        if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
-        fs.accessSync(TMP_DIR, fs.constants.W_OK);
-        return TMP_DIR;
-    } catch {
-        return '/tmp';
+if (!global.phSessions) global.phSessions = {}
+if (!global.phSearchState) global.phSearchState = {}
+
+const SESSION_TTL = 20 * 60 * 1000
+
+function cleanSessions() {
+    const now = Date.now()
+    for (const k of Object.keys(global.phSessions)) {
+        if (now - global.phSessions[k].ts > SESSION_TTL) delete global.phSessions[k]
+    }
+    for (const k of Object.keys(global.phSearchState)) {
+        if (now - global.phSearchState[k].ts > SESSION_TTL) delete global.phSearchState[k]
     }
 }
 
-async function hlsToMp4(m3u8Url) {
-    const tmpDir = ensureTmp();
+function mkToken(sender) {
+    return `${(sender || '').split('@')[0]}_${Date.now().toString(36)}`
+}
 
+function ensureTmp() {
+    try {
+        if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true })
+        fs.accessSync(TMP_DIR, fs.constants.W_OK)
+        return TMP_DIR
+    } catch {
+        return '/tmp'
+    }
+}
+
+const FFMPEG_TIMEOUT_MS = 10 * 60 * 1000
+const STALE_TMP_MS = 30 * 60 * 1000
+
+async function hlsToMp4(m3u8Url) {
+    const tmpDir = ensureTmp()
     try {
         fs.readdirSync(tmpDir)
             .filter(f => f.startsWith('ph_tmp_'))
-            .forEach(f => { try { fs.unlinkSync(path.join(tmpDir, f)); } catch {} });
+            .forEach(f => {
+                try {
+                    const file = path.join(tmpDir, f)
+                    if (Date.now() - fs.statSync(file).mtimeMs > STALE_TMP_MS) fs.unlinkSync(file)
+                } catch {}
+            })
     } catch {}
 
-    const ts = Date.now();
-    const tmpOutput = path.join(tmpDir, `ph_tmp_${ts}.mp4`);
+    const ts = Date.now()
+    const out = path.join(tmpDir, `ph_tmp_${ts}.mp4`)
 
     try {
-        const args = [
+        await execFileAsync(FFMPEG_PATH, [
             '-y',
+            '-nostdin',
+            '-nostats',
+            '-loglevel', 'error',
             '-allowed_extensions', 'ALL',
             '-protocol_whitelist', 'file,http,https,tcp,tls,crypto',
             '-headers', `User-Agent: ${PH_HEADERS['User-Agent']}\r\nReferer: https://www.pornhub.com\r\n`,
@@ -50,240 +79,311 @@ async function hlsToMp4(m3u8Url) {
             '-movflags', 'faststart',
             '-bsf:a', 'aac_adtstoasc',
             '-f', 'mp4',
-            tmpOutput
-        ];
-        console.log('[ph ffmpeg]', FFMPEG_PATH, args.join(' '));
-        await execFileAsync(FFMPEG_PATH, args);
-        console.log('[ph ffmpeg] done:', tmpOutput);
-    } catch (err) {
-        console.error('[ph ffmpeg stderr]', err.stderr);
-        throw new Error(`ffmpeg: ${err.message}\n${err.stderr || ''}`);
+            out
+        ], { timeout: FFMPEG_TIMEOUT_MS, killSignal: 'SIGKILL', maxBuffer: 4 * 1024 * 1024 })
+    } catch (e) {
+        try { fs.unlinkSync(out) } catch {}
+        throw e
     }
 
-    if (!fs.existsSync(tmpOutput) || fs.statSync(tmpOutput).size === 0)
-        throw new Error('Remux failed — output empty.');
-
-    return tmpOutput;
+    if (!fs.existsSync(out) || fs.statSync(out).size === 0) {
+        try { fs.unlinkSync(out) } catch {}
+        throw new Error('Remux failed — output empty.')
+    }
+    return out
 }
 
-
 function extractViewkey(url) {
-    const qMatch = url.match(/[?&]viewkey=([a-zA-Z0-9]+)/);
-    if (qMatch) return qMatch[1];
-    const pathMatch = url.match(/\/video\/([a-zA-Z0-9]+)/);
-    if (pathMatch) return pathMatch[1];
-    return null;
+    return (url.match(/[?&]viewkey=([a-zA-Z0-9]+)/) || url.match(/\/video\/([a-zA-Z0-9]+)/))?.[1] ?? null
 }
 
 async function scrapePornhub(url) {
-    const viewkey = extractViewkey(url);
-    if (!viewkey) throw new Error('Could not extract viewkey from URL.');
+    const viewkey = extractViewkey(url)
+    if (!viewkey) throw new Error('Could not extract viewkey from URL.')
 
-    const canonicalUrl = `https://www.pornhub.com/view_video.php?viewkey=${viewkey}`;
-    const response = await axios.get(canonicalUrl, { headers: PH_HEADERS, timeout: 20000 });
-    const $ = cheerio.load(response.data);
+    const res = await axios.get(`https://www.pornhub.com/view_video.php?viewkey=${viewkey}`, {
+        headers: PH_HEADERS, timeout: 20000
+    })
+    const $ = cheerio.load(res.data)
 
     const title = $('title').text().replace(/\s*[-–]\s*Pornhub\.com\s*$/i, '').trim()
         || $('meta[property="og:title"]').attr('content')?.trim()
-        || 'Unknown Title';
-
-    const thumbnail = $('meta[property="og:image"]').attr('content') || null;
-
+        || 'Unknown Title'
+    const thumbnail = $('meta[property="og:image"]').attr('content') || null
     const uploader = $('.usernameBadgesWrapper a').first().text().trim()
         || $('a.bolded').first().text().trim()
-        || 'Unknown';
+        || 'Unknown'
 
-    let flashvars = null;
+    let flashvars = null
     $('script').each(function () {
-        if (flashvars) return;
-        const raw = $(this).html() || '';
-        if (!raw.includes('mediaDefinitions')) return;
-        const m = raw.match(/var\s+flashvars_\d+\s*=\s*(\{[\s\S]*?\})\s*;/);
-        if (!m) return;
-        try {
-            flashvars = JSON.parse(m[1]);
-        } catch {
+        if (flashvars) return
+        const raw = $(this).html() || ''
+        if (!raw.includes('mediaDefinitions')) return
+        const m = raw.match(/var\s+flashvars_\d+\s*=\s*(\{[\s\S]*?\})\s*;/)
+        if (!m) return
+        try { flashvars = JSON.parse(m[1]) } catch {
             try {
-                const start = raw.indexOf('{', raw.indexOf('flashvars_'));
-                const end = raw.lastIndexOf('}', raw.indexOf(';\n', start)) + 1;
-                flashvars = JSON.parse(raw.slice(start, end));
+                const start = raw.indexOf('{', raw.indexOf('flashvars_'))
+                const end = raw.lastIndexOf('}', raw.indexOf(';\n', start)) + 1
+                flashvars = JSON.parse(raw.slice(start, end))
             } catch {}
         }
-    });
+    })
 
-    if (!flashvars) throw new Error('Could not locate flashvars. Video may be age-gated or geo-blocked.');
+    if (!flashvars) throw new Error('Could not locate flashvars. Video may be age-gated or premium-only.')
 
-    const mediaDefinitions = flashvars.mediaDefinitions || [];
-    const videoUrls = [];
-
-    for (const def of mediaDefinitions) {
-        if (!def.videoUrl) continue;
-        if (def.format === 'mp4') {
-            videoUrls.push({
-                type: 'MP4',
-                quality: def.quality ? `${def.quality}p` : 'Default',
-                link: [def.videoUrl],
-            });
-        } else if (def.format === 'hls') {
-            videoUrls.push({
-                type: 'HLS',
-                quality: def.quality ? `${def.quality}p` : 'Auto',
-                link: [def.videoUrl],
-            });
-        }
+    const videoUrls = []
+    for (const def of (flashvars.mediaDefinitions || [])) {
+        if (!def.videoUrl) continue
+        const q = String(def.quality ?? '').trim()
+        if (def.format === 'mp4' && /\d/.test(q)) videoUrls.push({ type: 'MP4', quality: `${q}p`, link: [def.videoUrl] })
+        else if (def.format === 'hls') videoUrls.push({ type: 'HLS', quality: q ? `${q}p` : 'Auto', link: [def.videoUrl] })
     }
 
     videoUrls.sort((a, b) => {
-        if (a.type === 'JPG') return 1;
-        if (b.type === 'JPG') return -1;
-        if (a.type === 'HLS' && b.type !== 'HLS') return 1;
-        if (b.type === 'HLS' && a.type !== 'HLS') return -1;
-        return (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0);
-    });
+        if (a.type === 'JPG') return 1
+        if (b.type === 'JPG') return -1
+        if (a.type === 'HLS' && b.type !== 'HLS') return 1
+        if (b.type === 'HLS' && a.type !== 'HLS') return -1
+        return (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0)
+    })
 
-    if (videoUrls.length === 0) throw new Error('No downloadable media found — video may be premium-only.');
+    if (!videoUrls.length) throw new Error('No downloadable media found — video may be premium-only.')
+    if (thumbnail) videoUrls.push({ type: 'JPG', quality: 'Thumbnail', link: [thumbnail] })
 
-    if (thumbnail) videoUrls.push({ type: 'JPG', quality: 'Thumbnail', link: [thumbnail] });
-
-    return { title, uploader, thumbnail, videoUrls };
+    return { title, uploader, thumbnail, videoUrls }
 }
 
+async function searchPornhub(query, page = 1) {
+    const res = await axios.get('https://www.pornhub.com/video/search', {
+        params: { search: query, page },
+        headers: PH_HEADERS,
+        timeout: 20000
+    })
+    const $ = cheerio.load(res.data)
+    const results = []
+
+    $('li.pcVideoListItem').each(function () {
+        const $item = $(this)
+        const $link = $item.find('a.linkVideoThumb').first()
+        const href = $link.attr('href')
+        if (!href) return
+        const videoUrl = href.startsWith('http') ? href : `https://www.pornhub.com${href}`
+        const viewkey = extractViewkey(videoUrl)
+        if (!viewkey) return
+
+        results.push({
+            viewkey,
+            url: `https://www.pornhub.com/view_video.php?viewkey=${viewkey}`,
+            title: ($item.find('span.title').text() || $item.find('.videoTitle').text() || $link.attr('title') || 'Unknown').trim(),
+            duration: ($item.find('var.duration').text() || $item.find('.videoDuration').text()).trim(),
+            views: $item.find('.views var').text().trim()
+        })
+    })
+
+    const hasNext = results.length >= 32 || $('a.page_next').length > 0 || $('[aria-label="next"]').length > 0
+    return { results, hasNext }
+}
 
 const sendFileOut = (conn, m, url, name, caption) => m.platform === 'discord'
     ? conn.discord(m.chat, { [/\.(jpe?g|png|webp)$/i.test(name) ? 'image' : 'video']: url, fileName: name, text: caption.replace(/\*([^*\n]+)\*/g, '**$1**') })
-    : conn.sendFile(m.chat, url, name, caption, m);
+    : conn.sendFile(m.chat, url, name, caption, m)
 
-async function deliver(conn, m, session, index) {
-    const links = session.allLinks[index];
-    const type = session.types[index];
-    const cap = `*${session.title}*`;
+async function deliverFormat(conn, m, session, index) {
+    const links = session.allLinks[index]
+    const type = session.types[index]
+    const cap = `*${session.title}*`
 
     for (const url of links) {
         if (type === 'JPG') {
-            await sendFileOut(conn, m, url, 'thumbnail.jpg', cap);
+            await sendFileOut(conn, m, url, 'thumbnail.jpg', cap)
         } else if (type === 'HLS') {
-            let tmpPath = null;
+            let tmp = null
             try {
-                tmpPath = await hlsToMp4(url);
-                await sendFileOut(conn, m, tmpPath, 'video.mp4', cap);
+                tmp = await hlsToMp4(url)
+                await sendFileOut(conn, m, tmp, 'video.mp4', cap)
             } catch (e) {
-                console.error('[ph HLS send error]', e);
-                await m.reply(`⚠️ Send failed: ${e.message}`);
+                await m.reply(`Send failed: ${e.message}`)
                 m.error = e
             } finally {
-                if (tmpPath) try { fs.unlinkSync(tmpPath); } catch {}
+                if (tmp) try { fs.unlinkSync(tmp) } catch {}
             }
         } else {
-            await sendFileOut(conn, m, url, 'video.mp4', cap);
+            await sendFileOut(conn, m, url, 'video.mp4', cap)
         }
     }
 }
 
-let handler = async (m, { conn, text, usedPrefix, command, platform }) => {
-    if (platform === 'discord') {
-        const pick = String(text || '').trim().match(/^pick\s+(\w+)\s+(\d+)$/i);
-        if (pick) {
-            const session = global.phSessions?.[pick[1]];
-            if (!session) return m.reply('This menu has expired, please run the command again.');
-            await m.react('⬇️');
-            try {
-                await deliver(conn, m, session, Number(pick[2]));
-            } catch (e) {
-                await m.reply(`⚠️ Error: ${e.message}`);
-            }
-            return;
-        }
-    }
-
-    const links = isLink(text);
-    if (!text || !links) {
-        return m.reply(`Please send a Pornhub video link.\n> Example: ${usedPrefix + command} https://www.pornhub.com/view_video.php?viewkey=XXXX`);
-    }
-
-    const input = links[0];
-    conn.pornhub = conn.pornhub || {};
-
-    let data;
-    try {
-        await m.react('⏳')
-        data = await scrapePornhub(input);
-    } catch (e) {
-        m.error = e
-        return m.reply(`⚠️ Failed: ${e.message}`);
-    }
-
-    if (platform === 'discord') {
-        const token = Math.random().toString(36).slice(2, 10);
-        global.phSessions = global.phSessions || {};
-        global.phSessions[token] = { title: data.title, allLinks: data.videoUrls.map(v => v.link), types: data.videoUrls.map(v => v.type) };
-        setTimeout(() => { delete global.phSessions[token]; }, 30 * 60 * 1000).unref?.();
-        return conn.discord(m.chat, {
-            text: `**${data.title}**\nUploader: ${data.uploader}\n\nSelect a format.`,
-            select: {
-                placeholder: 'Select a format',
-                options: data.videoUrls.slice(0, 25).map((item, i) => ({ label: `${item.type} — ${item.quality}`.slice(0, 100), action: `ph pick ${token} ${i}` }))
-            }
-        });
-    }
-
-    const menu = data.videoUrls
-        .map((item, i) => `*_${i + 1}. ${item.type} — ${item.quality}_*`)
-        .join('\n');
-
-    await m.reply(`*${data.title}*\nUploader: ${data.uploader}\n──────────────\n\nSelect a format:\n${menu}`);
-
-    conn.pornhub[m.sender] = {
+async function showFormatMenu(conn, m, data, command) {
+    cleanSessions()
+    const token = mkToken(m.sender)
+    global.phSessions[token] = {
         title: data.title,
         allLinks: data.videoUrls.map(v => v.link),
         types: data.videoUrls.map(v => v.type),
-        timeout: setTimeout(() => { delete conn.pornhub[m.sender]; }, 160000),
-    };
-};
-
-handler.before = async (m, { conn }) => {
-    conn.pornhub = conn.pornhub || {};
-    if (!(m.sender in conn.pornhub)) return;
-
-    const session = conn.pornhub[m.sender];
-    const input = m.text?.match(/\d+/g);
-    if (!input) return;
-
-    const index = parseInt(input[0]) - 1;
-
-    if (index < 0 || index >= session.allLinks.length) {
-        return m.reply('Please pick a valid number from the list.');
+        ts: Date.now()
     }
 
+    if (m.platform === 'discord') {
+        return conn.discord(m.chat, {
+            text: `**${data.title}**\nUploader: ${data.uploader}\n\nPilih format:`,
+            select: {
+                placeholder: 'Select format',
+                options: data.videoUrls.slice(0, 25).map((v, i) => ({
+                    label: `${v.type} — ${v.quality}`.slice(0, 100),
+                    action: `${command} phdl ${token} ${i}`
+                }))
+            }
+        })
+    }
+
+    const rows = data.videoUrls.map((v, i) => ({
+        header: `${v.type} — ${v.quality}`,
+        title: '',
+        description: '',
+        id: `.${command} phdl ${token} ${i}`
+    }))
+
+    return conn.sendButton(m.chat, {
+        text: `*${data.title}*\nUploader: ${data.uploader}\n──────────────\nPilih format download:`,
+        footer: 'Pornhub',
+        nativeFlow: [{ text: '\u0000', sections: [{ rows }] }]
+    }, m)
+}
+
+async function showSearchResult(conn, m, query, results, page, hasNext, command) {
+    cleanSessions()
+    const token = mkToken(m.sender)
+    global.phSearchState[token] = { query, results, page, ts: Date.now() }
+
+    if (m.platform === 'discord') {
+        const options = results.slice(0, 25).map((v, i) => ({
+            label: `${v.title.slice(0, 85)}${v.duration ? ` [${v.duration}]` : ''}`,
+            action: `${command} phget ${token} ${i}`
+        }))
+        const buttons = []
+        if (page > 1) buttons.push({ text: '◀ Prev', id: `${command} phpage ${token} ${page - 1}` })
+        if (hasNext) buttons.push({ text: 'Next ▶', id: `${command} phpage ${token} ${page + 1}` })
+        return conn.discord(m.chat, {
+            text: `**Pornhub — "${query}"** (Page ${page})\n${results.length} results found`,
+            select: { placeholder: 'Pilih video', options },
+            button: buttons
+        })
+    }
+
+    const rows = results.slice(0, 10).map((v, i) => ({
+        header: v.title.slice(0, 60),
+        title: [v.duration, v.views].filter(Boolean).join(' · '),
+        description: '',
+        id: `.${command} phget ${token} ${i}`
+    }))
+
+    const navFlow = []
+    if (page > 1) navFlow.push({ text: '◀ Prev', id: `.${command} phpage ${token} ${page - 1}` })
+    if (hasNext) navFlow.push({ text: 'Next ▶', id: `.${command} phpage ${token} ${page + 1}` })
+
+    return conn.sendButton(m.chat, {
+        text: `*Pornhub — "${query}"*\n_Page ${page} · ${results.length} results_`,
+        footer: 'Pornhub Search',
+        nativeFlow: [{ text: '\u0000', sections: [{ rows }] }, ...navFlow]
+    }, m)
+}
+
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+    const input = String(text || '').trim()
+
+    const phdl = input.match(/^phdl\s+(\S+)\s+(\d+)$/)
+    if (phdl) {
+        const session = global.phSessions[phdl[1]]
+        if (!session) return m.reply('Session ini sudah expired, ulangi command.')
+        const index = Number(phdl[2])
+        if (index < 0 || index >= session.allLinks.length) return m.reply('Index tidak valid.')
+        await m.react('⬇️')
+        try {
+            await deliverFormat(conn, m, session, index)
+            await m.react('✅')
+        } catch (e) {
+            await m.react('❌')
+            await m.reply(`Error: ${e.message}`)
+            m.error = e
+        }
+        return
+    }
+
+    const phget = input.match(/^phget\s+(\S+)\s+(\d+)$/)
+    if (phget) {
+        const state = global.phSearchState[phget[1]]
+        if (!state) return m.reply('Search expired, cari ulang.')
+        const item = state.results[Number(phget[2])]
+        if (!item) return m.reply('Item tidak ditemukan.')
+        await m.react('⏳')
+        try {
+            const data = await scrapePornhub(item.url)
+            await showFormatMenu(conn, m, data, command)
+        } catch (e) {
+            await m.reply(`Failed: ${e.message}`)
+            m.error = e
+        }
+        return
+    }
+
+    const phpage = input.match(/^phpage\s+(\S+)\s+(\d+)$/)
+    if (phpage) {
+        const state = global.phSearchState[phpage[1]]
+        if (!state) return m.reply('Search expired, cari ulang.')
+        const page = Number(phpage[2])
+        await m.react('🔍')
+        try {
+            const { results, hasNext } = await searchPornhub(state.query, page)
+            if (!results.length) return m.reply('Tidak ada hasil di halaman ini.')
+            await showSearchResult(conn, m, state.query, results, page, hasNext, command)
+        } catch (e) {
+            await m.reply(`Error: ${e.message}`)
+            m.error = e
+        }
+        return
+    }
+
+    if (isLink(input)) {
+        await m.react('⏳')
+        try {
+            const data = await scrapePornhub(isLink(input)[0])
+            await showFormatMenu(conn, m, data, command)
+        } catch (e) {
+            await m.reply(`Failed: ${e.message}`)
+            m.error = e
+        }
+        return
+    }
+
+    if (!input) return m.reply(`Kirim link atau query pencarian.\nContoh: *${usedPrefix + command} eipril*`)
+
+    await m.react('🔍')
     try {
-        await m.react("⬇️")
-        await deliver(conn, m, session, index);
+        const { results, hasNext } = await searchPornhub(input)
+        if (!results.length) return m.reply(`Tidak ada hasil untuk: *${input}*`)
+        await showSearchResult(conn, m, input, results, 1, hasNext, command)
     } catch (e) {
-        console.error(e);
-        await m.reply(`⚠️ Error: ${e.message}`);
+        await m.reply(`Search failed: ${e.message}`)
         m.error = e
-    } finally {
-        clearTimeout(session.timeout);
-        delete conn.pornhub[m.sender];
     }
-};
+}
 
 handler.help = [
-    ...['ph', 'pornhub'].map(v => v + ' <url>'),
-    { command: 'ph', name: 'text', description: 'Pornhub video URL', type: 'string', required: true }
-];
-handler.tags  = ['adult'];
-handler.command = ['ph', 'pornhub'];
-handler.description = 'Download a video from Pornhub';
-handler.limit = 1;
-handler.level = 1;
-handler.ai = { risk: "low", description: "download p#rnhub post using url" }
-
+    ...['ph', 'pornhub'].map(v => v + ' <url|query>'),
+    { command: 'ph', name: 'text', description: 'Pornhub URL or search query', type: 'string', required: false }
+]
+handler.tags = ['adult']
+handler.command = ['ph', 'pornhub']
+handler.description = 'Download atau cari video dari Pornhub'
+handler.limit = 1
+handler.level = 1
+handler.ai = { risk: 'low', description: 'search or download pornhub video using url or keywords' }
 handler.platform = { whatsapp: true, discord: true }
 
-export default handler;
-
+export default handler
 
 function isLink(text) {
-    if (!text) return null;
-    return text.match(/https?:\/\/\S+/gi);
+    if (!text) return null
+    return text.match(/https?:\/\/\S+/gi)
 }

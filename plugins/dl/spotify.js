@@ -269,6 +269,15 @@ async function ytmSearch(query) {
 const searchCache = new Map();
 const pendingSearches = new Map();
 const SEARCH_CACHE_TTL = 30_000;
+const SEARCH_CACHE_MAX = 200;
+
+function pruneSearchCache() {
+    const now = Date.now();
+    for (const [key, entry] of searchCache) {
+        if (now >= entry.expiresAt) searchCache.delete(key);
+    }
+    while (searchCache.size > SEARCH_CACHE_MAX) searchCache.delete(searchCache.keys().next().value);
+}
 
 async function searchSpotify(query) {
     const normalizedQuery = String(query || "").trim();
@@ -310,6 +319,7 @@ async function searchSpotify(query) {
                 message: results.length ? undefined : 'No results found'
             };
 
+            pruneSearchCache();
             searchCache.set(cacheKey, {
                 result,
                 expiresAt: Date.now() + SEARCH_CACHE_TTL

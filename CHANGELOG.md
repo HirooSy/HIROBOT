@@ -5,6 +5,11 @@
 • Add pure JS Chrome/Playwright browser automation module package
 • Add sticker reaction support and payload handling to react helper methods
 • Add username resolution fallback to LID-to-number mapping resolution
+• Update internal plugin documentation and structure guide
+• Add proxy cache limits and cleanup to website server
+• Refactor brat and converter plugins to use safe execFile with timeout/quiet flags
+• Refactor Pornhub downloader with temp cleanup, improved session management, and safe ffmpeg flags
+• Add search cache pruning limit to Spotify plugin
 
 ________________________
 
@@ -31,6 +36,12 @@ ________________________
 * Edit "lib/utils/simple.js"
 * Edit "package.json"
 * Edit "plugins/tools/reaction.js"
+* Edit "lib/package/ai/tools/plugin.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/scrapers/src/brat.js"
+* Edit "lib/utils/converter.js"
+* Edit "plugins/dl/pornhub.js"
+* Edit "plugins/dl/spotify.js"
 ```
 </sub>
 
@@ -238,7 +249,7 @@ ________________________
 * Edit "plugins/main/menu.js"
 * Edit "plugins/main/profile.js"
 * Edit "plugins/main/speedtest.js"
-* Edit "plugins/sticker/sticker.js"
+* Edit "plugins/sticker/telegram.js"
 * Edit "plugins/tools/alightmotion.js"
 * Edit "plugins/tools/convert.js"
 * Edit "plugins/tools/crm.js"
@@ -278,37 +289,5 @@ ________________________
 * Edit plugins/ai/aicheck.js
 * Edit plugins/ai/notrack.js
 * Edit plugins/dl/x.js
-```
-</sub>
-
-<h3>15/October/2026</h3>
-<sub>
-
-```diff
-• Implement robust path resolution and security checks for AI file operations to prevent arbitrary access outside project root (https://github.com/HirooSy/HIROBOT/pull/6)
-• Refactor connection settings to enable history loading by default
-• Remove channel management plugin
-• Refactor tiered configuration settings to improve capacity tracking
-• Cleanup unused constants and refine error threshold logic in connection main.js
-• Refactor web server infrastructure and routes
-• Remove legacy creator plugin
-• Add new owner contact plugin
-
-________________________
-
-* Edit "lib/config.js"
-* Edit "lib/package/ai/tools/files.js"
-- Delete "plugins/tools/channel.js"
-+ Add "plugins/main/channel.js"
-* Edit "lib/config.js"
-* Edit "lib/main.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/simple.js"
-- Delete "plugins/main/creator.js"
-* Edit "plugins/main/menu.js"
-* Edit "plugins/main/profile.js"
-+ Add "plugins/main/owner.js"
 ```
 </sub>
