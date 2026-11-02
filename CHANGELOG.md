@@ -1,3 +1,23 @@
+<h3>03/November/2026</h3>
+<sub>
+
+```diff
+• Add status broadcast plugin for uploading photos, videos, and text directly to WhatsApp status
+• Add subbot API endpoints and control panel UI for custom prefix and menu settings management
+• Enhance subbot menu handler to support custom menu templates and placeholder replacements
+
+________________________
+
++ Add "plugins/owner/sw.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/package/website/views/profile.html"
+* Edit "lib/package/website/views/style.css"
+* Edit "plugins/main/menu.js"
+* Edit "plugins/owner/setpp.js"
+* Edit "plugins/subbot/connect.js"
+```
+</sub>
+
 <h3>02/November/2026</h3>
 <sub>
 
@@ -293,36 +313,5 @@ ________________________
 * Edit "plugins/tools/hd.js"
 * Edit "plugins/tools/reaction.js"
 * Edit "plugins/tools/wink.js"
-```
-</sub>
-
-<h3>16/October/2026</h3>
-<sub>
-
-```diff
-• Fix Native SQL bloated issue (please update baileys version)
-• Fix Gemini guest's (keyless version) tool vision to video/audio
-• Add auto update baileys version in main.js
-• Some minor changes 
-• Add ability to AI to react facebook contents
-________________________
-
-* Edit lib/main.js
-* Edit lib/package/ai/mcp.js
-* Edit lib/package/ai/prompt.txt
-* Edit lib/package/ai/tools/files.js
-* Edit lib/package/ai/tools/group.js
-* Edit lib/package/ai/tools/media.js
-* Edit lib/package/ai/tools/messaging.js
-* Edit lib/package/ai/tools/plugin.js
-* Edit lib/package/ai/tools/reminder.js
-* Edit lib/package/ai/tools/system.js
-* Edit lib/package/ai/tools/web.js
-* Edit lib/scrapers/src/x.js
-* Edit lib/scrapers/src/ytdl.js
-* Edit lib/utils/database.js
-* Edit plugins/ai/aicheck.js
-* Edit plugins/ai/notrack.js
-* Edit plugins/dl/x.js
 ```
 </sub>

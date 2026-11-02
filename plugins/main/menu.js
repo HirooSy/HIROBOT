@@ -156,6 +156,21 @@ const defaultMenu = {
 
 ──────────────────`
 
+    const customMenu = conn.customMenu
+    const customPage = customMenu && (selected === '404' ? (customMenu.type === 'all' ? 'all' : 'select') : (customMenu.type === 'select' && selected !== 'all' ? 'tags' : null))
+    if (customPage) {
+      const values = {
+        botName: conn.botName || global.settings.botname,
+        userName: name,
+        status: m.sender.split('@')[0] == dev ? 'Developer' : isOwner ? 'Owner' : isPrems ? 'Premium User' : 'User',
+        prefix: (Array.isArray(conn.prefix) ? conn.prefix : Array.isArray(global.prefix) ? global.prefix : [_p]).join(' '),
+        totalCommands: menuCommandNames(allPlugins).length,
+        version: _package.version || '-',
+        readMore: '‎'.repeat(4001)
+      }
+      await sendCustomPage(conn, m, customMenu, customPage, { values, allPlugins, tags: arrayTags, _p, name, tag: selected })
+      return 0
+    }
     if (selected === '404') {
       const jsonlist = arrayTags.filter(v => v !== 'all').map(v => {
         const tagCommands = Object.values(allPlugins)
@@ -321,6 +336,114 @@ const defaultMenu = {
 }
 
 const ORDER = ['Info', 'Utility', 'Moderation', 'Roles', 'Settings', 'Server', 'Music', 'AI', 'Downloader', 'Tools', 'Sticker', 'Canvas', 'Group', 'Adult', 'Owner']
+
+const menuPlaceholders = (text, values) => String(text ?? '').replace(/__([A-Za-z]+)__/g, (match, key) => Object.hasOwn(values, key) ? String(values[key]) : match)
+
+const menuTagLabel = tag => tag.charAt(0).toUpperCase() + tag.slice(1)
+
+const menuCommandNames = plugins => Object.values(plugins)
+  .filter(plugin => !plugin.disabled && plugin.help)
+  .flatMap(plugin => Array.isArray(plugin.help) ? plugin.help : [plugin.help])
+  .map(h => h.split(' ')[0])
+  .filter((h, i, arr) => arr.indexOf(h) === i)
+
+const menuTagCommands = (allPlugins, tag) => Object.values(allPlugins)
+  .filter(plugin => !plugin.disabled && plugin.tags?.includes(tag) && plugin.help)
+  .flatMap(plugin => Array.isArray(plugin.help) ? plugin.help : [plugin.help])
+  .map(h => h.split(' ')[0])
+  .filter((h, i, arr) => arr.indexOf(h) === i)
+
+const menuTagText = (template, commands, _p) => String(template ?? '').split('\n').flatMap(line => line.includes('__commands__') ? commands.map(cmd => line.split('__commands__').join(`${_p}${cmd}`)) : [line]).join('\n')
+
+const menuRows = (allPlugins, tags, _p) => tags.filter(tag => tag !== 'all').map(tag => {
+  const commands = menuTagCommands(allPlugins, tag)
+  const shown = commands.slice(0, 5).join(', ')
+  const description = !commands.length ? '-' : commands.length <= 5 ? shown : `${shown}, ...${commands.length - 5}+`
+  return { title: `• ${menuTagLabel(tag)}`, description: description.slice(0, 72), id: `${_p}menu ${tag}` }
+}).slice(0, 30)
+
+const menuAllText = (allPlugins, tags, _p, template, values) => tags.filter(tag => tag !== 'all').map(tag => {
+  const commands = menuTagCommands(allPlugins, tag)
+  return commands.length ? menuPlaceholders(menuTagText(template, commands, _p), { ...values, tagName: menuTagLabel(tag) }) : ''
+}).filter(Boolean).join('\n\n')
+
+async function menuQuoted(conn, m, quote, name, order = {}) {
+  if (quote === 'text') return m
+  if (quote === 'contact') return {
+    key: { remoteJid: '0@s.whatsapp.net' },
+    message: {
+      contactMessage: {
+        displayName: name,
+        vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:${name}\nitem1.TEL;waid=${m.sender.split('@')[0]}:${m.sender.split('@')[0]}\nitem1.X-ABLabel:Mobile\nEND:VCARD`,
+      },
+    },
+  }
+  if (quote === 'order') return {
+    key: { remoteJid: '0@s.whatsapp.net' },
+    message: {
+      orderMessage: {
+        orderId: '780642630945098',
+        thumbnail: await conn.resize(global.img.profile.sender, 150, 150),
+        itemCount: order.count ?? 666,
+        status: 1,
+        surface: 1,
+        message: order.text ?? '• LIST COMMANDS',
+        orderTitle: 'Channel.',
+        sellerJid: '6283143393763@s.whatsapp.net',
+        token: 'AR6pyJ/fz5vRFxggGxURL7EA/vCtjKrhcJSNhHqX1iJh8A==',
+        totalAmount1000: '0',
+        totalCurrencyCode: 'IDR',
+      },
+    },
+  }
+  return undefined
+}
+
+async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p, name, tag }) {
+  const page = cfg.pages[key]
+  const rows = key === 'select' ? menuRows(allPlugins, tags, _p) : []
+  const tagCommands = key === 'tags' ? menuTagCommands(allPlugins, tag) : []
+  const source = key === 'tags' ? menuTagText(page.text, tagCommands, _p) : page.text
+  const commands = key === 'all' ? menuAllText(allPlugins, tags, _p, cfg.pages.tags.text, values) : ''
+  const pageValues = { ...values, tagName: key === 'tags' ? menuTagLabel(tag) : '', commands }
+  const text = [menuPlaceholders(source, pageValues), commands && !/__commands__/.test(page.text) ? commands : ''].filter(Boolean).join('\n\n')
+  const footer = menuPlaceholders(cfg.footer, pageValues)
+  const quoted = await menuQuoted(conn, m, cfg.quote, name, { text: cfg.quoteText, count: cfg.quoteCount })
+  const buttons = key === 'select' ? cfg.buttons : cfg.buttons.filter(item => item.kind !== 'select')
+  const buttonLabel = item => item.text || '\u0000'
+  const nativeFlow = buttons.map(item => {
+    if (item.kind === 'select') return { text: buttonLabel(item), sections: [{ title: values.botName, rows }] }
+    if (item.kind === 'list') return { text: buttonLabel(item), sections: [{ title: values.botName, rows: item.options.map(option => ({ title: option.text, description: option.description, id: option.value })) }] }
+    if (item.kind === 'url') return { text: buttonLabel(item), url: item.value }
+    return { text: buttonLabel(item), id: item.value }
+  })
+  const attachment = page.attachment
+  const isUrl = typeof attachment === 'string' && /^https?:\/\//i.test(attachment)
+  const readAttachment = async () => attachment && !isUrl ? promises.readFile(attachment) : attachment
+  let message = page.message
+  if (['button-image', 'button-document'].includes(message) && !attachment) message = 'button'
+  if (!['reply', 'location'].includes(message) && !nativeFlow.length) message = 'reply'
+
+  if (message === 'location') return conn.sendLocation(m.chat, await readAttachment(), text, footer, quoted)
+  if (message === 'reply') {
+    const lines = buttons.flatMap(item => item.kind === 'select' ? rows.map(row => `- ${row.title.slice(2)}`) : item.kind === 'list' ? item.options.map(option => `- ${option.text}`) : [`- ${item.text || '\u0000'}`])
+    return conn.reply(m.chat, [text, lines.join('\n')].filter(Boolean).join('\n\n'), quoted)
+  }
+  const base = { text, footer, nativeFlow }
+  if (message === 'button-image') return conn.sendButton(m.chat, { ...base, image: attachment }, quoted)
+  const documentThumb = async () => {
+    if (!/\.(png|jpe?g|webp|gif|bmp)$/i.test(page.attachmentName || '')) return undefined
+    try {
+      const raw = await readAttachment()
+      return await conn.resize(typeof raw === 'string' ? Buffer.from(await (await fetch(raw)).arrayBuffer()) : raw, 100, 100)
+    } catch {
+      return undefined
+    }
+  }
+  if (message === 'button-document') return conn.sendButton(m.chat, { ...base, document: attachment, mimetype: page.attachmentMimetype, fileName: values.botName, jpegThumbnail: await documentThumb() }, quoted)
+  if (message === 'button-location') return conn.sendButton(m.chat, { ...base, location: { buffer: (await readAttachment()) ?? undefined, name: values.botName, address: '' } }, quoted)
+  return conn.sendButton(m.chat, base, quoted)
+}
 
 handler.tags = ['main']
 handler.command = ['menu', 'help', '?']

@@ -275,6 +275,7 @@
                   <div class="subbot-console-foot">Read-only</div>
                 </div>
                 <div class="subbot-slide">
+                <div id="subbot-prefix"></div>
                 <div class="subbot-row subbot-mode-row">
                   <div class="subbot-mode-text">
                     <div class="subbot-row-title">Mode</div>
@@ -318,6 +319,14 @@
                   <div class="subbot-actions">
                     <button class="btn btn-secondary subbot-action" id="subbot-download-btn" onclick="subbotDownload()"></button>
                     <button class="btn btn-secondary subbot-action subbot-delete" id="subbot-delete-btn" onclick="subbotDelete()"></button>
+                  </div>
+                  <div class="subbot-menu-section">
+                    <div class="subbot-menu-title">Menu Settings</div>
+                    <div id="subbot-menu-form"></div>
+                    <input type="file" id="subbot-menu-file" style="display:none" onchange="subbotMenuUpload(this)">
+                    <div class="subbot-menu-actions" id="subbot-menu-actions">
+                      <button type="button" class="btn btn-small btn-flat" onclick="subbotMenuSave()">Save</button>
+                    </div>
                   </div>
                 </div>
                 <div class="subbot-slide subbot-plugins-slide">
@@ -1227,10 +1236,564 @@ function subbotLogHtml(l) {
     `<div class="sc-row"><span class="sc-key">Message</span><span class="sc-val${c.error ? ' sc-err' : ''}">${escapeHtml(c.text)}</span></div></div>`
 }
 
+function subbotRenderPrefix(d) {
+  const root = document.getElementById('subbot-prefix')
+  if (!root) return
+  if (!document.getElementById('subbot-prefix-input')) {
+    root.innerHTML = `<div class="subbot-prefix"><div class="subbot-prefix-head"><div class="subbot-row-title">Custom prefix</div><div class="subbot-row-sub" id="subbot-prefix-hint"></div></div><div class="subbot-prefix-box"><button type="button" class="switch" id="subbot-prefix-toggle" role="switch" aria-label="Custom prefix" onclick="subbotPrefixToggle()"><span class="switch-knob"></span></button><input type="text" class="subbot-prefix-input" id="subbot-prefix-input" maxlength="3" placeholder="Prefix" onkeydown="if (event.key === 'Enter') subbotPrefixAdd()"><button type="button" class="subbot-prefix-add" onclick="subbotPrefixAdd()" aria-label="Add prefix" title="Add prefix">+</button></div><div class="subbot-prefix-list" id="subbot-prefix-list"></div></div>`
+  }
+  const on = !!d.customPrefix
+  const toggle = document.getElementById('subbot-prefix-toggle')
+  toggle.classList.toggle('on', on)
+  toggle.setAttribute('aria-checked', on ? 'true' : 'false')
+  root.querySelector('.subbot-prefix').classList.toggle('is-off', !on)
+  document.getElementById('subbot-prefix-hint').textContent = on ? 'Only these prefixes work for this subbot' : `Default prefixes: ${(d.activePrefixes || []).join(' ')}`
+  const list = Array.isArray(d.prefixes) ? d.prefixes : []
+  document.getElementById('subbot-prefix-list').innerHTML = list.length
+    ? list.map((p, i) => `<span class="subbot-prefix-chip">${escapeHtml(p)}<button type="button" class="subbot-prefix-x" onclick="subbotPrefixRemove(${i})" aria-label="Remove ${escapeHtml(p)}" title="Remove">×</button></span>`).join('')
+    : '<span class="subbot-prefix-empty">No custom prefix yet</span>'
+  menuPreviewRender()
+}
+
+function subbotPrefixToggle() {
+  if (!subbotData) return
+  return subbotCall('prefix/toggle', { value: !subbotData.customPrefix })
+}
+
+async function subbotPrefixAdd() {
+  const input = document.getElementById('subbot-prefix-input')
+  const value = input.value.trim()
+  if (!value) return showToast('Type a prefix first', 'warn')
+  const d = await subbotCall('prefix/add', { prefix: value })
+  if (d) input.value = ''
+}
+
+function subbotPrefixRemove(index) {
+  if (!subbotData || !Array.isArray(subbotData.prefixes)) return
+  return subbotCall('prefix/remove', { prefix: subbotData.prefixes[index] })
+}
+
 function subbotRenderSettings(d) {
+  subbotRenderPrefix(d)
   const auto = document.getElementById('subbot-auto')
   auto.classList.toggle('on', !!d.autoConnect)
   auto.setAttribute('aria-checked', d.autoConnect ? 'true' : 'false')
+  subbotMenuSync(d)
+}
+
+let menuDraft = null
+let menuDirty = false
+let menuServerKey = ''
+let menuUploadPage = 'all'
+let menuLimits = { select: 10, all: 10 }
+const SUBBOT_MENU_PAGES = ['all', 'select', 'tags']
+const SUBBOT_MENU_TYPE_OPTIONS = [['select', 'Select'], ['all', 'Show all']]
+const SUBBOT_MENU_MESSAGE_OPTIONS = [['button', 'Button'], ['button-location', 'Button - Location'], ['button-document', 'Button - Document'], ['button-image', 'Button - Image'], ['location', 'Location'], ['reply', 'Reply']]
+const SUBBOT_MENU_QUOTE_OPTIONS = [['text', 'Text'], ['contact', 'Contact'], ['order', 'Order'], ['none', 'None']]
+const MENU_QUOTE_TEXT_MAX = 60
+const SUBBOT_MENU_PAGE_TITLE = { all: 'Message type', select: 'Selection page type', tags: 'Menu tags type' }
+const SUBBOT_MENU_TEXT_TITLE = { all: 'Menu text', select: 'Select page text' }
+const SUBBOT_MENU_PLACEHOLDERS = ['__botName__', '__userName__', '__status__', '__prefix__', '__totalCommands__', '__version__', '__readMore__']
+const SUBBOT_MENU_NOTES = {
+  button: 'Sent as WhatsApp buttons.',
+  'button-location': 'Buttons with a location header.',
+  'button-document': 'Buttons with a document attached.',
+  'button-image': 'Buttons with an image attached.',
+  location: 'Sent as a location card. Buttons are not shown.',
+  reply: 'Sent as plain text. Buttons are written as a list.'
+}
+const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document']
+const SUBBOT_MENU_MEDIA_OPTIONAL = ['button-location', 'location']
+const SUBBOT_MENU_SELECT_LABEL = '✦ SHOW ALL MENU'
+const SUBBOT_MENU_MEDIA_LIMIT = 8 * 1024 * 1024
+const SUBBOT_MENU_LIST_MAX = 10
+const SUBBOT_MENU_LIST_LABEL_MAX = 20
+const SUBBOT_MENU_OPTION_TITLE_MAX = 24
+const SUBBOT_MENU_OPTION_DESCRIPTION_MAX = 72
+const MENU_PREVIEW_TAG = 'Test Tag'
+const MENU_PREVIEW_COMMANDS = ['cmd1', 'cmd2', 'cmd3']
+const MENU_PREVIEW_ICONS = {
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
+  moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+  reply: '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>',
+  external: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+  list: '<line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/>',
+  cart: '<circle cx="9" cy="20" r="1"/><circle cx="20" cy="20" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>',
+  person: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>'
+}
+let menuPreviewDark = true
+
+function subbotMenuSync(d, force = false) {
+  if (!d || !d.menu) return
+  if (d.menuLimits) menuLimits = d.menuLimits
+  const key = JSON.stringify(d.menu)
+  if (!force && (menuDirty || key === menuServerKey)) return
+  menuServerKey = key
+  menuDraft = JSON.parse(key)
+  menuDirty = false
+  subbotMenuRender()
+}
+
+function menuRowHtml(title, sub, control, className = '') {
+  return `<div class="subbot-row subbot-mode-row ${className}"><div class="subbot-mode-text"><div class="subbot-row-title">${escapeHtml(title)}</div><div class="subbot-row-sub">${escapeHtml(sub)}</div></div>${control}</div>`
+}
+
+function menuSelectHtml(options, value, onPick) {
+  const current = options.find(option => option[0] === value) || options[0]
+  const items = options.map(([v, label]) => `<button type="button" data-value="${v}" class="${v === current[0] ? 'active' : ''}" onclick="${onPick(v)}">${escapeHtml(label)}</button>`).join('')
+  return `<div class="subbot-select subbot-mode-select"><div class="subbot-select-box"><button type="button" class="subbot-select-btn" onclick="subbotToggleSelect(this)"><span data-select-label>${escapeHtml(current[1])}</span><span class="subbot-select-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="subbot-select-menu">${items}</div></div></div>`
+}
+
+function menuQuoteControlHtml() {
+  const select = menuSelectHtml(SUBBOT_MENU_QUOTE_OPTIONS, menuDraft.quote, v => `menuPick('quote', '${v}')`)
+  if (menuDraft.quote !== 'order') return select
+  return `<div class="subbot-quote-control"><input type="text" class="input-field subbot-quote-text" maxlength="${MENU_QUOTE_TEXT_MAX}" placeholder="Text" value="${escapeHtml(menuDraft.quoteText)}" oninput="menuSetField('quoteText', this.value)"><input type="number" class="input-field subbot-quote-count" min="0" max="999999" step="1" placeholder="Items" value="${escapeHtml(String(menuDraft.quoteCount))}" oninput="menuSetField('quoteCount', Math.min(999999, Math.max(0, parseInt(this.value, 10) || 0)))">${select}</div>`
+}
+
+function menuPageMessageRow(page) {
+  const message = menuDraft.pages[page].message
+  return menuRowHtml(SUBBOT_MENU_PAGE_TITLE[page], SUBBOT_MENU_NOTES[message] || '', menuSelectHtml(SUBBOT_MENU_MESSAGE_OPTIONS, message, v => `menuPickMessage('${page}', '${v}')`))
+}
+
+function menuThumbnailPages() {
+  return menuDraft.type === 'select' ? ['select', 'tags'] : ['all']
+}
+
+function menuThumbnailRowHtml() {
+  const pages = menuThumbnailPages()
+  const messages = pages.map(page => menuDraft.pages[page].message)
+  const required = messages.some(message => SUBBOT_MENU_MEDIA_REQUIRED.includes(message))
+  if (!required && !messages.some(message => SUBBOT_MENU_MEDIA_OPTIONAL.includes(message))) return ''
+  const target = pages.find(page => SUBBOT_MENU_MEDIA_REQUIRED.includes(menuDraft.pages[page].message)) || pages[0]
+  const media = menuDraft.pages[pages[0]].media
+  const value = media && media.source === 'url' ? media.url : ''
+  const placeholder = media && media.source !== 'url' ? media.name : 'https://...'
+  const control = `<div class="subbot-mode-control"><button type="button" class="subbot-mode-icon" onclick="subbotMenuPickFile('${target}')" aria-label="Upload" title="Upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button><input type="text" class="subbot-mode-input" maxlength="256" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}" oninput="menuSetThumbnailUrl(this.value)"></div>`
+  return menuRowHtml(required ? 'Media' : 'Thumbnail', required ? 'Required for this message type' : 'Optional for this message type', control)
+}
+
+function menuEditorHtml(page, chips) {
+  const text = menuDraft.pages[page].text
+  const buttons = chips.map(key => `<button type="button" onclick="menuInsertPlaceholder('${page}', '${key}')">${key}</button>`).join('')
+  return `<div class="subbot-menu-field"><span class="subbot-menu-label">${escapeHtml(SUBBOT_MENU_TEXT_TITLE[page])}</span><div class="subbot-menu-chips">${buttons}</div><div class="subbot-plugin-editor subbot-menu-editor"><div class="subbot-editor-body"><div class="subbot-editor-gutter" id="subbot-menu-gutter-${page}" aria-hidden="true"></div><textarea class="subbot-editor-code" id="subbot-menu-text-${page}" maxlength="4000" spellcheck="false" wrap="off" autocapitalize="off" autocorrect="off" oninput="menuTextInput('${page}', this)" onscroll="menuEditorScroll('${page}')">${escapeHtml(text)}</textarea></div></div></div>`
+}
+
+function menuTagsParts(text) {
+  const lines = String(text ?? '').split('\n')
+  return [lines[0] ?? '', lines.slice(1).join('\n').replace(/\n+$/, '')]
+}
+
+function menuSetTagsPart(index, value) {
+  if (!menuDraft) return
+  const [label, commands] = menuTagsParts(menuDraft.pages.tags.text)
+  const parts = index === 0 ? [value, commands] : [label, value]
+  menuDraft.pages.tags.text = parts[1] ? parts.join('\n') : parts[0]
+  menuDirty = true
+  menuPreviewRender()
+}
+
+function menuTagsRowsHtml() {
+  const [label, commands] = menuTagsParts(menuDraft.pages.tags.text)
+  return menuRowHtml('Tags label', 'Heading of each category page', `<input type="text" class="subbot-mode-input" maxlength="60" spellcheck="false" autocapitalize="off" autocorrect="off" value="${escapeHtml(label)}" oninput="menuSetTagsPart(0, this.value)">`) + menuRowHtml('Commands list', 'One line per command', `<input type="text" class="subbot-mode-input" maxlength="120" spellcheck="false" autocapitalize="off" autocorrect="off" value="${escapeHtml(commands)}" oninput="menuSetTagsPart(1, this.value)">`)
+}
+
+function menuOptionHtml(index, optionIndex, option) {
+  return `<div class="subbot-menu-option"><div class="subbot-menu-fields"><input type="text" class="input-field" maxlength="${SUBBOT_MENU_OPTION_TITLE_MAX}" placeholder="Label" value="${escapeHtml(option.text)}" oninput="menuEditOption(${index}, ${optionIndex}, 'text', this.value)"><input type="text" class="input-field" maxlength="${SUBBOT_MENU_OPTION_DESCRIPTION_MAX}" placeholder="Description (optional)" value="${escapeHtml(option.description)}" oninput="menuEditOption(${index}, ${optionIndex}, 'description', this.value)"><input type="text" class="input-field" maxlength="256" placeholder="Command, e.g. .menu" value="${escapeHtml(option.value)}" oninput="menuEditOption(${index}, ${optionIndex}, 'value', this.value)"></div><button type="button" class="subbot-menu-icon" onclick="menuRemoveOption(${index}, ${optionIndex})" aria-label="Remove option">×</button></div>`
+}
+
+function menuButtonsHtml(m, max, isSelect) {
+  const last = m.buttons.length - 1
+  const rows = m.buttons.map((item, i) => {
+    const move = `<div class="subbot-menu-move"><button type="button" class="subbot-menu-icon" onclick="menuMoveButton(${i}, -1)"${i === 0 ? ' disabled' : ''} aria-label="Move up">▲</button><button type="button" class="subbot-menu-icon" onclick="menuMoveButton(${i}, 1)"${i === last ? ' disabled' : ''} aria-label="Move down">▼</button></div>`
+    const remove = `<button type="button" class="subbot-menu-icon" onclick="menuRemoveButton(${i})" aria-label="Remove button">×</button>`
+    if (item.kind === 'select') return `<div class="subbot-menu-btn">${move}<div class="subbot-menu-fields"><input type="text" class="input-field" maxlength="${SUBBOT_MENU_LIST_LABEL_MAX}" placeholder="Label" value="${escapeHtml(item.text)}" oninput="menuEditButton(${i}, 'text', this.value)"><div class="subbot-menu-note">Opens a list of command categories.</div></div><span></span></div>`
+    if (item.kind === 'list') {
+      const options = item.options.map((option, o) => menuOptionHtml(i, o, option)).join('')
+      return `<div class="subbot-menu-btn">${move}<div class="subbot-menu-fields"><input type="text" class="input-field" maxlength="${SUBBOT_MENU_LIST_LABEL_MAX}" placeholder="Label" value="${escapeHtml(item.text)}" oninput="menuEditButton(${i}, 'text', this.value)"><div class="subbot-menu-bar"><span class="subbot-menu-label">Options</span><span class="subbot-menu-count">${item.options.length}/${SUBBOT_MENU_LIST_MAX}</span></div><div class="subbot-menu-options">${options}</div><button type="button" class="btn btn-small btn-secondary subbot-menu-add" ${item.options.length >= SUBBOT_MENU_LIST_MAX ? 'disabled' : ''} onclick="menuAddOption(${i})">Add option</button></div>${remove}</div>`
+    }
+    return `<div class="subbot-menu-btn">${move}<div class="subbot-menu-fields"><input type="text" class="input-field" maxlength="25" placeholder="Label" value="${escapeHtml(item.text)}" oninput="menuEditButton(${i}, 'text', this.value)"><input type="text" class="input-field" maxlength="256" placeholder="https://... or .command" value="${escapeHtml(item.value)}" oninput="menuEditButton(${i}, 'value', this.value)"></div>${remove}</div>`
+  }).join('')
+  const note = isSelect ? '<div class="subbot-menu-note">Other buttons also appear on menu tag pages.</div>' : ''
+  const add = `<div class="subbot-select subbot-menu-add-select"><div class="subbot-select-box"><button type="button" class="btn btn-small btn-secondary subbot-menu-add" ${m.buttons.length >= max ? 'disabled' : ''} onclick="subbotToggleSelect(this)">Add button</button><div class="subbot-select-menu"><button type="button" onclick="menuAddButton('reply')">Button</button><button type="button" onclick="menuAddButton('list')">Select</button></div></div></div>`
+  return `<div class="subbot-menu-field"><div class="subbot-menu-bar"><span class="subbot-menu-label">Buttons</span><span class="subbot-menu-count">${m.buttons.length}/${max}</span></div>${rows}${note}${add}</div>`
+}
+
+function subbotMenuRender() {
+  const box = document.getElementById('subbot-menu-form')
+  const actions = document.getElementById('subbot-menu-actions')
+  const m = menuDraft
+  if (!box || !m) return
+  const toggle = menuRowHtml('Custom menu', 'Replace the default menu for this subbot', `<button type="button" class="switch${m.custom ? ' on' : ''}" role="switch" aria-checked="${m.custom ? 'true' : 'false'}" aria-label="Custom menu" onclick="menuToggleCustom()"><span class="switch-knob"></span></button>`)
+  if (actions) actions.style.display = m.custom ? '' : 'none'
+  if (!m.custom) {
+    box.innerHTML = toggle
+    return
+  }
+  const isSelect = m.type === 'select'
+  const pages = isSelect ? ['select', 'tags'] : ['all']
+  const parts = [toggle, menuPreviewHtml(), menuRowHtml('Menu type', isSelect ? 'A list of categories. Each category opens its own page.' : 'Every command on one page.', menuSelectHtml(SUBBOT_MENU_TYPE_OPTIONS, m.type, v => `menuPick('type', '${v}')`))]
+  for (const page of pages) parts.push(menuPageMessageRow(page))
+  parts.push(menuThumbnailRowHtml())
+  parts.push(menuRowHtml('Quote message', 'Quoted with every reply', menuQuoteControlHtml(), 'subbot-quote-row'))
+  if (isSelect) parts.push(menuEditorHtml('select', SUBBOT_MENU_PLACEHOLDERS))
+  else parts.push(menuEditorHtml('all', [...SUBBOT_MENU_PLACEHOLDERS, '__commands__']))
+  parts.push(menuTagsRowsHtml())
+  const footerMessages = isSelect ? [m.pages.select.message, m.pages.tags.message] : [m.pages.all.message]
+  if (footerMessages.some(message => message !== 'reply')) parts.push(`<div class="subbot-menu-field"><span class="subbot-menu-label">Footer</span><input type="text" class="input-field" maxlength="60" value="${escapeHtml(m.footer)}" oninput="menuSetField('footer', this.value)"></div>`)
+  parts.push(menuButtonsHtml(m, menuLimits[m.type] || 10, isSelect))
+  box.innerHTML = parts.join('')
+  menuEditorSync(isSelect ? 'select' : 'all')
+  menuPreviewRender()
+}
+
+function menuPreviewHtml() {
+  return `<div class="subbot-menu-field subbot-preview"><div class="subbot-menu-bar"><span class="subbot-preview-title">Preview</span><button type="button" class="subbot-preview-toggle" id="subbot-menu-preview-toggle" onclick="menuPreviewToggleTheme()"></button></div><div class="subbot-preview-stage" id="subbot-menu-preview"></div></div>`
+}
+
+function menuPreviewIcon(name) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${MENU_PREVIEW_ICONS[name]}</svg>`
+}
+
+function menuPreviewToggleTheme() {
+  menuPreviewDark = !menuPreviewDark
+  menuPreviewRender()
+}
+
+function menuPreviewValues() {
+  const active = subbotData && Array.isArray(subbotData.activePrefixes) && subbotData.activePrefixes.length ? subbotData.activePrefixes : ['.']
+  return {
+    botName: (subbotData && (subbotData.botName || subbotData.defaultBotName)) || 'HIROBOT',
+    userName: 'User',
+    status: 'User',
+    prefix: active.join(' '),
+    commandPrefix: active[0],
+    totalCommands: MENU_PREVIEW_COMMANDS.length,
+    version: '1.0',
+    tagName: '',
+    commands: '',
+    readMore: '\u0001'
+  }
+}
+
+function menuPreviewFill(text, values) {
+  return String(text ?? '').replace(/__([A-Za-z]+)__/g, (match, key) => Object.hasOwn(values, key) ? String(values[key]) : match)
+}
+
+function menuPreviewTagText(template, prefix) {
+  return String(template ?? '').split('\n').flatMap(line => line.includes('__commands__') ? MENU_PREVIEW_COMMANDS.map(cmd => line.split('__commands__').join(prefix + cmd)) : [line]).join('\n')
+}
+
+function menuPreviewFormat(text) {
+  return escapeHtml(text)
+    .replace(/```([\s\S]+?)```/g, '<code>$1</code>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*([^*\n]+)\*/g, '<b>$1</b>')
+    .replace(/_([^_\n]+)_/g, '<i>$1</i>')
+    .replace(/~([^~\n]+)~/g, '<s>$1</s>')
+    .replace(/\n/g, '<br>')
+    .replace(/\u0001/g, '<span class="subbot-preview-more">... Read more</span>')
+}
+
+function menuPreviewQuote(quote, values) {
+  const block = (name, lines, thumb) => `<div class="subbot-preview-quote"><div class="subbot-preview-quote-body"><b>${escapeHtml(name)}</b>${lines.map(([icon, text]) => `<span>${icon ? menuPreviewIcon(icon) : ''}${escapeHtml(text)}</span>`).join('')}</div>${thumb ? '<div class="subbot-preview-quote-thumb"></div>' : ''}</div>`
+  if (quote === 'text') return block(values.userName, [[null, values.commandPrefix + 'menu']], false)
+  if (quote === 'contact') return block('Me', [['person', 'Contact: ' + values.userName]], true)
+  if (quote === 'order') return block('Me', [['cart', `${values.quoteCount} items`], [null, values.quoteText]], true)
+  return ''
+}
+
+function menuPreviewParts() {
+  const m = menuDraft
+  const values = menuPreviewValues()
+  const tagValues = { ...values, tagName: MENU_PREVIEW_TAG }
+  const rows = [{ title: '• ' + MENU_PREVIEW_TAG, description: MENU_PREVIEW_COMMANDS.join(', ') }]
+  const tagText = menuPreviewFill(menuPreviewTagText(m.pages.tags.text, values.commandPrefix), tagValues)
+  if (m.type === 'select') return [
+    { caption: 'Selection page', message: m.pages.select.message, text: menuPreviewFill(m.pages.select.text, values), media: m.pages.select.media, buttons: m.buttons, rows },
+    { caption: 'Menu tags', message: m.pages.tags.message, text: tagText, media: m.pages.tags.media, buttons: m.buttons.filter(item => item.kind !== 'select'), rows: [] }
+  ]
+  const pageText = m.pages.all.text
+  const text = menuPreviewFill(pageText, { ...values, commands: tagText })
+  return [{ caption: 'Menu', message: m.pages.all.message, text: /__commands__/.test(pageText) ? text : [text, tagText].filter(Boolean).join('\n\n'), media: m.pages.all.media, buttons: m.buttons.filter(item => item.kind !== 'select'), rows: [] }]
+}
+
+function menuPreviewExt(media) {
+  const name = media && media.name ? String(media.name) : ''
+  if (/\.[a-z0-9]+$/i.test(name)) return name.split('.').pop().toUpperCase()
+  const type = media && media.mimetype ? String(media.mimetype).split('/')[1] || '' : ''
+  return (type.split(';')[0] || 'FILE').toUpperCase()
+}
+
+function menuPreviewButton(item, rows) {
+  const icon = item.kind === 'url' ? 'external' : item.kind === 'reply' ? 'reply' : 'list'
+  const label = escapeHtml(item.text || '')
+  const content = `${menuPreviewIcon(icon)}${label}`
+  const list = item.kind === 'select' ? rows : item.kind === 'list' ? item.options.map(option => ({ title: option.text, description: option.description })) : null
+  if (!list) return `<button type="button" class="subbot-preview-btn">${content}</button>`
+  const options = list.map(row => `<div class="subbot-preview-option"><span>${escapeHtml(row.title)}</span>${row.description ? `<small>${escapeHtml(row.description)}</small>` : ''}</div>`).join('')
+  return `<div class="subbot-preview-group"><button type="button" class="subbot-preview-btn" onclick="this.parentNode.classList.toggle('open')">${content}</button><div class="subbot-preview-options">${options}</div></div>`
+}
+
+function menuPreviewBubble(part, values, quote, footer) {
+  const media = part.media
+  let message = part.message
+  if (['button-image', 'button-document'].includes(message) && !media) message = 'button'
+  if (!['reply', 'location'].includes(message) && !part.buttons.length) message = 'reply'
+  const src = media && media.source === 'url' ? media.url : ''
+  const image = `<img src="${escapeHtml(src)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('is-broken')">`
+  const mediaBox = label => `<div class="subbot-preview-media">${src ? image : ''}<span>${escapeHtml(label)}</span></div>`
+  let header = ''
+  if (message === 'button-image') header = mediaBox(media.name || 'Image')
+  if (message === 'button-location') header = mediaBox(media?.name || 'Location') + `<div class="subbot-preview-loc">${escapeHtml(values.botName)}</div>`
+  if (message === 'button-document') header = `<div class="subbot-preview-doc"><div class="subbot-preview-doc-thumb">${src ? image : ''}${menuPreviewIcon('file')}</div><div class="subbot-preview-doc-info"><b>${escapeHtml(values.botName)}</b><small>${escapeHtml(menuPreviewExt(media))}</small></div><span class="subbot-preview-doc-dl">${menuPreviewIcon('download')}</span></div>`
+  if (message === 'location') header = mediaBox(media?.name || 'Location')
+  let body = part.text
+  let footerHtml = footer ? `<div class="subbot-preview-footer">${escapeHtml(footer)}</div>` : ''
+  let buttons = ''
+  if (message === 'reply') {
+    const lines = part.buttons.flatMap(item => item.kind === 'select' ? part.rows.map(row => `- ${row.title.slice(2)}`) : item.kind === 'list' ? item.options.map(option => `- ${option.text}`) : [`- ${item.text}`])
+    body = [part.text, lines.join('\n')].filter(Boolean).join('\n\n')
+    footerHtml = ''
+  } else if (message !== 'location') {
+    buttons = `<div class="subbot-preview-buttons${part.buttons.length > 3 ? ' is-stack' : ''}">${part.buttons.map(item => menuPreviewButton(item, part.rows)).join('')}</div>`
+  }
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return `<div class="subbot-preview-bubble">${quote}${header}<div class="subbot-preview-text">${menuPreviewFormat(body)}</div>${footerHtml}<div class="subbot-preview-meta">${time}</div>${buttons}</div>`
+}
+
+function menuPreviewLayoutButtons() {
+  const stage = document.getElementById('subbot-menu-preview')
+  if (!stage) return
+  stage.querySelectorAll('.subbot-preview-buttons:not(.is-stack)').forEach(row => {
+    if (row.scrollWidth > row.clientWidth + 1) row.classList.add('is-stack')
+  })
+}
+
+window.addEventListener('resize', () => menuPreviewRender())
+
+function menuPreviewRender() {
+  const stage = document.getElementById('subbot-menu-preview')
+  const toggle = document.getElementById('subbot-menu-preview-toggle')
+  if (!stage || !menuDraft) return
+  const label = menuPreviewDark ? 'Switch to light mode' : 'Switch to dark mode'
+  stage.className = 'subbot-preview-stage ' + (menuPreviewDark ? 'is-dark' : 'is-light')
+  if (toggle) {
+    toggle.innerHTML = menuPreviewIcon(menuPreviewDark ? 'sun' : 'moon')
+    toggle.setAttribute('aria-label', label)
+    toggle.title = label
+  }
+  const values = menuPreviewValues()
+  const quote = menuPreviewQuote(menuDraft.quote, { ...values, quoteText: menuDraft.quoteText, quoteCount: menuDraft.quoteCount })
+  const footer = menuPreviewFill(menuDraft.footer, values)
+  stage.innerHTML = menuPreviewParts().map(part => `<div class="subbot-preview-part"><div class="subbot-preview-caption">${escapeHtml(part.caption)}</div>${menuPreviewBubble(part, values, quote, footer)}</div>`).join('')
+  menuPreviewLayoutButtons()
+}
+
+function menuEditorSync(page) {
+  const code = document.getElementById('subbot-menu-text-' + page)
+  const gutter = document.getElementById('subbot-menu-gutter-' + page)
+  if (!code || !gutter) return
+  const lines = Math.max(1, code.value.split('\n').length)
+  if (gutter.childElementCount !== lines) gutter.innerHTML = Array.from({ length: lines }, (_, i) => `<div>${i + 1}</div>`).join('')
+  menuEditorScroll(page)
+}
+
+function menuEditorScroll(page) {
+  const code = document.getElementById('subbot-menu-text-' + page)
+  const gutter = document.getElementById('subbot-menu-gutter-' + page)
+  if (code && gutter) gutter.scrollTop = code.scrollTop
+}
+
+function menuTextInput(page, el) {
+  if (!menuDraft) return
+  menuDraft.pages[page].text = el.value
+  menuDirty = true
+  menuEditorSync(page)
+  menuPreviewRender()
+}
+
+function menuInsertPlaceholder(page, key) {
+  const code = document.getElementById('subbot-menu-text-' + page)
+  if (!code) return
+  code.setRangeText(key, code.selectionStart, code.selectionEnd, 'end')
+  menuTextInput(page, code)
+  code.focus()
+}
+
+function menuSetField(key, value) {
+  if (!menuDraft) return
+  menuDraft[key] = value
+  menuDirty = true
+  menuPreviewRender()
+}
+
+function menuPick(key, value) {
+  subbotCloseSelects()
+  if (!menuDraft || menuDraft[key] === value) return
+  menuDraft[key] = value
+  if (key === 'type') {
+    if (value === 'select') {
+      if (!menuDraft.buttons.some(item => item.kind === 'select') && menuDraft.buttons.length < (menuLimits[value] || 10)) menuDraft.buttons.push({ kind: 'select', text: SUBBOT_MENU_SELECT_LABEL })
+    } else {
+      menuDraft.buttons = menuDraft.buttons.filter(item => item.kind !== 'select')
+    }
+  }
+  menuDirty = true
+  subbotMenuRender()
+}
+
+function menuPickMessage(page, value) {
+  subbotCloseSelects()
+  if (!menuDraft || menuDraft.pages[page].message === value) return
+  menuDraft.pages[page].message = value
+  menuDirty = true
+  subbotMenuRender()
+}
+
+async function menuToggleCustom() {
+  if (!menuDraft) return
+  const d = await subbotCall('menu/toggle', { value: !menuDraft.custom })
+  if (!d || !d.menu) return
+  menuDraft.custom = d.menu.custom
+  subbotMenuRender()
+}
+
+function menuSetThumbnailUrl(value) {
+  if (!menuDraft) return
+  const url = value.trim()
+  for (const page of SUBBOT_MENU_PAGES) menuDraft.pages[page].media = url ? { source: 'url', url } : null
+  menuDirty = true
+  menuPreviewRender()
+}
+
+function menuAddButton(kind = 'reply') {
+  subbotCloseSelects()
+  if (!menuDraft || menuDraft.buttons.length >= (menuLimits[menuDraft.type] || 10)) return
+  if (kind === 'list') menuDraft.buttons.push({ kind: 'list', text: '', options: [{ text: '', description: '', value: '' }] })
+  else menuDraft.buttons.push({ kind: 'reply', text: '', value: '' })
+  menuDirty = true
+  subbotMenuRender()
+}
+
+function menuEditButton(index, key, value) {
+  const item = menuDraft && menuDraft.buttons[index]
+  if (!item) return
+  item[key] = value
+  menuDirty = true
+  menuPreviewRender()
+}
+
+function menuAddOption(index) {
+  const item = menuDraft && menuDraft.buttons[index]
+  if (!item || item.kind !== 'list' || item.options.length >= SUBBOT_MENU_LIST_MAX) return
+  item.options.push({ text: '', description: '', value: '' })
+  menuDirty = true
+  subbotMenuRender()
+}
+
+function menuEditOption(index, optionIndex, key, value) {
+  const item = menuDraft && menuDraft.buttons[index]
+  const option = item && item.kind === 'list' && item.options[optionIndex]
+  if (!option) return
+  option[key] = value
+  menuDirty = true
+  menuPreviewRender()
+}
+
+function menuRemoveOption(index, optionIndex) {
+  const item = menuDraft && menuDraft.buttons[index]
+  if (!item || item.kind !== 'list') return
+  item.options.splice(optionIndex, 1)
+  menuDirty = true
+  subbotMenuRender()
+}
+
+function menuRemoveButton(index) {
+  if (!menuDraft || !menuDraft.buttons[index] || menuDraft.buttons[index].kind === 'select') return
+  menuDraft.buttons.splice(index, 1)
+  menuDirty = true
+  subbotMenuRender()
+}
+
+function menuMoveButton(index, step) {
+  const list = menuDraft && menuDraft.buttons
+  const target = index + step
+  if (!list || target < 0 || target >= list.length) return
+  const moved = list[index]
+  list[index] = list[target]
+  list[target] = moved
+  menuDirty = true
+  subbotMenuRender()
+}
+
+function subbotMenuPickFile(page) {
+  menuUploadPage = page
+  const input = document.getElementById('subbot-menu-file')
+  input.accept = menuDraft && menuDraft.pages[page].message === 'button-image' ? 'image/*' : ''
+  input.click()
+}
+
+function subbotMenuReadFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '')
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+async function subbotMenuUpload(input) {
+  const file = input.files && input.files[0]
+  input.value = ''
+  const page = menuUploadPage
+  if (!file || !menuDraft) return
+  if (file.size > SUBBOT_MENU_MEDIA_LIMIT) return showToast('File must be 8 MB or smaller.', 'error')
+  let data
+  try {
+    data = await subbotMenuReadFile(file)
+  } catch {
+    return showToast('Could not read the file.', 'error')
+  }
+  const d = await subbotCall('menu/media', { target: page, name: file.name, mimetype: file.type, data })
+  if (!d || !d.menu) return
+  const media = d.menu.pages[page].media
+  for (const key of SUBBOT_MENU_PAGES) menuDraft.pages[key].media = media ? { ...media } : null
+  subbotMenuRender()
+  showToast('File uploaded', 'success')
+}
+
+function menuPayload() {
+  const m = menuDraft
+  const pages = {}
+  for (const page of SUBBOT_MENU_PAGES) {
+    const p = m.pages[page]
+    pages[page] = {
+      message: p.message,
+      text: p.text,
+      media: !p.media ? null : p.media.source === 'upload' ? { source: 'upload' } : { source: 'url', url: p.media.url }
+    }
+  }
+  return {
+    custom: m.custom,
+    type: m.type,
+    quote: m.quote,
+    quoteText: m.quoteText,
+    quoteCount: m.quoteCount,
+    footer: m.footer,
+    buttons: m.buttons.map(item => item.kind === 'select' ? { kind: 'select', text: item.text } : item.kind === 'list' ? { kind: 'list', text: item.text, options: item.options.map(option => ({ text: option.text, description: option.description, value: option.value })) } : { kind: item.kind, text: item.text, value: item.value }),
+    pages
+  }
+}
+
+async function subbotMenuSave() {
+  if (!subbotData || !menuDraft) return
+  const d = await subbotCall('menu', { menu: menuPayload() })
+  if (!d) return
+  menuDirty = false
+  subbotMenuSync(d, true)
+  showToast('Menu saved', 'success')
 }
 
 function subbotRenderTitle(d) {

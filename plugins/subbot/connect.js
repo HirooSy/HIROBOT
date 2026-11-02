@@ -21,7 +21,46 @@ const subbotRuntime = (global.subbotRuntime ||= new Map())
 const subbotPlugins = (global.subbotPlugins ||= new Map())
 const SUBBOT_TYPE_LABEL = { sql: 'SQL', multi: 'JSON multi-file', single: 'JSON single-file' }
 const SUBBOT_MODE_LABEL = { self: 'Self', group: 'Group chat', private: 'Private chat', public: 'Public' }
+const SUBBOT_PREFIX_MAX = 10
 const SUBBOT_LOG_LIMIT = 200
+const SUBBOT_MENU_TYPES = ['select', 'all']
+const SUBBOT_MENU_MESSAGES = ['button', 'button-location', 'button-document', 'button-image', 'location', 'reply']
+const SUBBOT_MENU_BUTTON_MESSAGES = ['button', 'button-location', 'button-document', 'button-image']
+const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document']
+const SUBBOT_MENU_QUOTES = ['text', 'contact', 'order', 'none']
+const SUBBOT_MENU_QUOTE_TEXT_DEFAULT = '• LIST COMMANDS'
+const SUBBOT_MENU_QUOTE_TEXT_MAX = 60
+const SUBBOT_MENU_QUOTE_COUNT_DEFAULT = 666
+const SUBBOT_MENU_QUOTE_COUNT_MAX = 999999
+const SUBBOT_MENU_PAGES = ['all', 'select', 'tags']
+const SUBBOT_MENU_MAX = { select: 10, all: 10 }
+const SUBBOT_MENU_LIST_MAX = 10
+const SUBBOT_MENU_LIST_LABEL_MAX = 20
+const SUBBOT_MENU_OPTION_TITLE_MAX = 24
+const SUBBOT_MENU_OPTION_DESCRIPTION_MAX = 72
+const SUBBOT_MENU_SELECT_LABEL = '✦ SHOW ALL MENU'
+const SUBBOT_MENU_PAGE_NAME = { all: 'Menu', select: 'Selection page', tags: 'Menu tags' }
+const SUBBOT_MENU_INFO_TEXT = [
+    '──────────────────',
+    '',
+    '*U S E R*',
+    '- `Name:` __userName__',
+    '- `Status:` __status__',
+    '',
+    '──────────────────',
+    '',
+    '*I N F O R M A T I O N*',
+    '- `Bot Name:` __botName__',
+    '- `Version:` __version__',
+    '',
+    '──────────────────'
+].join('\n')
+const SUBBOT_MENU_PAGE_DEFAULTS = {
+    all: { message: 'button', text: SUBBOT_MENU_INFO_TEXT },
+    select: { message: 'button', text: SUBBOT_MENU_INFO_TEXT },
+    tags: { message: 'reply', text: '*__tagName__*\n- __commands__' }
+}
+const SUBBOT_MENU_MEDIA_MAX_BYTES = 8 * 1024 * 1024
 const SUBBOT_PLUGIN_NAME = /^[a-z0-9][a-z0-9_-]{0,39}\.js$/i
 const SUBBOT_PLUGIN_MAX_BYTES = 64 * 1024
 const SUBBOT_TEMP_RULE = 'The temp folder is data/tmp inside the bot folder (path.join(process.cwd(), "data", "tmp")), the ./tmp folder, or the system temp folder (os.tmpdir() or tmpdir()). A folder made with fs.mkdtemp inside one of these is also the temp folder. A path built from one of these folders is inside the temp folder even when it is stored in a variable, joined step by step, or passed to a helper function.'
@@ -187,6 +226,28 @@ function storedSubbotBotName(jid) {
 function getSubbotMode(jid) {
     const mode = readSubbotSetting(jid).mode
     return Object.hasOwn(SUBBOT_MODE_LABEL, mode) ? mode : 'public'
+}
+
+function isValidSubbotPrefix(value) {
+    return typeof value === 'string' && /^[^\p{L}\p{N}\s]{1,3}$/u.test(value)
+}
+
+function getSubbotCustomPrefixEnabled(jid) {
+    return readSubbotSetting(jid).customPrefixEnabled === true
+}
+
+function getSubbotCustomPrefixList(jid) {
+    const list = readSubbotSetting(jid).customPrefixes
+    return Array.isArray(list) ? list.filter(isValidSubbotPrefix) : []
+}
+
+function getSubbotOwnPrefixes(jid) {
+    const list = getSubbotCustomPrefixList(jid)
+    return getSubbotCustomPrefixEnabled(jid) && list.length ? list : null
+}
+
+function getSubbotActivePrefixes(jid) {
+    return getSubbotOwnPrefixes(jid) || (Array.isArray(global.prefix) && global.prefix.length ? [...global.prefix] : ['.'])
 }
 
 function subbotModeAllows(mode, msg) {
@@ -565,6 +626,8 @@ export async function startSubBot(jid, opts = {}) {
 
         Object.defineProperty(subConn, 'botName', { configurable: true, get: () => getSubbotBotName(jid) })
         Object.defineProperty(subConn, 'customPlugins', { configurable: true, get: () => subbotPlugins.get(jid) || null })
+        Object.defineProperty(subConn, 'customMenu', { configurable: true, get: () => getSubbotCustomMenu(jid) })
+        Object.defineProperty(subConn, 'prefix', { configurable: true, get: () => getSubbotOwnPrefixes(jid) ?? undefined })
         subConn.printHook = (entry) => pushLog(jid, entry.text, 'chat', entry)
         Object.assign(subConn, Connection.getMessageConfig())
 
@@ -785,13 +848,18 @@ export function webSubbotInfo(jid) {
         saved,
         type,
         mode: getSubbotMode(jid),
+        customPrefix: getSubbotCustomPrefixEnabled(jid),
+        prefixes: getSubbotCustomPrefixList(jid),
+        activePrefixes: getSubbotActivePrefixes(jid),
         autoConnect: !!getUserAutoReconnect(jid),
         slots: { used: Connection.conns.size, max },
         active: [...Connection.conns.keys()],
         runtime: { startedAt: runtime.startedAt },
         botName: storedSubbotBotName(jid),
         defaultBotName: getSubbotConfig().botname,
-        logs: runtime.logs.slice(-120)
+        logs: runtime.logs.slice(-120),
+        menu: subbotMenuState(jid),
+        menuLimits: SUBBOT_MENU_MAX
     }
     if (state === 'pairing') {
         info.pairing = {
@@ -928,11 +996,270 @@ export async function webSubbotSetMode(jid, mode) {
     pushLog(jid, `Mode set to ${SUBBOT_MODE_LABEL[mode]}`)
 }
 
+export async function webSubbotToggleCustomPrefix(jid, value) {
+    const enabled = !!value
+    if (enabled && !getSubbotCustomPrefixList(jid).length) throw new Error('Add at least one prefix first.')
+    if (getSubbotCustomPrefixEnabled(jid) === enabled) return
+    writeSubbotSetting(jid, { customPrefixEnabled: enabled })
+    pushLog(jid, enabled ? 'Custom prefix enabled' : 'Custom prefix disabled')
+}
+
+export async function webSubbotAddPrefix(jid, prefix) {
+    const value = String(prefix ?? '').trim()
+    if (!isValidSubbotPrefix(value)) throw new Error('Prefix must be 1 to 3 symbols, without letters, numbers, or spaces.')
+    const list = getSubbotCustomPrefixList(jid)
+    if (list.includes(value)) throw new Error('That prefix is already added.')
+    if (list.length >= SUBBOT_PREFIX_MAX) throw new Error(`Up to ${SUBBOT_PREFIX_MAX} prefixes are allowed.`)
+    writeSubbotSetting(jid, { customPrefixes: [...list, value] })
+    pushLog(jid, `Prefix ${value} added`)
+}
+
+export async function webSubbotRemovePrefix(jid, prefix) {
+    const value = String(prefix ?? '')
+    const list = getSubbotCustomPrefixList(jid)
+    const next = list.filter(item => item !== value)
+    if (next.length === list.length) return
+    const patch = { customPrefixes: next }
+    if (!next.length) patch.customPrefixEnabled = false
+    writeSubbotSetting(jid, patch)
+    pushLog(jid, `Prefix ${value} removed`)
+}
+
 export async function webSubbotSetBotName(jid, name) {
     const value = String(name ?? '').trim()
     if (value.length > 32) throw new Error('Bot name must be 32 characters or fewer.')
     writeSubbotSetting(jid, { botName: value })
     pushLog(jid, `Bot name set to ${value || getSubbotConfig().botname}`)
+}
+
+function menuUrlName(url) {
+    try {
+        return decodeURIComponent(path.posix.basename(new URL(url).pathname)).slice(0, 120) || 'file'
+    } catch {
+        return 'file'
+    }
+}
+
+function menuMediaPath(jid, file) {
+    return path.join(subbotDir(jid), 'menu', path.basename(String(file || '')))
+}
+
+function removeMenuMediaFile(jid, file) {
+    fs.rmSync(menuMediaPath(jid, file), { force: true })
+}
+
+function selectMenuButton(text = SUBBOT_MENU_SELECT_LABEL) {
+    return { kind: 'select', text }
+}
+
+function normalizeSubbotMenuLabel(value) {
+    const label = String(value ?? '').trim()
+    if (label.length > SUBBOT_MENU_LIST_LABEL_MAX) throw new Error(`Select button label must be ${SUBBOT_MENU_LIST_LABEL_MAX} characters or fewer.`)
+    return label
+}
+
+function normalizeSubbotMenuList(item) {
+    const options = []
+    for (const option of Array.isArray(item.options) ? item.options : []) {
+        const text = String(option?.text ?? '').trim()
+        const description = String(option?.description ?? '').trim()
+        const value = String(option?.value ?? '').trim()
+        if (!text && !description && !value) continue
+        if (!text) throw new Error('Every option needs a label.')
+        if (!value) throw new Error('Every option needs a command.')
+        if (text.length > SUBBOT_MENU_OPTION_TITLE_MAX) throw new Error(`Option label must be ${SUBBOT_MENU_OPTION_TITLE_MAX} characters or fewer.`)
+        if (description.length > SUBBOT_MENU_OPTION_DESCRIPTION_MAX) throw new Error(`Option description must be ${SUBBOT_MENU_OPTION_DESCRIPTION_MAX} characters or fewer.`)
+        if (value.length > 256) throw new Error('Option command must be 256 characters or fewer.')
+        if (/^https?:\/\//i.test(value)) throw new Error('Options need a command, not a URL.')
+        options.push({ text, description, value })
+    }
+    const label = String(item.text ?? '').trim()
+    if (!label && !options.length) return null
+    if (label.length > SUBBOT_MENU_LIST_LABEL_MAX) throw new Error(`Select button label must be ${SUBBOT_MENU_LIST_LABEL_MAX} characters or fewer.`)
+    if (!options.length) throw new Error('Add at least one option to the select button.')
+    if (options.length > SUBBOT_MENU_LIST_MAX) throw new Error(`Up to ${SUBBOT_MENU_LIST_MAX} options are allowed per select button.`)
+    return { kind: 'list', text: label, options }
+}
+
+function migrateLegacySubbotMenu(src) {
+    if (src.text === undefined && src.message === undefined) return {}
+    return {
+        all: { message: src.message, text: src.text },
+        select: { message: src.message, text: src.text }
+    }
+}
+
+function normalizeSubbotMenuPage(input, previous, key, strict) {
+    const src = input && typeof input === 'object' ? input : {}
+    const prev = previous && typeof previous === 'object' ? previous : {}
+    const name = SUBBOT_MENU_PAGE_NAME[key]
+    const defaults = SUBBOT_MENU_PAGE_DEFAULTS[key]
+    let message = src.message ?? defaults.message
+    if (!SUBBOT_MENU_MESSAGES.includes(message)) {
+        if (strict) throw new Error(`Invalid message type for ${name}.`)
+        message = defaults.message
+    }
+    let text = src.text === undefined ? defaults.text : String(src.text)
+    if (!text.trim()) {
+        if (strict) throw new Error(`${name} text cannot be empty.`)
+        text = defaults.text
+    }
+    if (text.length > 4000) throw new Error(`${name} text must be 4000 characters or fewer.`)
+    let media = null
+    const sourceMedia = src.media && typeof src.media === 'object' ? src.media : null
+    if (sourceMedia?.source === 'upload' && prev.media?.source === 'upload') media = prev.media
+    if (sourceMedia?.source === 'url') {
+        const url = String(sourceMedia.url ?? '').trim()
+        if (url) {
+            if (!/^https?:\/\//i.test(url) || url.length > 2048) throw new Error('Media URL must start with http:// or https://.')
+            const kept = prev.media?.source === 'url' && prev.media.url === url ? prev.media : null
+            media = { source: 'url', url, name: kept?.name || menuUrlName(url), ...(kept?.mimetype ? { mimetype: kept.mimetype } : {}) }
+        }
+    }
+    if (strict) {
+        if (SUBBOT_MENU_MEDIA_REQUIRED.includes(message) && !media) throw new Error(`Upload a file or enter a URL for ${name}.`)
+        if (message === 'button-image' && media?.source === 'upload' && !String(media.mimetype || '').startsWith('image/')) throw new Error(`${name} needs an image file for Button - Image.`)
+    }
+    return { message, text, media }
+}
+
+function normalizeSubbotMenu(input, previous) {
+    const src = input && typeof input === 'object' ? input : {}
+    const prev = previous && typeof previous === 'object' ? previous : {}
+    const type = src.type ?? 'select'
+    const quote = src.quote ?? 'contact'
+    if (!SUBBOT_MENU_TYPES.includes(type)) throw new Error('Invalid menu type.')
+    if (!SUBBOT_MENU_QUOTES.includes(quote)) throw new Error('Invalid quote type.')
+    const quoteText = src.quoteText === undefined ? SUBBOT_MENU_QUOTE_TEXT_DEFAULT : String(src.quoteText ?? '').trim()
+    if (quoteText.length > SUBBOT_MENU_QUOTE_TEXT_MAX) throw new Error(`Quote text must be ${SUBBOT_MENU_QUOTE_TEXT_MAX} characters or fewer.`)
+    const quoteCount = src.quoteCount === undefined ? SUBBOT_MENU_QUOTE_COUNT_DEFAULT : Number(src.quoteCount)
+    if (!Number.isInteger(quoteCount) || quoteCount < 0 || quoteCount > SUBBOT_MENU_QUOTE_COUNT_MAX) throw new Error(`Quote item count must be a whole number from 0 to ${SUBBOT_MENU_QUOTE_COUNT_MAX}.`)
+    const footer = String(src.footer ?? '').trim()
+    if (footer.length > 60) throw new Error('Footer must be 60 characters or fewer.')
+
+    const sourcePages = src.pages && typeof src.pages === 'object' ? src.pages : migrateLegacySubbotMenu(src)
+    const prevPages = prev.pages && typeof prev.pages === 'object' ? prev.pages : {}
+    const pages = {
+        all: normalizeSubbotMenuPage(sourcePages.all, prevPages.all, 'all', type === 'all'),
+        select: normalizeSubbotMenuPage(sourcePages.select, prevPages.select, 'select', type === 'select'),
+        tags: normalizeSubbotMenuPage(sourcePages.tags, prevPages.tags, 'tags', true)
+    }
+    const thumbnail = [type === 'all' ? pages.all.media : pages.select.media, pages.all.media, pages.select.media, pages.tags.media].find(Boolean) || null
+    for (const key of SUBBOT_MENU_PAGES) pages[key].media = thumbnail ? { ...thumbnail } : null
+
+    const max = SUBBOT_MENU_MAX[type]
+    const sourceButtons = src.buttons === undefined ? (type === 'select' ? [{ kind: 'select' }] : []) : Array.isArray(src.buttons) ? src.buttons : []
+    let buttons = []
+    for (const item of sourceButtons) {
+        if (item?.kind === 'select') {
+            if (!buttons.some(button => button.kind === 'select')) buttons.push(selectMenuButton(item.text === undefined ? SUBBOT_MENU_SELECT_LABEL : normalizeSubbotMenuLabel(item.text)))
+            continue
+        }
+        if (item?.kind === 'list') {
+            const list = normalizeSubbotMenuList(item)
+            if (list) buttons.push(list)
+            continue
+        }
+        const label = String(item?.text ?? '').trim()
+        const value = String(item?.value ?? '').trim()
+        if (!label && !value) continue
+        if (!value) throw new Error('Every button needs a URL or command.')
+        if (label.length > 25) throw new Error('Button label must be 25 characters or fewer.')
+        if (value.length > 256) throw new Error('Button URL or command must be 256 characters or fewer.')
+        buttons.push({ kind: /^https?:\/\//i.test(value) ? 'url' : 'reply', text: label, value })
+    }
+    if (type === 'select' && !buttons.some(button => button.kind === 'select') && buttons.length < max) buttons.push(selectMenuButton())
+    if (type === 'all') buttons = buttons.filter(button => button.kind !== 'select')
+    if (buttons.length > max) throw new Error(`Up to ${max} buttons are allowed for this menu type.`)
+    if (type === 'all' && SUBBOT_MENU_BUTTON_MESSAGES.includes(pages.all.message) && !buttons.length) throw new Error('Add at least one button for the Menu page.')
+
+    return { custom: src.custom === true, type, quote, quoteText, quoteCount, footer, buttons, pages }
+}
+
+function subbotMenuState(jid) {
+    const stored = readSubbotSetting(jid).menu
+    try {
+        return normalizeSubbotMenu(stored, stored)
+    } catch {
+        return normalizeSubbotMenu({}, {})
+    }
+}
+
+function getSubbotCustomMenu(jid) {
+    const stored = readSubbotSetting(jid).menu
+    if (!stored || stored.custom !== true) return null
+    let menu
+    try {
+        menu = normalizeSubbotMenu(stored, stored)
+    } catch {
+        return null
+    }
+    const pageRuntime = key => {
+        const page = menu.pages[key]
+        const file = page.media?.source === 'upload' ? menuMediaPath(jid, page.media.file) : null
+        const attachment = page.media?.source === 'url' ? page.media.url : file && fs.existsSync(file) ? file : null
+        return { message: page.message, text: page.text, attachment, attachmentName: page.media?.name || 'file', attachmentMimetype: page.media?.mimetype }
+    }
+    return {
+        type: menu.type,
+        quote: menu.quote,
+        quoteText: menu.quoteText,
+        quoteCount: menu.quoteCount,
+        footer: menu.footer,
+        buttons: menu.buttons,
+        pages: { all: pageRuntime('all'), select: pageRuntime('select'), tags: pageRuntime('tags') }
+    }
+}
+
+function removeReplacedMenuMedia(jid, previous, next) {
+    for (const key of SUBBOT_MENU_PAGES) {
+        const old = previous?.pages?.[key]?.media
+        if (old?.source === 'upload' && old.file && next.pages[key].media?.file !== old.file) removeMenuMediaFile(jid, old.file)
+    }
+}
+
+export async function webSubbotSetMenu(jid, menu) {
+    if (!menu || typeof menu !== 'object') throw new Error('Invalid menu settings.')
+    const previous = readSubbotSetting(jid).menu
+    const next = normalizeSubbotMenu(menu, previous)
+    if (next.type === 'select' && !next.buttons.some(button => button.kind === 'select')) throw new Error(`Remove one button to make room for ${SUBBOT_MENU_SELECT_LABEL}.`)
+    removeReplacedMenuMedia(jid, previous, next)
+    writeSubbotSetting(jid, { menu: next })
+    pushLog(jid, next.custom ? 'Custom menu saved' : 'Custom menu turned off')
+}
+
+export async function webSubbotToggleMenu(jid, value) {
+    const previous = readSubbotSetting(jid).menu
+    const next = normalizeSubbotMenu({ ...subbotMenuState(jid), custom: value === true }, previous)
+    writeSubbotSetting(jid, { menu: next })
+    pushLog(jid, next.custom ? 'Custom menu turned on' : 'Custom menu turned off')
+}
+
+export async function webSubbotUploadMenuMedia(jid, body) {
+    const target = SUBBOT_MENU_PAGES.includes(body?.target) ? body.target : 'all'
+    const data = String(body?.data ?? '').replace(/^data:[^,]*,/, '')
+    const buffer = Buffer.from(data, 'base64')
+    if (!buffer.length) throw new Error('Choose a file to upload.')
+    if (buffer.length > SUBBOT_MENU_MEDIA_MAX_BYTES) throw new Error('File must be 8 MB or smaller.')
+    const name = path.basename(String(body?.name ?? '').trim()).slice(0, 120) || 'file'
+    const mimetype = String(body?.mimetype || 'application/octet-stream').toLowerCase().slice(0, 100)
+    const previous = readSubbotSetting(jid).menu
+    const base = previous && typeof previous === 'object' ? previous : {}
+    const activePages = (base.type ?? 'select') === 'all' ? ['all'] : ['select', 'tags']
+    const imagePage = activePages.find(key => (base.pages?.[key]?.message ?? SUBBOT_MENU_PAGE_DEFAULTS[key].message) === 'button-image')
+    if (imagePage && !mimetype.startsWith('image/')) throw new Error(`${SUBBOT_MENU_PAGE_NAME[imagePage]} needs an image file for Button - Image.`)
+    const upload = global.scraper?.upload?.default
+    if (typeof upload !== 'function') throw new Error('Upload service is not available')
+    const url = await upload(buffer, name)
+    if (!url) throw new Error('Upload failed')
+    const pages = { ...(base.pages && typeof base.pages === 'object' ? base.pages : migrateLegacySubbotMenu(base)) }
+    for (const key of SUBBOT_MENU_PAGES) {
+        const old = pages[key]?.media
+        if (old?.source === 'upload' && old.file) removeMenuMediaFile(jid, old.file)
+        pages[key] = { ...(pages[key] && typeof pages[key] === 'object' ? pages[key] : {}), media: { source: 'url', url, name, mimetype } }
+    }
+    writeSubbotSetting(jid, { menu: { ...base, pages } })
+    pushLog(jid, `Menu file uploaded for ${SUBBOT_MENU_PAGE_NAME[target]}: ${name}`)
 }
 
 export function webSubbotSessionFile(jid) {

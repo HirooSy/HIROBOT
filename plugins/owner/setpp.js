@@ -36,6 +36,7 @@ let handler = async (m, { conn, args }) => {
 };
 
 handler.help = ['setbotpp'];
+handler.tags = ['owner']
 handler.command = /^setbotpp$/i;
 handler.ai = { risk: 'low', description: "change bot's profile picture" }
 
