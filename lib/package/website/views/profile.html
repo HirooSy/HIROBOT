@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/></noscript>
-  <link rel="stylesheet" href="/style.css?v=7">
+  <link rel="stylesheet" href="/style.css?v=9">
 </head>
 <body class="page-profile">
 <div class="page">
@@ -138,14 +138,15 @@
             <button class="menu-btn" id="menu-shop" onclick="toggleSection('shop')">Shop</button>
             <button class="menu-btn" id="menu-subbot" onclick="toggleSection('subbot')">Subbot</button>
           </div>
-          <div class="search-box">
-            <span class="search-icon"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-            <input type="text" id="user-search-input" class="search-input" placeholder="Search user by their number/username" oninput="onUserSearchInput()">
-          </div>
         </div>
       </div>
 
-      <div class="divider-lg" id="section-divider" style="display:none"></div>
+          <div class="search-box home-search">
+            <span class="search-icon"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+            <input type="text" id="user-search-input" class="search-input" placeholder="Search user by their number/username" oninput="onUserSearchInput()">
+          </div>
+
+      <div class="divider-lg" id="section-divider"></div>
 <div class="section-panel" id="section-gacha">
         <div class="section-heading">GACHA</div>
         <div class="card">
@@ -556,6 +557,17 @@
     </div>
     <div class="divider"></div>
     <div class="badge-info-note">Missing a renewal breaks your streak, but you get a 1-day grace period after expiry to renew and keep it alive.</div>
+  </div>
+
+  <div class="user-profile-overlay" id="user-profile-overlay">
+    <div class="user-profile-pop" role="dialog" aria-label="User profile">
+      <button type="button" class="user-profile-close" onclick="closeUserProfile()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg></button>
+      <div id="user-profile-body"></div>
+    </div>
+  </div>
+
+  <div class="photo-viewer" id="photo-viewer">
+    <img class="photo-viewer-img" id="photo-viewer-img" alt="">
   </div>
 
   <div id="toast" class="toast"></div>
@@ -1006,9 +1018,10 @@ function subbotRenderActive(d) {
         ? `<div class="sr-avatar-wrap"><img class="sr-avatar" src="${escapeHtml(u.profilePicCache)}" alt=""></div>`
         : `<div class="sr-avatar-wrap"><div class="sr-avatar">${escapeHtml(initials)}</div></div>`
       return `
-        <div class="search-result-card subbot-active-item">
+        <div class="search-result-card subbot-active-item" data-profile-key="${escapeHtml(u.key)}">
           ${avatarHtml}
           <div class="sr-info">
+            <div class="sr-subbot-name">${escapeHtml(u.botName || '')}</div>
             <div class="sr-name ${getPremiumBadgeClass(u)}">${escapeHtml(label)}</div>
             ${renderBadgeIcons(u.badge, true)}
           </div>
@@ -1386,6 +1399,25 @@ document.addEventListener('visibilitychange', () => {
 })
 document.addEventListener('click', e => {
   if (!e.target.closest('.subbot-plugin-item')) subbotPluginMenuClose()
+})
+document.addEventListener('click', e => {
+  const card = e.target.closest('[data-profile-key]')
+  if (card) openUserProfile(card.dataset.profileKey)
+})
+document.getElementById('user-profile-overlay').addEventListener('click', e => {
+  if (e.target.id === 'user-profile-overlay') closeUserProfile()
+})
+document.addEventListener('click', e => {
+  const photo = e.target.closest('[data-photo-src]')
+  if (photo) openPhotoViewer(photo.dataset.photoSrc)
+})
+document.getElementById('photo-viewer').addEventListener('click', closePhotoViewer)
+document.getElementById('photo-viewer-img').addEventListener('error', closePhotoViewer)
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closePhotoViewer()
+    closeUserProfile()
+  }
 })
 document.addEventListener('DOMContentLoaded', () => {
   subbotRenderMethod()
@@ -1979,7 +2011,7 @@ async function runUserSearch(q) {
         const nameClass = getPremiumBadgeClass(u)
         const badgesHtml = renderBadgeIcons(u.badge, true)
         return `
-          <div class="search-result-card">
+          <div class="search-result-card" data-profile-key="${escapeHtml(u.userKey)}">
             ${avatarHtml}
             <div class="sr-info">
               <div class="sr-name ${nameClass}">${escapeHtml(u.name || u.phone)}</div>
@@ -1996,6 +2028,80 @@ async function runUserSearch(q) {
 
     document.getElementById('section-search-results').style.display = 'block'
   } catch {
+  }
+}
+
+let userProfileRequest = 0
+
+function openPhotoViewer(src) {
+  document.getElementById('photo-viewer-img').src = src
+  document.getElementById('photo-viewer').classList.add('open')
+}
+
+function closePhotoViewer() {
+  document.getElementById('photo-viewer').classList.remove('open')
+  document.getElementById('photo-viewer-img').removeAttribute('src')
+}
+
+function closeUserProfile() {
+  document.getElementById('user-profile-overlay').classList.remove('open')
+  userProfileRequest++
+}
+
+function userProfileDate(value) {
+  return new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function renderUserProfile(u) {
+  const initials = (u.name && u.name !== '-' ? u.name : u.phone || '?').slice(0, 2).toUpperCase()
+  const avatarHtml = u.profilePic
+    ? `<img class="up-avatar-img" src="${escapeHtml(u.profilePic)}" alt="">`
+    : `<div class="up-avatar-fallback">${escapeHtml(initials)}</div>`
+  const progress = u.nextExp ? Math.min(100, Math.round((u.exp / u.nextExp) * 100)) : 100
+  const premiumValue = u.premiumSince ? 'Since ' + userProfileDate(u.premiumSince) : 'Active'
+  return `
+    <div class="up-head">
+      <div class="up-avatar"${u.profilePic ? ` data-photo-src="${escapeHtml(u.profilePic)}"` : ''}>${avatarHtml}</div>
+      <div class="up-head-info">
+        <div class="up-name ${getPremiumBadgeClass(u)}">${escapeHtml(u.name)}</div>
+        ${u.phone ? `<div class="up-phone">${escapeHtml(u.phone)}</div>` : ''}
+        ${renderBadgeIcons(u.badge)}
+      </div>
+    </div>
+    <div class="up-stats">
+      <div class="up-stat"><div class="up-stat-value">${escapeHtml(fmtExp(u.exp))}</div><div class="up-stat-label">Exp</div></div>
+      <div class="up-stat"><div class="up-stat-value">${escapeHtml(fmtExp(u.gems))}</div><div class="up-stat-label">Gems</div></div>
+      <div class="up-stat"><div class="up-stat-value">${escapeHtml(u.tier)}</div><div class="up-stat-label">Tier</div></div>
+      <div class="up-stat"><div class="up-stat-value">${escapeHtml(u.joined ? userProfileDate(u.joined) : '-')}</div><div class="up-stat-label">Joined</div></div>
+    </div>
+    ${u.nextTier ? `
+    <div class="up-progress">
+      <div class="up-progress-label">${escapeHtml(fmtExp(u.exp))} / ${escapeHtml(fmtExp(u.nextExp))} EXP to ${escapeHtml(u.nextTier)}</div>
+      <div class="up-progress-bar"><div class="up-progress-fill" style="width:${progress}%"></div></div>
+    </div>` : ''}
+    ${u.premium ? `
+    <div class="up-row">
+      <span>Premium</span>
+      <span class="up-row-value premium">${escapeHtml(premiumValue)}</span>
+    </div>` : ''}
+  `
+}
+
+async function openUserProfile(key) {
+  const requestId = ++userProfileRequest
+  const body = document.getElementById('user-profile-body')
+  body.innerHTML = '<div class="search-empty">Loading...</div>'
+  document.getElementById('user-profile-overlay').classList.add('open')
+  try {
+    const data = await (await safeFetch('/api/user-profile?key=' + encodeURIComponent(key), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })).json()
+    if (requestId !== userProfileRequest) return
+    body.innerHTML = data.success
+      ? renderUserProfile(data.user)
+      : `<div class="search-empty">${escapeHtml(data.message || 'Failed to load profile.')}</div>`
+  } catch {
+    if (requestId === userProfileRequest) body.innerHTML = '<div class="search-empty">Failed to load profile.</div>'
   }
 }
 

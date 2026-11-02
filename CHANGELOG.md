@@ -8,6 +8,10 @@
 • Optimize web server proxy cache handling and memory management
 • Export guest text generation utility in MCP AI package
 • Update project documentation and file tree in README.md
+• Add /api/user-profile endpoint for querying user data and badge status
+• Enhance subbotActiveList to include botName and user key for better UI integration
+• Add subbotDisplayName helper to subbot plugin for unified name resolution
+• Update stylesheet version for profile page
 
 ________________________
 

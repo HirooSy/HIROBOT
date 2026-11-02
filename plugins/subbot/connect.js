@@ -764,6 +764,10 @@ async function fetchPairingCode(handle, jid, entry) {
     }
 }
 
+export function subbotDisplayName(jid) {
+    return getSubbotBotName(jid)
+}
+
 export function webSubbotInfo(jid) {
     const { max } = getSubbotConfig()
     const entry = webSubbots.get(jid)
