@@ -1,3 +1,32 @@
+<h3>02/November/2026</h3>
+<sub>
+
+```diff
+• Refactor session and database storage paths to data/bot directory
+• Add subbot API management endpoints and UI for subbot type, mode, botname, and AI-assisted plugin management
+• Optimize web server proxy cache handling and memory management
+• Export guest text generation utility in MCP AI package
+• Update project documentation and file tree in README.md
+
+________________________
+
+* Edit "README.md"
+* Edit "lib/config.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/package/website/views/profile.html"
+* Edit "lib/package/website/views/style.css"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/database.js"
+* Edit "lib/utils/handler.js"
+* Edit "plugins/ai/ai.js"
+* Edit "plugins/main/menu.js"
+* Edit "plugins/owner/backup.js"
+* Edit "plugins/owner/migratedb.js"
+* Edit "plugins/subbot/connect.js"
+```
+</sub>
+
 <h3>01/November/2026</h3>
 <sub>
 
@@ -21,6 +50,7 @@ ________________________
 + Add "lib/package/chrome/errors.js"
 + Add "lib/package/chrome/index.js"
 + Add "lib/package/chrome/input.js"
++ Add "lib/package/chrome/launcher.js"
 + Add "lib/package/chrome/launcher.js"
 + Add "lib/package/chrome/locator.js"
 + Add "lib/package/chrome/messages.js"
@@ -233,7 +263,7 @@ ________________________
 * Edit "lib/utils/handler.js"
 * Edit "lib/utils/simple.js"
 * Edit "package.json"
-* Edit "plugins/ai/gpt.js"
+* Edit "plugins/ai/aicheck.js"
 * Edit "plugins/ai/notrack.js"
 * Edit "plugins/dl/drive.js"
 * Edit "plugins/dl/e621.js"

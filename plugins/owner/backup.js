@@ -92,7 +92,7 @@ let handler = async (m, { conn }) => {
     join(cwd, '.npm'),
     join(cwd, '.agents'),
     join(cwd, '.config'),
-    join(cwd, 'data/sessions/store.db'),
+    join(cwd, 'data/bot/store.db'),
   ]
 
   await addFolderRecursively(zipAll, cwd, cwd, excludePaths)

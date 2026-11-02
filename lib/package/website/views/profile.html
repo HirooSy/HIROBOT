@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/></noscript>
-  <link rel="stylesheet" href="/style.css?v=3">
+  <link rel="stylesheet" href="/style.css?v=4">
 </head>
 <body class="page-profile">
 <div class="page">
@@ -117,14 +117,6 @@
 
       <div class="divider-lg"></div>
 
-      <div class="card discord-card" id="discord-card" style="display:none">
-        <div>
-          <div class="card-title">Discord</div>
-          <div class="text-sm text-muted2" id="discord-status"></div>
-        </div>
-        <button type="button" class="btn btn-small btn-discord" id="discord-btn" onclick="connectDiscord()">Connect</button>
-      </div>
-
       <div class="card discord-card whatsapp-card" id="whatsapp-card" style="display:none">
         <div>
           <div class="card-title">WhatsApp</div>
@@ -217,6 +209,38 @@
                 <button type="button" data-method="qr" onclick="subbotPickMethod('qr')">QR code</button>
               </div>
               <div class="subbot-hint" id="subbot-hint"></div>
+              <div class="subbot-row subbot-mode-row">
+                <div class="subbot-mode-text">
+                  <div class="subbot-row-title">Session type</div>
+                  <div class="subbot-row-sub" data-type-hint></div>
+                </div>
+                <div class="subbot-select subbot-mode-select" data-select="type">
+                  <div class="subbot-select-box">
+                    <button type="button" class="subbot-select-btn" onclick="subbotToggleSelect(this)"><span data-select-label>Single</span><span class="subbot-select-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
+                    <div class="subbot-select-menu">
+                      <button type="button" data-value="sql" onclick="subbotPickType('sql')">SQL</button>
+                      <button type="button" data-value="multi" onclick="subbotPickType('multi')">Multi</button>
+                      <button type="button" data-value="single" onclick="subbotPickType('single')">Single</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="subbot-row subbot-mode-row">
+                <div class="subbot-mode-text">
+                  <div class="subbot-row-title">Session type</div>
+                  <div class="subbot-row-sub" data-type-hint></div>
+                </div>
+                <div class="subbot-select subbot-mode-select" data-select="type">
+                  <div class="subbot-select-box">
+                    <button type="button" class="subbot-select-btn" onclick="subbotToggleSelect(this)"><span data-select-label>Single</span><span class="subbot-select-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
+                    <div class="subbot-select-menu">
+                      <button type="button" data-value="sql" onclick="subbotPickType('sql')">SQL</button>
+                      <button type="button" data-value="multi" onclick="subbotPickType('multi')">Multi</button>
+                      <button type="button" data-value="single" onclick="subbotPickType('single')">Single</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div class="subbot-note" id="subbot-connect-note" style="display:none">Subbot is available to premium users only.</div>
               <button class="btn" id="subbot-connect-btn" onclick="subbotConnect()">Connect</button>
             </div>
@@ -235,39 +259,138 @@
               <button class="btn btn-secondary" onclick="subbotCancel()">Cancel</button>
             </div>
           </div>
-          <div class="subbot-grid" id="subbot-grid">
-            <div class="card subbot-square" id="subbot-session-card" style="display:none">
-              <div class="subbot-status" id="subbot-status" data-state="stopped"><span class="subbot-dot"></span><span id="subbot-status-text"></span></div>
-              <div class="subbot-note" id="subbot-premium-note" style="display:none">Premium required to start.</div>
-              <div class="subbot-controls">
-                <button class="btn btn-small btn-flat" id="subbot-run-btn" onclick="subbotToggleRun()">Start</button>
-                <div class="subbot-icons">
-                  <button class="btn subbot-icon-btn" id="subbot-download-btn" title="Download session" aria-label="Download session" onclick="subbotDownload()"></button>
-                  <button class="btn subbot-icon-btn subbot-delete" id="subbot-delete-btn" title="Delete session" aria-label="Delete session" onclick="subbotDelete()"></button>
+
+                    <div id="subbot-session" style="display:none">
+            <div class="subbot-tabs" id="subbot-tabs" data-tab="console">
+              <span class="subbot-tab-indicator"></span>
+              <button type="button" class="active" data-subbot-tab="console" onclick="subbotPickTab('console')">Console</button>
+              <button type="button" data-subbot-tab="settings" onclick="subbotPickTab('settings')">Settings</button>
+              <button type="button" data-subbot-tab="plugins" onclick="subbotPickTab('plugins')">Plugins</button>
+            </div>
+
+            <div class="card subbot-panel">
+              <div class="subbot-slides" id="subbot-slides" data-tab="console">
+                <div class="subbot-slide">
+                  <div class="subbot-title-row">
+                    <span class="subbot-title" id="subbot-title"></span>
+                    <input type="text" class="subbot-title-input" id="subbot-title-input" maxlength="32" placeholder="HIROBOT" style="display:none" onblur="subbotCommitTitle()" onkeydown="subbotTitleKey(event)">
+                    <button type="button" class="subbot-title-edit" onclick="subbotEditTitle()" aria-label="Edit bot name" title="Edit bot name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+                  </div>
+                  <div class="subbot-server-head subbot-console-head">
+                    <div class="subbot-status" id="subbot-status" data-state="stopped"><span class="subbot-dot"></span><span id="subbot-status-text"></span></div>
+                    <button class="btn btn-small btn-flat" id="subbot-run-btn" onclick="subbotToggleRun()">Start</button>
+                  </div>
+                  <div class="subbot-note" id="subbot-premium-note" style="display:none">Premium required to start.</div>
+                  <div class="subbot-stats">
+                    <div class="subbot-stat"><div class="subbot-stat-value" id="subbot-stat-uptime">-</div><div class="subbot-stat-label">Uptime</div></div>
+                    <div class="subbot-stat"><div class="subbot-stat-value" id="subbot-stat-slots">0/0</div><div class="subbot-stat-label">Slots</div></div>
+                    <div class="subbot-stat"><div class="subbot-stat-value" id="subbot-stat-session">SQL</div><div class="subbot-stat-label">Session</div></div>
+                  </div>
+                  <div class="subbot-console" id="subbot-console"></div>
+                  <div class="subbot-console-foot">Read-only</div>
                 </div>
-              </div>
-              <div class="subbot-row subbot-auto-row" title="Start this session automatically when the bot restarts.">
-                <div>
-                  <div class="subbot-row-title">Auto-connect</div>
-                  <div class="subbot-row-sub">Starts on bot restart</div>
+                <div class="subbot-slide">
+                <div class="subbot-row subbot-mode-row">
+                  <div class="subbot-mode-text">
+                    <div class="subbot-row-title">Mode</div>
+                    <div class="subbot-row-sub" id="subbot-mode-hint"></div>
+                  </div>
+                  <div class="subbot-select subbot-mode-select" data-select="mode">
+                    <div class="subbot-select-box">
+                      <button type="button" class="subbot-select-btn" onclick="subbotToggleSelect(this)"><span data-select-label>Public</span><span class="subbot-select-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
+                      <div class="subbot-select-menu">
+                        <button type="button" data-value="self" onclick="subbotPickMode('self')">Self</button>
+                        <button type="button" data-value="group" onclick="subbotPickMode('group')">Group chat</button>
+                        <button type="button" data-value="private" onclick="subbotPickMode('private')">Private chat</button>
+                        <button type="button" data-value="public" onclick="subbotPickMode('public')">Public</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <button type="button" class="switch" id="subbot-auto" role="switch" aria-checked="false" aria-label="Auto-connect" onclick="subbotToggleAuto()"><span class="switch-knob"></span></button>
+                <div class="subbot-row subbot-mode-row">
+                  <div class="subbot-mode-text">
+                    <div class="subbot-row-title">Session type</div>
+                    <div class="subbot-row-sub" data-type-hint></div>
+                  </div>
+                  <div class="subbot-select subbot-mode-select" data-select="type">
+                    <div class="subbot-select-box">
+                      <button type="button" class="subbot-select-btn" onclick="subbotToggleSelect(this)" disabled><span data-select-label>Single</span><span class="subbot-select-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
+                      <div class="subbot-select-menu">
+                        <button type="button" data-value="sql" onclick="subbotPickType('sql')">SQL</button>
+                        <button type="button" data-value="multi" onclick="subbotPickType('multi')">Multi</button>
+                        <button type="button" data-value="single" onclick="subbotPickType('single')">Single</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                  <div class="subbot-row subbot-auto-row" title="Restore this session automatically when the bot starts.">
+                    <div>
+                      <div class="subbot-row-title">Auto reconnect</div>
+                      <div class="subbot-row-sub">Restores the session on bot start</div>
+                    </div>
+                    <button type="button" class="switch" id="subbot-auto" role="switch" aria-checked="false" aria-label="Auto reconnect" onclick="subbotToggleAuto()"><span class="switch-knob"></span></button>
+                  </div>
+                  <div class="subbot-actions">
+                    <button class="btn btn-secondary subbot-action" id="subbot-download-btn" onclick="subbotDownload()"></button>
+                    <button class="btn btn-secondary subbot-action subbot-delete" id="subbot-delete-btn" onclick="subbotDelete()"></button>
+                  </div>
+                </div>
+                <div class="subbot-slide subbot-plugins-slide">
+                  <div class="subbot-plugin-head">
+                    <div>
+                      <div class="subbot-row-title">Custom plugins</div>
+                      <div class="subbot-row-sub">Run only for this subbot. Every file is reviewed by AI before it is saved.</div>
+                    </div>
+                    <span class="subbot-slots" id="subbot-plugin-count">0</span>
+                  </div>
+                  <button type="button" class="btn btn-secondary subbot-action subbot-ai-btn" id="subbot-ai-btn" onclick="subbotPluginAskOpen()">Ask AI</button>
+                  <div class="subbot-ask-panel" id="subbot-ask-panel" style="display:none">
+                    <textarea class="subbot-ask-input" id="subbot-ask-input" maxlength="1000" spellcheck="false" placeholder="Describe the plugin you want. Example: a .dice command that rolls a six-sided die and replies with the result."></textarea>
+                    <div class="subbot-ask-actions">
+                      <button type="button" class="btn btn-small btn-flat" id="subbot-ask-cancel" onclick="subbotPluginAskClose()">Cancel</button>
+                      <button type="button" class="btn btn-small" id="subbot-ask-generate" onclick="subbotPluginAskGenerate()">Generate</button>
+                    </div>
+                    <div class="subbot-editor-status" id="subbot-ask-status"></div>
+                  </div>
+                  <div class="subbot-plugin-actions">
+                    <button type="button" class="btn btn-secondary subbot-action" onclick="subbotPluginPickFile()">Upload</button>
+                    <button type="button" class="btn btn-secondary subbot-action" onclick="subbotPluginNew()">New</button>
+                    <input type="file" accept=".js,text/javascript" id="subbot-plugin-file" style="display:none" onchange="subbotPluginUpload(this)">
+                  </div>
+                  <div class="subbot-plugin-list" id="subbot-plugin-list" onclick="subbotPluginListClick(event)"></div>
+                  <div class="subbot-plugin-editor" id="subbot-plugin-editor" style="display:none">
+                    <div class="subbot-editor-bar">
+                      <input type="text" class="subbot-editor-name" id="subbot-plugin-name" maxlength="43" placeholder="my-plugin.js" spellcheck="false" autocomplete="off" autocapitalize="off">
+                      <div class="subbot-editor-actions">
+                        <button type="button" class="btn btn-small btn-flat" id="subbot-plugin-cancel" onclick="subbotPluginClose()">Cancel</button>
+                        <button type="button" class="btn btn-small" id="subbot-plugin-save" onclick="subbotPluginSave()">Save</button>
+                      </div>
+                    </div>
+                    <div class="subbot-editor-body">
+                      <div class="subbot-editor-gutter" id="subbot-plugin-gutter" aria-hidden="true"></div>
+                      <textarea class="subbot-editor-code" id="subbot-plugin-code" spellcheck="false" wrap="off" autocapitalize="off" autocorrect="off" placeholder="Type or paste the plugin code here" oninput="subbotEditorSync()" onscroll="subbotEditorScroll()" onkeydown="subbotEditorKey(event)"></textarea>
+                    </div>
+                    <div class="subbot-editor-status" id="subbot-plugin-status"></div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="card subbot-square" id="subbot-active-card">
-              <div class="subbot-card-head">
-                <div class="text-md font-bold">Active subbots</div>
-                <span class="subbot-slots" id="subbot-slots">0/0</span>
-              </div>
-              <div class="scroll-list-container subbot-active-wrap">
-                <div id="subbot-active-list" class="scroll-list subbot-active-list"></div>
-                <div class="top-gradient" id="subbot-top-gradient"></div>
-                <div class="bottom-gradient" id="subbot-bottom-gradient"></div>
-              </div>
+          </div>
+
+          <div class="card subbot-list-card" id="subbot-active-card">
+            <div class="subbot-card-head">
+              <div class="text-md font-bold">Active subbots</div>
+              <span class="subbot-slots" id="subbot-slots">0/0</span>
+            </div>
+            <div class="scroll-list-container subbot-active-wrap">
+              <div id="subbot-active-list" class="scroll-list subbot-active-list"></div>
+              <div class="top-gradient" id="subbot-top-gradient"></div>
+              <div class="bottom-gradient" id="subbot-bottom-gradient"></div>
             </div>
           </div>
         </div>
       </div>
+
 <div class="section-panel" id="section-search-results" style="display:none">
         <div class="search-results-label">Search Results</div>
         <div id="search-results-list"></div>
@@ -275,6 +398,14 @@
 
     </div>
 <div id="tab-account" class="tab-panel">
+      <div class="card discord-card" id="discord-card" style="display:none">
+        <div>
+          <div class="card-title">Discord</div>
+          <div class="text-sm text-muted2" id="discord-status"></div>
+        </div>
+        <button type="button" class="btn btn-small btn-discord" id="discord-btn" onclick="connectDiscord()">Connect</button>
+      </div>
+
       <div class="card">
         <div class="card-title">Change Name</div>
         <input type="text" id="rename-input" class="input-field" placeholder="New display name" maxlength="32">
@@ -758,6 +889,10 @@ let subbotExpiryTimer = null
 let subbotDeadline = 0
 let subbotQrKey = ''
 let subbotActiveKey = ''
+let subbotLogKey = ''
+let subbotTitleEditing = false
+let subbotUptimeStart = 0
+let subbotUptimeTimer = null
 
 const SUBBOT_HINTS = {
   pairing: 'Get a code to enter in WhatsApp. It appears after you press Connect.',
@@ -783,7 +918,7 @@ function subbotSchedulePoll() {
   subbotPollTimer = setTimeout(() => {
     if (!subbotShouldPoll()) return subbotSchedulePoll()
     subbotRefresh(true)
-  }, pending ? 2000 : 15000)
+  }, pending ? 2000 : subbotData.state === 'online' ? 4000 : 15000)
 }
 
 async function subbotRefresh(silent = false) {
@@ -910,33 +1045,43 @@ function subbotRenderMethod() {
   document.getElementById('subbot-hint').textContent = SUBBOT_HINTS[subbotMethod]
 }
 
+const SUBBOT_STATUS_TEXT = { online: 'Running', stopped: 'Offline', connecting: 'Starting...' }
+const SUBBOT_TYPE_NAME = { sql: 'SQL', multi: 'Multi', single: 'Single' }
+const SUBBOT_STORAGE_HINT = {
+  sql: 'SQL keeps the session in a native SQL file.',
+  multi: 'Multi keeps one JSON file per key, inside a folder.',
+  single: 'Single keeps the whole session in one JSON file.'
+}
+
+function subbotHasSession(d) {
+  return d.state === 'online' || d.state === 'stopped' || d.state === 'connecting'
+}
+
 function subbotRender() {
   const d = subbotData
   if (!d) return
   document.getElementById('subbot-loading').style.display = 'none'
   document.getElementById('subbot-body').style.display = 'block'
   subbotRenderActive(d)
-  const hasSession = d.state === 'online' || d.state === 'stopped' || d.state === 'connecting'
-  document.getElementById('subbot-session-card').style.display = hasSession ? '' : 'none'
+  const hasSession = subbotHasSession(d)
   document.getElementById('subbot-connect-card').style.display = hasSession ? 'none' : 'block'
-  document.getElementById('subbot-grid').classList.toggle('pair', hasSession)
-
-  if (hasSession) {
+  document.getElementById('subbot-session').style.display = hasSession ? 'block' : 'none'
+  subbotRenderTypeSelects(d)
+  subbotRenderModeSelects(d)
+  if (!hasSession) {
     clearInterval(subbotExpiryTimer)
-    document.getElementById('subbot-status').dataset.state = d.state
-    document.getElementById('subbot-status-text').textContent = { online: 'Connected', stopped: 'Stopped', connecting: 'Connecting...' }[d.state]
-    const runBtn = document.getElementById('subbot-run-btn')
-    runBtn.textContent = d.state === 'online' ? 'Stop' : d.state === 'connecting' ? 'Cancel' : 'Start'
-    runBtn.className = 'btn btn-small ' + (d.state === 'stopped' ? 'btn-flat' : 'btn-secondary')
-    const blocked = d.state === 'stopped' && !d.canUse
-    runBtn.disabled = blocked
-    document.getElementById('subbot-premium-note').style.display = blocked ? 'block' : 'none'
-    const auto = document.getElementById('subbot-auto')
-    auto.classList.toggle('on', !!d.autoConnect)
-    auto.setAttribute('aria-checked', d.autoConnect ? 'true' : 'false')
+    subbotRenderConnect(d)
+    subbotStopUptime()
     return
   }
+  subbotRenderTitle(d)
+  subbotRenderStatus(d)
+  subbotRenderStats(d)
+  subbotRenderLogs(d.logs || [])
+  subbotRenderSettings(d)
+}
 
+function subbotRenderConnect(d) {
   const pending = d.state === 'pairing'
   document.getElementById('subbot-idle').style.display = pending ? 'none' : 'block'
   document.getElementById('subbot-pending').style.display = pending ? 'block' : 'none'
@@ -973,6 +1118,206 @@ function subbotRender() {
   subbotExpiryTimer = setInterval(subbotTickExpiry, 1000)
   subbotTickExpiry()
 }
+
+function subbotRenderStatus(d) {
+  document.getElementById('subbot-status').dataset.state = d.state
+  document.getElementById('subbot-status-text').textContent = SUBBOT_STATUS_TEXT[d.state] || ''
+  const runBtn = document.getElementById('subbot-run-btn')
+  const blocked = d.state === 'stopped' && !d.canUse
+  runBtn.textContent = d.state === 'online' ? 'Stop' : d.state === 'connecting' ? 'Cancel' : 'Start'
+  runBtn.className = 'btn btn-small ' + (d.state === 'stopped' ? 'btn-flat' : 'btn-secondary')
+  runBtn.disabled = blocked
+  document.getElementById('subbot-premium-note').style.display = blocked ? 'block' : 'none'
+}
+
+function subbotRenderStats(d) {
+  const runtime = d.runtime || {}
+  subbotUptimeStart = d.state === 'online' ? (runtime.startedAt || 0) : 0
+  document.getElementById('subbot-stat-slots').textContent = d.slots.used + '/' + d.slots.max
+  document.getElementById('subbot-stat-session').textContent = SUBBOT_TYPE_NAME[d.type] || 'SQL'
+  subbotTickUptime()
+  if (subbotUptimeStart && !subbotUptimeTimer) subbotUptimeTimer = setInterval(subbotTickUptime, 1000)
+  if (!subbotUptimeStart) subbotStopUptime()
+}
+
+function subbotStopUptime() {
+  subbotUptimeStart = 0
+  clearInterval(subbotUptimeTimer)
+  subbotUptimeTimer = null
+  subbotTickUptime()
+}
+
+function subbotTickUptime() {
+  document.getElementById('subbot-stat-uptime').textContent = subbotUptimeStart
+    ? subbotFormatUptime(Date.now() - subbotUptimeStart)
+    : '-'
+}
+
+function subbotFormatUptime(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const days = Math.floor(total / 86400)
+  const hms = [Math.floor((total % 86400) / 3600), Math.floor((total % 3600) / 60), total % 60]
+    .map(v => String(v).padStart(2, '0'))
+    .join(':')
+  return days ? `${days}d ${hms}` : hms
+}
+
+function subbotFormatClock(time) {
+  return new Date(time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+function subbotRenderLogs(logs) {
+  const el = document.getElementById('subbot-console')
+  const key = JSON.stringify(logs)
+  if (key === subbotLogKey) return
+  const follow = !subbotLogKey || el.scrollHeight - el.scrollTop - el.clientHeight < 24
+  subbotLogKey = key
+  el.innerHTML = logs.length
+    ? logs.map(subbotLogHtml).join('')
+    : '<div class="sc-empty">No output yet.</div>'
+  if (follow) el.scrollTop = el.scrollHeight
+}
+
+function subbotRenderTypeSelects(d) {
+  const locked = d.state !== 'none'
+  const hint = locked
+    ? 'Delete the session to change the session type.'
+    : (SUBBOT_STORAGE_HINT[d.type] || '')
+  document.querySelectorAll('[data-select="type"]').forEach(root => {
+    if (locked) root.classList.remove('open')
+    root.querySelector('[data-select-label]').textContent = SUBBOT_TYPE_NAME[d.type] || 'SQL'
+    root.querySelector('.subbot-select-btn').disabled = locked
+    root.querySelectorAll('.subbot-select-menu button').forEach(b => b.classList.toggle('active', b.dataset.value === d.type))
+  })
+  document.querySelectorAll('[data-type-hint]').forEach(el => { el.textContent = hint })
+}
+
+const SUBBOT_MODE_NAME = { self: 'Self', group: 'Group chat', private: 'Private chat', public: 'Public' }
+const SUBBOT_MODE_HINT = {
+  self: 'Only commands sent from this account',
+  group: 'Only responds inside group chats',
+  private: 'Only responds in direct messages',
+  public: 'Everyone can use it'
+}
+
+function subbotRenderModeSelects(d) {
+  const mode = SUBBOT_MODE_NAME[d.mode] ? d.mode : 'public'
+  document.querySelectorAll('[data-select="mode"]').forEach(root => {
+    root.querySelector('[data-select-label]').textContent = SUBBOT_MODE_NAME[mode]
+    root.querySelectorAll('.subbot-select-menu button').forEach(b => b.classList.toggle('active', b.dataset.value === mode))
+  })
+  document.getElementById('subbot-mode-hint').textContent = SUBBOT_MODE_HINT[mode]
+}
+
+function subbotFormatSize(size) {
+  if (!size || size <= 0) return '-'
+  if (size < 1000) return size + 'B'
+  if (size < 1000000) return (size / 1000).toFixed(1) + 'KB'
+  return (size / 1000000).toFixed(1) + 'MB'
+}
+
+function subbotLogHtml(l) {
+  const time = subbotFormatClock(l.time)
+  if (l.level !== 'chat' || !l.detail) {
+    return `<div class="sc-line sc-${l.level}"><span class="sc-time">${time}</span><span class="sc-msg">${escapeHtml(l.message)}</span></div>`
+  }
+  const c = l.detail
+  const sender = c.name ? `(${c.name}) ${c.jid}` : c.jid
+  const type = c.isCommand ? `${c.type} (Command)` : c.type
+  return `<div class="sc-chat"><div class="sc-chat-time">${time}</div>` +
+    `<div class="sc-row"><span class="sc-key">Sender</span><span class="sc-val">${escapeHtml(sender)}</span></div>` +
+    `<div class="sc-row"><span class="sc-key">Type</span><span class="sc-val${c.isCommand ? ' sc-cmd' : ''}">${escapeHtml(type)}</span></div>` +
+    `<div class="sc-row"><span class="sc-key">Size</span><span class="sc-val">${subbotFormatSize(c.size)}</span></div>` +
+    `<div class="sc-row"><span class="sc-key">Message</span><span class="sc-val${c.error ? ' sc-err' : ''}">${escapeHtml(c.text)}</span></div></div>`
+}
+
+function subbotRenderSettings(d) {
+  const auto = document.getElementById('subbot-auto')
+  auto.classList.toggle('on', !!d.autoConnect)
+  auto.setAttribute('aria-checked', d.autoConnect ? 'true' : 'false')
+}
+
+function subbotRenderTitle(d) {
+  if (subbotTitleEditing) return
+  document.getElementById('subbot-title').textContent = d.botName || d.defaultBotName || 'HIROBOT'
+}
+
+function subbotEditTitle() {
+  if (!subbotData) return
+  const title = document.getElementById('subbot-title')
+  const input = document.getElementById('subbot-title-input')
+  input.value = subbotData.botName || ''
+  input.placeholder = subbotData.defaultBotName || 'HIROBOT'
+  subbotTitleEditing = true
+  title.style.display = 'none'
+  input.style.display = 'block'
+  input.focus()
+  input.select()
+}
+
+function subbotShowTitle() {
+  subbotTitleEditing = false
+  document.getElementById('subbot-title-input').style.display = 'none'
+  document.getElementById('subbot-title').style.display = ''
+}
+
+function subbotTitleKey(e) {
+  if (e.key === 'Enter') e.target.blur()
+  if (e.key === 'Escape') subbotCancelTitle()
+}
+
+function subbotCancelTitle() {
+  if (!subbotTitleEditing) return
+  subbotShowTitle()
+  document.getElementById('subbot-title-input').blur()
+}
+
+function subbotCommitTitle() {
+  if (!subbotTitleEditing) return
+  const value = document.getElementById('subbot-title-input').value.trim()
+  subbotShowTitle()
+  if (!subbotData || value === (subbotData.botName || '')) return
+  return subbotCall('botname', { name: value })
+}
+
+function subbotCloseSelects() {
+  document.querySelectorAll('.subbot-select.open').forEach(r => r.classList.remove('open'))
+}
+
+function subbotToggleSelect(btn) {
+  const root = btn.closest('.subbot-select')
+  const isOpen = root.classList.contains('open')
+  subbotCloseSelects()
+  if (!isOpen) root.classList.add('open')
+}
+
+function subbotPickType(type) {
+  subbotCloseSelects()
+  return subbotSetType(type)
+}
+
+function subbotSetType(type) {
+  if (!subbotData || subbotData.state !== 'none' || subbotData.type === type) return
+  return subbotCall('type', { type })
+}
+
+function subbotPickMode(mode) {
+  subbotCloseSelects()
+  if (!subbotData || subbotData.mode === mode) return
+  return subbotCall('mode', { mode })
+}
+
+function subbotPickTab(tab) {
+  const tabs = document.getElementById('subbot-tabs')
+  tabs.dataset.tab = tab
+  document.getElementById('subbot-slides').dataset.tab = tab
+  tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.subbotTab === tab))
+  if (tab === 'plugins') subbotPluginsRefresh()
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.subbot-select')) subbotCloseSelects()
+})
 
 async function subbotCall(path, body) {
   if (subbotBusy) return null
@@ -1058,9 +1403,242 @@ document.addEventListener('visibilitychange', () => {
 })
 document.addEventListener('DOMContentLoaded', () => {
   subbotRenderMethod()
-  document.getElementById('subbot-download-btn').innerHTML = icon('download')
-  document.getElementById('subbot-delete-btn').innerHTML = icon('trash')
+  document.getElementById('subbot-download-btn').innerHTML = icon('download') + ' Download'
+  document.getElementById('subbot-delete-btn').innerHTML = icon('trash') + ' Delete'
 })
+
+let subbotPluginEditing = false
+let subbotPluginBusy = false
+
+function subbotPluginListClick(e) {
+  const edit = e.target.closest('[data-plugin-edit]')
+  if (edit) return subbotPluginEdit(edit.dataset.pluginEdit)
+  const remove = e.target.closest('[data-plugin-delete]')
+  if (remove) return subbotPluginDelete(remove.dataset.pluginDelete)
+}
+
+function subbotPluginRender(list) {
+  document.getElementById('subbot-plugin-count').textContent = list.length
+  const el = document.getElementById('subbot-plugin-list')
+  if (!list.length) {
+    el.innerHTML = '<div class="subbot-plugin-empty">No custom plugins yet. Upload a .js file, create one with New, or describe it with Ask AI.</div>'
+    return
+  }
+  el.innerHTML = list.map(p => `
+    <div class="subbot-plugin-item">
+      <div class="subbot-plugin-info">
+        <div class="subbot-plugin-name">${escapeHtml(p.name)}</div>
+        <div class="subbot-plugin-meta">${subbotFormatSize(p.size)}</div>
+      </div>
+      <div class="subbot-plugin-buttons">
+        <button type="button" class="btn btn-small btn-flat" data-plugin-edit="${escapeHtml(p.name)}">Edit</button>
+        <button type="button" class="btn btn-small btn-flat subbot-delete" data-plugin-delete="${escapeHtml(p.name)}">Delete</button>
+      </div>
+    </div>
+  `).join('')
+}
+
+async function subbotPluginCall(path, body, timeoutMs = 120000) {
+  const hasBody = body !== undefined
+  const res = await safeFetch('/api/subbot/plugins' + path, {
+    method: hasBody ? 'POST' : 'GET',
+    headers: subbotHeaders(hasBody),
+    body: hasBody ? JSON.stringify(body) : undefined
+  }, timeoutMs)
+  const d = await res.json()
+  if (d.plugins) subbotPluginRender(d.plugins)
+  return d
+}
+
+async function subbotPluginsRefresh() {
+  try {
+    const d = await subbotPluginCall('')
+    if (!d.success) throw new Error(d.message || 'Failed to load plugins')
+  } catch (err) {
+    showToast(err.message || 'Failed to load plugins', 'error')
+  }
+}
+
+function subbotPluginStatus(message, kind = '', issues = []) {
+  const el = document.getElementById('subbot-plugin-status')
+  el.dataset.kind = kind
+  el.innerHTML = message
+    ? `<div>${escapeHtml(message)}</div>` + (issues.length ? `<ul>${issues.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '')
+    : ''
+}
+
+function subbotPluginOpen(name, code, editing) {
+  subbotPluginEditing = editing
+  const nameInput = document.getElementById('subbot-plugin-name')
+  nameInput.value = name
+  nameInput.readOnly = editing
+  document.getElementById('subbot-plugin-code').value = code
+  document.getElementById('subbot-plugin-editor').style.display = 'block'
+  subbotPluginStatus('')
+  subbotEditorSync()
+}
+
+function subbotPluginClose() {
+  if (subbotPluginBusy) return
+  document.getElementById('subbot-plugin-editor').style.display = 'none'
+  document.getElementById('subbot-plugin-name').value = ''
+  document.getElementById('subbot-plugin-code').value = ''
+  subbotPluginEditing = false
+  subbotPluginStatus('')
+}
+
+function subbotPluginNew() {
+  if (subbotPluginBusy) return
+  subbotPluginOpen('', '', false)
+  document.getElementById('subbot-plugin-name').focus()
+}
+
+let subbotAskBusy = false
+
+function subbotAskStatus(message, kind = '', issues = []) {
+  const el = document.getElementById('subbot-ask-status')
+  el.dataset.kind = kind
+  el.innerHTML = message
+    ? `<div>${escapeHtml(message)}</div>` + (issues.length ? `<ul>${issues.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '')
+    : ''
+}
+
+function subbotPluginAskOpen() {
+  if (subbotPluginBusy || subbotAskBusy) return
+  document.getElementById('subbot-ask-panel').style.display = 'block'
+  subbotAskStatus('')
+  document.getElementById('subbot-ask-input').focus()
+}
+
+function subbotPluginAskClose() {
+  if (subbotAskBusy) return
+  document.getElementById('subbot-ask-panel').style.display = 'none'
+  document.getElementById('subbot-ask-input').value = ''
+  subbotAskStatus('')
+}
+
+async function subbotPluginAskGenerate() {
+  if (subbotAskBusy || subbotPluginBusy) return
+  const request = document.getElementById('subbot-ask-input').value.trim()
+  if (!request) return subbotAskStatus('Describe the plugin you want first.', 'error')
+  subbotAskBusy = true
+  document.getElementById('subbot-ask-generate').disabled = true
+  document.getElementById('subbot-ask-cancel').disabled = true
+  subbotAskStatus('AI is writing the plugin and reviewing it...', 'pending')
+  let generated = null
+  try {
+    const d = await subbotPluginCall('/generate', { request }, 180000)
+    if (!d.success) subbotAskStatus(d.message || 'Generation failed.', 'error')
+    else if (d.refused) subbotAskStatus(d.message || 'AI will not create this plugin.', 'error')
+    else if (!d.approved) subbotAskStatus('AI review rejected the generated plugin.', 'error', d.issues || [])
+    else generated = d
+  } catch (err) {
+    subbotAskStatus(err?.name === 'AbortError' ? 'Generation timed out. Try again.' : 'Request failed. Try again.', 'error')
+  } finally {
+    subbotAskBusy = false
+    document.getElementById('subbot-ask-generate').disabled = false
+    document.getElementById('subbot-ask-cancel').disabled = false
+  }
+  if (!generated) return
+  document.getElementById('subbot-ask-panel').style.display = 'none'
+  document.getElementById('subbot-ask-input').value = ''
+  subbotAskStatus('')
+  subbotPluginOpen(generated.name, generated.code, false)
+  subbotPluginStatus(`${generated.name} was written by AI and passed review. Press Save to install it.`)
+  document.getElementById('subbot-plugin-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+}
+
+function subbotPluginPickFile() {
+  if (subbotPluginBusy) return
+  document.getElementById('subbot-plugin-file').click()
+}
+
+async function subbotPluginUpload(input) {
+  const file = input.files && input.files[0]
+  input.value = ''
+  if (!file || subbotPluginBusy) return
+  if (file.size > 64 * 1024) return showToast('Plugin file must be 64 KB or smaller.', 'error')
+  subbotPluginOpen(file.name, await file.text(), false)
+  return subbotPluginSave()
+}
+
+async function subbotPluginEdit(name) {
+  if (subbotPluginBusy) return
+  try {
+    const d = await subbotPluginCall('/read', { name })
+    if (!d.success) throw new Error(d.message || 'Failed to open plugin')
+    subbotPluginOpen(d.name, d.code, true)
+    document.getElementById('subbot-plugin-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  } catch (err) {
+    showToast(err.message || 'Failed to open plugin', 'error')
+  }
+}
+
+async function subbotPluginSave() {
+  if (subbotPluginBusy) return
+  const name = document.getElementById('subbot-plugin-name').value.trim()
+  const code = document.getElementById('subbot-plugin-code').value
+  subbotPluginBusy = true
+  document.getElementById('subbot-plugin-save').disabled = true
+  document.getElementById('subbot-plugin-cancel').disabled = true
+  subbotPluginStatus('Reviewing with AI...', 'pending')
+  let saved = false
+  try {
+    const d = await subbotPluginCall('/save', { name, code })
+    if (!d.success) subbotPluginStatus(d.message || 'Save failed.', 'error')
+    else if (!d.approved) subbotPluginStatus('AI review rejected this plugin.', 'error', d.issues || [])
+    else saved = true
+  } catch (err) {
+    subbotPluginStatus(err?.name === 'AbortError' ? 'The review timed out. Try again.' : 'Request failed. Try again.', 'error')
+  } finally {
+    subbotPluginBusy = false
+    document.getElementById('subbot-plugin-save').disabled = false
+    document.getElementById('subbot-plugin-cancel').disabled = false
+  }
+  if (saved) {
+    showToast(`${name} saved`, 'success')
+    subbotPluginClose()
+  }
+}
+
+async function subbotPluginDelete(name) {
+  if (subbotPluginBusy) return
+  if (!confirm(`Delete ${name}? This subbot stops running it.`)) return
+  try {
+    const d = await subbotPluginCall('/delete', { name })
+    if (!d.success) throw new Error(d.message || 'Delete failed')
+    if (subbotPluginEditing && document.getElementById('subbot-plugin-name').value === name) subbotPluginClose()
+    showToast(`${name} deleted`, 'success')
+  } catch (err) {
+    showToast(err.message || 'Delete failed', 'error')
+  }
+}
+
+function subbotEditorSync() {
+  const code = document.getElementById('subbot-plugin-code')
+  const gutter = document.getElementById('subbot-plugin-gutter')
+  const lines = Math.max(1, code.value.split('\n').length)
+  if (gutter.childElementCount !== lines) {
+    gutter.innerHTML = Array.from({ length: lines }, (_, i) => `<div>${i + 1}</div>`).join('')
+  }
+  subbotEditorScroll()
+}
+
+function subbotEditorScroll() {
+  document.getElementById('subbot-plugin-gutter').scrollTop = document.getElementById('subbot-plugin-code').scrollTop
+}
+
+function subbotEditorKey(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault()
+    return subbotPluginSave()
+  }
+  if (e.key !== 'Tab' || e.shiftKey) return
+  e.preventDefault()
+  const el = e.target
+  el.setRangeText('    ', el.selectionStart, el.selectionEnd, 'end')
+  subbotEditorSync()
+}
 
 let siteSettings = null
 let adminDefaults = null

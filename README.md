@@ -36,7 +36,7 @@ HIROBOT
 ├── 📁lib
 │   ├── 📁package
 │   │   ├── 📁ai
-│   │   ├── 📁chrome
+│   │   ├── 📁chrome         # Playwright 
 │   │   ├── 📁discord
 │   │   ├── 📁voip           # Call
 │   │   ├── 📁website
@@ -51,7 +51,14 @@ HIROBOT
 │   ├── 📄main.js
 │   └── 📄start.js
 ├── 📁data
-│   ├── 📁sessions
+│   ├── 📁bot
+│   │   ├── 📁subbot
+│   │   │   └── 📁<number>
+│   │   │       ├── 📄setting.json
+│   │   │       └── 📁plugins
+│   │   ├── 📄main.session
+│   │   ├── 📄store.db
+│   │   └── 📄database.db
 │   ├── 📁tunnel
 │   └── 📁tmp
 ├── 📁plugins
@@ -810,7 +817,7 @@ call(m.sender, media, "720p").silent()
 <sub>
   
 ```env
-# Read .env.examplr for explanations 
+# Read .env.example for explanations 
 OWNER=
 MODERATOR=
 DATABASE=

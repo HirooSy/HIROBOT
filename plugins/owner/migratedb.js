@@ -5,7 +5,7 @@ import Helper from '../../lib/utils/helper.js'
 
 function getLocalDbPath() {
   const prefix = Helper.opts._[0] ? Helper.opts._[0] + '_' : ''
-  return join(process.cwd(), 'data', `${prefix}database.db`)
+  return join(process.cwd(), 'data', 'bot', `${prefix}database.db`)
 }
 
 function detectCloudType(url) {
@@ -60,10 +60,10 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     throw `Invalid format!
 
 *${usedPrefix + command} local-cloud*
-> Migrate data from the local file (data/database.db) to the cloud database (Mongo/MySQL, depending on the DATABASE env)
+> Migrate data from the local file (data/bot/database.db) to the cloud database (Mongo/MySQL, depending on the DATABASE env)
 
 *${usedPrefix + command} cloud-local*
-> Migrate data from the cloud database (Mongo/MySQL) to the local file (data/database.db)
+> Migrate data from the cloud database (Mongo/MySQL) to the local file (data/bot/database.db)
 
 _This command auto-detects MongoDB or MySQL from the DATABASE env value._`
   }
@@ -75,7 +75,7 @@ _This command auto-detects MongoDB or MySQL from the DATABASE env value._`
 
   if (direction === 'local-cloud') {
     if (!localExists) {
-      throw `❌ File *data/database.db* not found.
+      throw `❌ File *data/bot/database.db* not found.
 
 There is no local data to migrate.`
     }
@@ -96,7 +96,7 @@ Set the *DATABASE* env to a Mongo (mongodb://...) or MySQL (mysql://...) connect
     }
 
     if (!localData || countEntries(localData) === 0) {
-      throw `❌ Data in *data/database.db* is empty, nothing to migrate.`
+      throw `❌ Data in *data/bot/database.db* is empty, nothing to migrate.`
     }
 
     const cloudAdapter = getCloudAdapter(dbUrl, cloudType)
@@ -126,9 +126,9 @@ _Only copies data, nothing was deleted from either local or cloud._`)
       throw `❌ The *DATABASE* env is not set to a valid MongoDB/MySQL token.`
     }
     if (localExists) {
-      throw `❌ File *data/database.db* already exists.
+      throw `❌ File *data/bot/database.db* already exists.
 
-This command only runs when there is no local database yet, to avoid an unwanted migration. Remove/move *data/database.db* first if you really want to pull the data from the cloud again.`
+This command only runs when there is no local database yet, to avoid an unwanted migration. Remove/move *data/bot/database.db* first if you really want to pull the data from the cloud again.`
     }
 
     await m.reply(`Starting migration *${cloudType.toUpperCase()} ➜ local*, please wait...`)
@@ -145,7 +145,7 @@ This command only runs when there is no local database yet, to avoid an unwanted
       throw `❌ Data in the cloud database (${cloudType.toUpperCase()}) is empty, nothing to migrate.`
     }
 
-    if (!existsSync(join(process.cwd(), 'data'))) mkdirSync(join(process.cwd(), 'data'))
+    if (!existsSync(join(process.cwd(), 'data', 'bot'))) mkdirSync(join(process.cwd(), 'data', 'bot'), { recursive: true })
 
     const localAdapter = new SQLiteAdapter(localPath)
     let merged
@@ -161,7 +161,7 @@ This command only runs when there is no local database yet, to avoid an unwanted
 
 - Cloud data: ${countEntries(cloudData)} entries
 - Local data now: ${countEntries(merged)} entries
-- Saved to: data/database.db
+- Saved to: data/bot/database.db
 
 _Only copies data, nothing was deleted from either cloud or local._`)
   }

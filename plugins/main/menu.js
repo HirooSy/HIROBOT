@@ -4,6 +4,7 @@ import os from 'os'
 import { plugins } from '../../lib/utils/plugins.js'
 
 let handler = async (m, { conn, usedPrefix: _p, args, isPrems, isOwner, command: cmd, usedPrefix, platform }) => {
+  const allPlugins = conn.customPlugins ? { ...plugins, ...conn.customPlugins } : plugins
   if (platform == 'discord') {
     const view = { owner: isOwner, inGuild: m.isGroup, guild: m.guild, member: m.member, args: {} }
     const visible = [...conn.commands.values()].filter(cmd => !cmd.hidden && (isOwner || !cmd.owner) && !conn.cfg.access.denial(cmd, view))
@@ -63,7 +64,7 @@ let handler = async (m, { conn, usedPrefix: _p, args, isPrems, isOwner, command:
 ──────────────────
 
 **I N F O R M A T I O N**
-- \`Bot Name:\` ${global.settings.botname}
+- \`Bot Name:\` ${conn.botName || global.settings.botname}
 - \`Developer:\` ${dev || '-'}
 - \`Version:\` ${pkg.version || '-'}
 
@@ -149,7 +150,7 @@ const defaultMenu = {
 ──────────────────
 
 *I N F O R M A T I O N*
-- \`Bot Name:\` ${global.settings.botname}
+- \`Bot Name:\` ${conn.botName || global.settings.botname}
 - \`Developer:\` @${dev}
 - \`Version:\` ${_package.version}
 
@@ -157,7 +158,7 @@ const defaultMenu = {
 
     if (selected === '404') {
       const jsonlist = arrayTags.filter(v => v !== 'all').map(v => {
-        const tagCommands = Object.values(plugins)
+        const tagCommands = Object.values(allPlugins)
           .filter(plugin => !plugin.disabled && plugin.tags?.includes(v) && plugin.help)
           .flatMap(plugin => Array.isArray(plugin.help) ? plugin.help : [plugin.help])
           .map(h => h.split(' ')[0])
@@ -180,7 +181,7 @@ const defaultMenu = {
         }
       })
 
-      const totalCommands = Object.values(plugins)
+      const totalCommands = Object.values(allPlugins)
         .filter(plugin => !plugin.disabled && plugin.help)
         .flatMap(plugin => Array.isArray(plugin.help) ? plugin.help : [plugin.help])
         .map(h => h.split(' ')[0])
@@ -195,7 +196,7 @@ const defaultMenu = {
         ),
         mimetype: 'image/webp',
         caption: TextBefore,
-        fileName: global.settings.botname,
+        fileName: conn.botName || global.settings.botname,
         fileLength: '665666646645000',
         nativeFlow: [{},
           { text: '📢', url: 'https://whatsapp.com/channel/0029VaVJo460bIdoxTVoJY3e' },
@@ -223,7 +224,7 @@ const defaultMenu = {
 
     const totalreg  = Object.keys(db.data.users).filter(k => !k.startsWith('bf:')).length
     const rtotalreg = Object.values(db.data.users).filter(u => u.registered === true).length
-    const help = Object.values(plugins)
+    const help = Object.values(allPlugins)
       .filter(plugin => !plugin.disabled)
       .map(plugin => ({
         help:    Array.isArray(plugin.help) ? plugin.help : [plugin.help],
