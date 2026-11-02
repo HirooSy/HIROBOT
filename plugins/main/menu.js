@@ -65,7 +65,7 @@ let handler = async (m, { conn, usedPrefix: _p, args, isPrems, isOwner, command:
 
 **I N F O R M A T I O N**
 - \`Bot Name:\` ${conn.botName || global.settings.botname}
-- \`Developer:\` ${dev || '-'}
+- \`Developer:\` ${process.env.DISCORD_OWNER || '-'}
 - \`Version:\` ${pkg.version || '-'}
 
 ──────────────────`
