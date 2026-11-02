@@ -4,6 +4,7 @@
 ```diff
 • Refactor session and database storage paths to data/bot directory
 • Add subbot API management endpoints and UI for subbot type, mode, botname, and AI-assisted plugin management
+• Add subbot AI plugin editing endpoint and UI integration for modifying existing subbot plugins
 • Optimize web server proxy cache handling and memory management
 • Export guest text generation utility in MCP AI package
 • Update project documentation and file tree in README.md

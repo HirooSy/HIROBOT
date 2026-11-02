@@ -2936,6 +2936,8 @@ button {
 .page-profile .subbot-ask-input { display: block; width: 100%; height: 84px; margin: 0; padding: 10px 12px; background: transparent; border: none; outline: none; resize: none; color: #d6d6d6; font-family: inherit; font-size: 9px; line-height: 1.7; }
 .page-profile .subbot-ask-input::placeholder { color: #444444; }
 .page-profile .subbot-ask-actions { display: flex; justify-content: flex-end; gap: 4px; padding: 8px; background: var(--surface2); border-top: 1px solid var(--border); }
+.page-profile .btn.subbot-send-btn { width: 32px; height: 32px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.page-profile .btn.subbot-send-btn .icon-inline { width: 14px; height: 14px; }
 
 .page-profile .subbot-plugin-list { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
 
@@ -2945,7 +2947,8 @@ button {
 
 .page-profile .subbot-plugin-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 999px; }
 
-.page-profile .subbot-plugin-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--border2); border-radius: 10px; }
+.page-profile .subbot-plugin-item { padding: 10px 12px; border: 1px solid var(--border2); border-radius: 10px; }
+.page-profile .subbot-plugin-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
 .page-profile .subbot-plugin-info { min-width: 0; }
 
@@ -2953,7 +2956,14 @@ button {
 
 .page-profile .subbot-plugin-meta { margin-top: 3px; font-size: 7px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 
-.page-profile .subbot-plugin-buttons { display: flex; gap: 4px; flex-shrink: 0; }
+.page-profile .subbot-plugin-more { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: #ffffff; cursor: pointer; flex-shrink: 0; }
+.page-profile .subbot-plugin-more:hover { background: transparent; opacity: 0.7; }
+.page-profile .subbot-plugin-more svg { width: 16px; height: 16px; }
+.page-profile .subbot-plugin-dropdown { display: none; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.page-profile .subbot-plugin-item.open .subbot-plugin-dropdown { display: flex; }
+.page-profile .subbot-plugin-dropdown button { flex: 1; padding: 8px 6px; border: 1px solid var(--border2); border-radius: 8px; background: transparent; color: var(--muted2); font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
+.page-profile .subbot-plugin-dropdown button:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.page-profile .subbot-plugin-dropdown button.subbot-delete { color: var(--error); }
 
 .page-profile .subbot-plugin-empty { padding: 14px 10px; text-align: center; font-size: 8px; line-height: 1.6; color: var(--muted2); border: 1px dashed var(--border2); border-radius: 10px; }
 
@@ -2986,6 +2996,7 @@ button {
 .page-profile .subbot-editor-status[data-kind="pending"] { color: var(--text); }
 
 .page-profile .subbot-editor-status ul { margin: 4px 0 0 14px; padding: 0; }
+.page-profile .subbot-ask-status { border-top: none; border-bottom: 1px solid var(--border); }
 
 .page-profile .settings-tabs {
       display: flex;

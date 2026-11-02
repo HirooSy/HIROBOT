@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/></noscript>
-  <link rel="stylesheet" href="/style.css?v=4">
+  <link rel="stylesheet" href="/style.css?v=7">
 </head>
 <body class="page-profile">
 <div class="page">
@@ -327,14 +327,13 @@
                     </div>
                     <span class="subbot-slots" id="subbot-plugin-count">0</span>
                   </div>
-                  <button type="button" class="btn btn-secondary subbot-action subbot-ai-btn" id="subbot-ai-btn" onclick="subbotPluginAskOpen()">Ask AI</button>
+                  <button type="button" class="btn btn-secondary subbot-action subbot-ai-btn" id="subbot-ai-btn" onclick="subbotPluginAskToggle()">Ask AI</button>
                   <div class="subbot-ask-panel" id="subbot-ask-panel" style="display:none">
+                    <div class="subbot-editor-status subbot-ask-status" id="subbot-ask-status"></div>
                     <textarea class="subbot-ask-input" id="subbot-ask-input" maxlength="1000" spellcheck="false" placeholder="Describe the plugin you want. Example: a .dice command that rolls a six-sided die and replies with the result."></textarea>
                     <div class="subbot-ask-actions">
-                      <button type="button" class="btn btn-small btn-flat" id="subbot-ask-cancel" onclick="subbotPluginAskClose()">Cancel</button>
-                      <button type="button" class="btn btn-small" id="subbot-ask-generate" onclick="subbotPluginAskGenerate()">Generate</button>
+                      <button type="button" class="btn btn-small subbot-send-btn" id="subbot-ask-generate" onclick="subbotPluginAskGenerate()" aria-label="Send" title="Send"></button>
                     </div>
-                    <div class="subbot-editor-status" id="subbot-ask-status"></div>
                   </div>
                   <div class="subbot-plugin-actions">
                     <button type="button" class="btn btn-secondary subbot-action" onclick="subbotPluginPickFile()">Upload</button>
@@ -346,7 +345,7 @@
                     <div class="subbot-editor-bar">
                       <input type="text" class="subbot-editor-name" id="subbot-plugin-name" maxlength="43" placeholder="my-plugin.js" spellcheck="false" autocomplete="off" autocapitalize="off">
                       <div class="subbot-editor-actions">
-                        <button type="button" class="btn btn-small btn-flat" id="subbot-plugin-cancel" onclick="subbotPluginClose()">Cancel</button>
+                        <button type="button" class="btn btn-small btn-secondary" id="subbot-plugin-cancel" onclick="subbotPluginClose()">Cancel</button>
                         <button type="button" class="btn btn-small" id="subbot-plugin-save" onclick="subbotPluginSave()">Save</button>
                       </div>
                     </div>
@@ -1385,18 +1384,38 @@ async function subbotCopyCode() {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && subbotShouldPoll()) subbotRefresh(true)
 })
+document.addEventListener('click', e => {
+  if (!e.target.closest('.subbot-plugin-item')) subbotPluginMenuClose()
+})
 document.addEventListener('DOMContentLoaded', () => {
   subbotRenderMethod()
   document.getElementById('subbot-download-btn').innerHTML = icon('download') + ' Download'
   document.getElementById('subbot-delete-btn').innerHTML = icon('trash') + ' Delete'
+  document.getElementById('subbot-ask-generate').innerHTML = icon('arrowRight')
 })
 
 let subbotPluginEditing = false
 let subbotPluginBusy = false
 
+function subbotPluginMenuClose() {
+  document.querySelectorAll('.subbot-plugin-item.open').forEach(item => item.classList.remove('open'))
+}
+
+function subbotPluginMenuToggle(item) {
+  document.querySelectorAll('.subbot-plugin-item.open').forEach(other => {
+    if (other !== item) other.classList.remove('open')
+  })
+  item.classList.toggle('open')
+  if (item.classList.contains('open')) item.querySelector('.subbot-plugin-dropdown').scrollIntoView({ block: 'nearest' })
+}
+
 function subbotPluginListClick(e) {
+  if (e.target.closest('[data-plugin-more]')) return subbotPluginMenuToggle(e.target.closest('.subbot-plugin-item'))
+  subbotPluginMenuClose()
   const edit = e.target.closest('[data-plugin-edit]')
   if (edit) return subbotPluginEdit(edit.dataset.pluginEdit)
+  const download = e.target.closest('[data-plugin-download]')
+  if (download) return subbotPluginDownload(download.dataset.pluginDownload)
   const remove = e.target.closest('[data-plugin-delete]')
   if (remove) return subbotPluginDelete(remove.dataset.pluginDelete)
 }
@@ -1410,13 +1429,17 @@ function subbotPluginRender(list) {
   }
   el.innerHTML = list.map(p => `
     <div class="subbot-plugin-item">
-      <div class="subbot-plugin-info">
-        <div class="subbot-plugin-name">${escapeHtml(p.name)}</div>
-        <div class="subbot-plugin-meta">${subbotFormatSize(p.size)}</div>
+      <div class="subbot-plugin-row">
+        <div class="subbot-plugin-info">
+          <div class="subbot-plugin-name">${escapeHtml(p.name)}</div>
+          <div class="subbot-plugin-meta">${subbotFormatSize(p.size)}</div>
+        </div>
+        <button type="button" class="subbot-plugin-more" data-plugin-more aria-label="Plugin actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
       </div>
-      <div class="subbot-plugin-buttons">
-        <button type="button" class="btn btn-small btn-flat" data-plugin-edit="${escapeHtml(p.name)}">Edit</button>
-        <button type="button" class="btn btn-small btn-flat subbot-delete" data-plugin-delete="${escapeHtml(p.name)}">Delete</button>
+      <div class="subbot-plugin-dropdown">
+        <button type="button" data-plugin-edit="${escapeHtml(p.name)}">Edit</button>
+        <button type="button" data-plugin-download="${escapeHtml(p.name)}">Download</button>
+        <button type="button" class="subbot-delete" data-plugin-delete="${escapeHtml(p.name)}">Delete</button>
       </div>
     </div>
   `).join('')
@@ -1459,6 +1482,7 @@ function subbotPluginOpen(name, code, editing) {
   document.getElementById('subbot-plugin-code').value = code
   document.getElementById('subbot-plugin-editor').style.display = 'block'
   subbotPluginStatus('')
+  subbotAskSetMode()
   subbotEditorSync()
 }
 
@@ -1469,6 +1493,7 @@ function subbotPluginClose() {
   document.getElementById('subbot-plugin-code').value = ''
   subbotPluginEditing = false
   subbotPluginStatus('')
+  subbotAskSetMode()
 }
 
 function subbotPluginNew() {
@@ -1487,6 +1512,17 @@ function subbotAskStatus(message, kind = '', issues = []) {
     : ''
 }
 
+function subbotAskSetMode() {
+  document.getElementById('subbot-ask-input').placeholder = subbotPluginEditing
+    ? 'Describe the change or the error you see. Example: fix the TypeError that happens when text is empty.'
+    : 'Describe the plugin you want. To change an existing plugin, write its file name, for example: change userinfo.js to use aiRich.'
+}
+
+function subbotPluginAskToggle() {
+  if (document.getElementById('subbot-ask-panel').style.display === 'block') return subbotPluginAskClose()
+  return subbotPluginAskOpen()
+}
+
 function subbotPluginAskOpen() {
   if (subbotPluginBusy || subbotAskBusy) return
   document.getElementById('subbot-ask-panel').style.display = 'block'
@@ -1497,21 +1533,24 @@ function subbotPluginAskOpen() {
 function subbotPluginAskClose() {
   if (subbotAskBusy) return
   document.getElementById('subbot-ask-panel').style.display = 'none'
-  document.getElementById('subbot-ask-input').value = ''
   subbotAskStatus('')
 }
 
 async function subbotPluginAskGenerate() {
   if (subbotAskBusy || subbotPluginBusy) return
   const request = document.getElementById('subbot-ask-input').value.trim()
-  if (!request) return subbotAskStatus('Describe the plugin you want first.', 'error')
+  if (!request) return subbotAskStatus('Describe what you want first.', 'error')
+  const editing = subbotPluginEditing
+  const name = document.getElementById('subbot-plugin-name').value.trim()
+  const code = document.getElementById('subbot-plugin-code').value
   subbotAskBusy = true
   document.getElementById('subbot-ask-generate').disabled = true
-  document.getElementById('subbot-ask-cancel').disabled = true
-  subbotAskStatus('AI is writing the plugin and reviewing it...', 'pending')
+  subbotAskStatus('AI is working on the plugin and reviewing it...', 'pending')
   let generated = null
   try {
-    const d = await subbotPluginCall('/generate', { request }, 180000)
+    const d = editing
+      ? await subbotPluginCall('/edit', { name, code, request }, 180000)
+      : await subbotPluginCall('/generate', { request }, 180000)
     if (!d.success) subbotAskStatus(d.message || 'Generation failed.', 'error')
     else if (d.refused) subbotAskStatus(d.message || 'AI will not create this plugin.', 'error')
     else if (!d.approved) subbotAskStatus('AI review rejected the generated plugin.', 'error', d.issues || [])
@@ -1521,14 +1560,16 @@ async function subbotPluginAskGenerate() {
   } finally {
     subbotAskBusy = false
     document.getElementById('subbot-ask-generate').disabled = false
-    document.getElementById('subbot-ask-cancel').disabled = false
   }
   if (!generated) return
   document.getElementById('subbot-ask-panel').style.display = 'none'
   document.getElementById('subbot-ask-input').value = ''
   subbotAskStatus('')
-  subbotPluginOpen(generated.name, generated.code, false)
-  subbotPluginStatus(`${generated.name} was written by AI and passed review. Press Save to install it.`)
+  const existing = editing || !!generated.editing
+  subbotPluginOpen(generated.name, generated.code, existing)
+  subbotPluginStatus(existing
+    ? `${generated.name} was updated by AI and passed review. Press Save to install it.`
+    : `${generated.name} was written by AI and passed review. Press Save to install it.`)
   document.getElementById('subbot-plugin-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
 }
 
@@ -1555,6 +1596,21 @@ async function subbotPluginEdit(name) {
     document.getElementById('subbot-plugin-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   } catch (err) {
     showToast(err.message || 'Failed to open plugin', 'error')
+  }
+}
+
+async function subbotPluginDownload(name) {
+  try {
+    const d = await subbotPluginCall('/read', { name })
+    if (!d.success) throw new Error(d.message || 'Failed to read plugin')
+    const url = URL.createObjectURL(new Blob([d.code], { type: 'text/javascript' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = d.name
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch (err) {
+    showToast(err.message || 'Download failed', 'error')
   }
 }
 
