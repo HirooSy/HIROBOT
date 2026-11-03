@@ -275,7 +275,29 @@
                   <div class="subbot-console-foot">Read-only</div>
                 </div>
                 <div class="subbot-slide">
+                <div class="subbot-section-title">Config</div>
                 <div id="subbot-prefix"></div>
+                <div class="subbot-row subbot-auto-row">
+                  <div>
+                    <div class="subbot-row-title">Auto Read</div>
+                    <div class="subbot-row-sub">Mark incoming messages as read</div>
+                  </div>
+                  <button type="button" class="switch" id="subbot-autoread" role="switch" aria-checked="false" aria-label="Auto Read" onclick="subbotToggleAutoRead()"><span class="switch-knob"></span></button>
+                </div>
+                <div class="subbot-row subbot-auto-row">
+                  <div>
+                    <div class="subbot-row-title">Auto Typing</div>
+                    <div class="subbot-row-sub">Show typing while replying</div>
+                  </div>
+                  <button type="button" class="switch" id="subbot-autotyping" role="switch" aria-checked="false" aria-label="Auto Typing" onclick="subbotToggleAutoTyping()"><span class="switch-knob"></span></button>
+                </div>
+                <div class="subbot-row subbot-auto-row">
+                  <div>
+                    <div class="subbot-row-title">Show Online</div>
+                    <div class="subbot-row-sub">Stay visible as online while connected</div>
+                  </div>
+                  <button type="button" class="switch" id="subbot-showonline" role="switch" aria-checked="false" aria-label="Show Online" onclick="subbotToggleShowOnline()"><span class="switch-knob"></span></button>
+                </div>
                 <div class="subbot-row subbot-mode-row">
                   <div class="subbot-mode-text">
                     <div class="subbot-row-title">Mode</div>
@@ -293,6 +315,7 @@
                     </div>
                   </div>
                 </div>
+                <div class="subbot-section-title">Session</div>
                 <div class="subbot-row subbot-mode-row">
                   <div class="subbot-mode-text">
                     <div class="subbot-row-title">Session type</div>
@@ -1288,6 +1311,11 @@ function subbotRenderSettings(d) {
   const auto = document.getElementById('subbot-auto')
   auto.classList.toggle('on', !!d.autoConnect)
   auto.setAttribute('aria-checked', d.autoConnect ? 'true' : 'false')
+  for (const [id, on] of [['subbot-autoread', d.autoRead], ['subbot-autotyping', d.autoTyping], ['subbot-showonline', d.showOnline]]) {
+    const el = document.getElementById(id)
+    el.classList.toggle('on', !!on)
+    el.setAttribute('aria-checked', on ? 'true' : 'false')
+  }
   subbotMenuSync(d)
 }
 
@@ -2000,6 +2028,21 @@ function subbotToggleRun() {
 function subbotToggleAuto() {
   if (!subbotData) return
   return subbotCall('auto', { value: !subbotData.autoConnect })
+}
+
+function subbotToggleAutoRead() {
+  if (!subbotData) return
+  return subbotCall('autoread', { value: !subbotData.autoRead })
+}
+
+function subbotToggleAutoTyping() {
+  if (!subbotData) return
+  return subbotCall('autotyping', { value: !subbotData.autoTyping })
+}
+
+function subbotToggleShowOnline() {
+  if (!subbotData) return
+  return subbotCall('showonline', { value: !subbotData.showOnline })
 }
 
 async function subbotDelete() {

@@ -96,19 +96,18 @@ const defaultMenu = {
   footer: '',
   after: '',
 }
-  const arrayTags = ['all', 'main', 'group', 'sticker', 'canvas', 'ai', 'internet', 'adult', 'subbot', 'tools', 'downloader', 'owner', 'info']
+  const arrayTags = ['all', 'main', 'group', 'sticker', 'canvas', 'ai', 'internet', 'adult', 'tools', 'downloader', 'owner', 'info']
   let selected = `${args[0]}`.toLowerCase()
   if (!arrayTags.includes(selected)) selected = '404'
 
   const tagMap = {
-    all:        { main: 'Main', group: 'Group', internet: 'Internet', adult:'Adult', downloader: 'Downloader', database: 'Database', sticker: 'Sticker', canvas: 'Canvas', tools: 'Tools', subbot:'Sub-bot', ai: 'Artificial Intelligence', owner: 'Owner', info: 'Info' },
+    all:        { main: 'Main', group: 'Group', internet: 'Internet', adult:'Adult', downloader: 'Downloader', database: 'Database', sticker: 'Sticker', canvas: 'Canvas', tools: 'Tools', ai: 'Artificial Intelligence', owner: 'Owner', info: 'Info' },
     main:       { main: 'Main' },
     ai:         { ai: 'Artificial Intelligence' },
     sticker:    { sticker: 'Sticker' },
     canvas:     { canvas: 'Canvas' },
     group:      { group: 'Group', admin: `Admin ${global.opts['restrict'] ? '' : '(Disabled)'}` },
     adult:      { adult: 'Adult' },
-    subbot:    { subbot: 'Sub-bot' },
     tools:      { tools: 'Tools', ai: 'Artificial Intelligence', database: 'Database' },
     downloader: { downloader: 'Downloader' },
     internet:   { internet: 'Internet' },

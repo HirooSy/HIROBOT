@@ -12,6 +12,11 @@
 • Add native Node.js SQLite (DatabaseSync) support and automatic migration for legacy database files
 • Support product headers in interactive sendButton messages and rename LTO parameters to coupon
 • Record relayed message history centrally in connection helper and include additionalNodes in crm code generator
+• Move subbot management system from plugin into core botsManager utility
+• Add subbot API endpoints and web UI controls for Auto Read, Auto Typing, and Show Online settings
+• Refactor connection config to flatten main and subbot settings under global.settings.connection
+• Support optionText and optionTitle parameters in interactive button builder
+• Remove deprecated subbot plugin files and menu category
 
 ________________________
 
@@ -25,10 +30,15 @@ ________________________
 * Edit "package.json"
 * Edit "plugins/main/menu.js"
 * Edit "plugins/owner/setpp.js"
-* Edit "plugins/subbot/connect.js"
 * Edit "lib/utils/database.js"
 * Edit "plugins/main/enable.js"
 * Edit "plugins/tools/crm.js"
+* Edit "lib/config.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/handler.js"
++ Add "lib/utils/botsManager.js"
+- Delete "plugins/subbot/connect.js"
+- Delete "plugins/subbot/list.js"
 ```
 </sub>
 
@@ -105,7 +115,7 @@ ________________________
 * Edit "lib/utils/simple.js"
 * Edit "package.json"
 * Edit "plugins/tools/reaction.js"
-* Edit "lib/package/ai/tools/plugin.js"
+* Edit "lib/package/ai/toold/plugin.js"
 * Edit "lib/package/website/server.js"
 * Edit "lib/scrapers/src/brat.js"
 * Edit "lib/utils/converter.js"

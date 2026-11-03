@@ -3448,6 +3448,7 @@ button {
 }
 
 .page-profile .subbot-prefix { margin-bottom: 14px; }
+.page-profile .subbot-section-title { text-align: center; font-size: 10px; font-weight: 700; color: var(--text); margin: 14px 0 10px; }
 
 .page-profile .subbot-prefix-head { margin-bottom: 8px; }
 
