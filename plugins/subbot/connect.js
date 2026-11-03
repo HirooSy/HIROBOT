@@ -61,6 +61,7 @@ const SUBBOT_MENU_PAGE_DEFAULTS = {
     tags: { message: 'reply', text: '*__tagName__*\n- __commands__' }
 }
 const SUBBOT_MENU_MEDIA_MAX_BYTES = 8 * 1024 * 1024
+const SUBBOT_MENU_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp']
 const SUBBOT_PLUGIN_NAME = /^[a-z0-9][a-z0-9_-]{0,39}\.js$/i
 const SUBBOT_PLUGIN_MAX_BYTES = 64 * 1024
 const SUBBOT_TEMP_RULE = 'The temp folder is data/tmp inside the bot folder (path.join(process.cwd(), "data", "tmp")), the ./tmp folder, or the system temp folder (os.tmpdir() or tmpdir()). A folder made with fs.mkdtemp inside one of these is also the temp folder. A path built from one of these folders is inside the temp folder even when it is stored in a variable, joined step by step, or passed to a helper function.'
@@ -998,13 +999,13 @@ export async function webSubbotSetMode(jid, mode) {
 
 export async function webSubbotToggleCustomPrefix(jid, value) {
     const enabled = !!value
-    if (enabled && !getSubbotCustomPrefixList(jid).length) throw new Error('Add at least one prefix first.')
     if (getSubbotCustomPrefixEnabled(jid) === enabled) return
     writeSubbotSetting(jid, { customPrefixEnabled: enabled })
     pushLog(jid, enabled ? 'Custom prefix enabled' : 'Custom prefix disabled')
 }
 
 export async function webSubbotAddPrefix(jid, prefix) {
+    if (!getSubbotCustomPrefixEnabled(jid)) throw new Error('Turn on custom prefix first.')
     const value = String(prefix ?? '').trim()
     if (!isValidSubbotPrefix(value)) throw new Error('Prefix must be 1 to 3 symbols, without letters, numbers, or spaces.')
     const list = getSubbotCustomPrefixList(jid)
@@ -1019,9 +1020,7 @@ export async function webSubbotRemovePrefix(jid, prefix) {
     const list = getSubbotCustomPrefixList(jid)
     const next = list.filter(item => item !== value)
     if (next.length === list.length) return
-    const patch = { customPrefixes: next }
-    if (!next.length) patch.customPrefixEnabled = false
-    writeSubbotSetting(jid, patch)
+    writeSubbotSetting(jid, { customPrefixes: next })
     pushLog(jid, `Prefix ${value} removed`)
 }
 
@@ -1241,22 +1240,20 @@ export async function webSubbotUploadMenuMedia(jid, body) {
     const buffer = Buffer.from(data, 'base64')
     if (!buffer.length) throw new Error('Choose a file to upload.')
     if (buffer.length > SUBBOT_MENU_MEDIA_MAX_BYTES) throw new Error('File must be 8 MB or smaller.')
+    const detected = await Helper.fileTypeFromBuffer(buffer).catch(() => null)
+    if (!SUBBOT_MENU_IMAGE_MIMES.includes(detected?.mime)) throw new Error('Only image files are allowed. Use JPEG, PNG or WEBP.')
     const name = path.basename(String(body?.name ?? '').trim()).slice(0, 120) || 'file'
-    const mimetype = String(body?.mimetype || 'application/octet-stream').toLowerCase().slice(0, 100)
     const previous = readSubbotSetting(jid).menu
     const base = previous && typeof previous === 'object' ? previous : {}
-    const activePages = (base.type ?? 'select') === 'all' ? ['all'] : ['select', 'tags']
-    const imagePage = activePages.find(key => (base.pages?.[key]?.message ?? SUBBOT_MENU_PAGE_DEFAULTS[key].message) === 'button-image')
-    if (imagePage && !mimetype.startsWith('image/')) throw new Error(`${SUBBOT_MENU_PAGE_NAME[imagePage]} needs an image file for Button - Image.`)
     const upload = global.scraper?.upload?.default
     if (typeof upload !== 'function') throw new Error('Upload service is not available')
-    const url = await upload(buffer, name)
+    const url = await upload(buffer, `${path.parse(name).name || 'image'}.${detected.ext}`)
     if (!url) throw new Error('Upload failed')
     const pages = { ...(base.pages && typeof base.pages === 'object' ? base.pages : migrateLegacySubbotMenu(base)) }
     for (const key of SUBBOT_MENU_PAGES) {
         const old = pages[key]?.media
         if (old?.source === 'upload' && old.file) removeMenuMediaFile(jid, old.file)
-        pages[key] = { ...(pages[key] && typeof pages[key] === 'object' ? pages[key] : {}), media: { source: 'url', url, name, mimetype } }
+        pages[key] = { ...(pages[key] && typeof pages[key] === 'object' ? pages[key] : {}), media: { source: 'url', url, name, mimetype: detected.mime } }
     }
     writeSubbotSetting(jid, { menu: { ...base, pages } })
     pushLog(jid, `Menu file uploaded for ${SUBBOT_MENU_PAGE_NAME[target]}: ${name}`)

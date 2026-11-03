@@ -424,7 +424,12 @@ async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p,
   if (['button-image', 'button-document'].includes(message) && !attachment) message = 'button'
   if (!['reply', 'location'].includes(message) && !nativeFlow.length) message = 'reply'
 
-  if (message === 'location') return conn.sendLocation(m.chat, await readAttachment(), text, footer, quoted)
+  if (message === 'location') {
+    const card = location => conn.sendButton(m.chat, { text, footer, nativeFlow: [], location }, quoted)
+    const thumbnail = await readAttachment()
+    const plain = { name: values.botName, address: '' }
+    return thumbnail ? card({ ...plain, buffer: thumbnail }).catch(() => card(plain)) : card(plain)
+  }
   if (message === 'reply') {
     const lines = buttons.flatMap(item => item.kind === 'select' ? rows.map(row => `- ${row.title.slice(2)}`) : item.kind === 'list' ? item.options.map(option => `- ${option.text}`) : [`- ${item.text || '\u0000'}`])
     return conn.reply(m.chat, [text, lines.join('\n')].filter(Boolean).join('\n\n'), quoted)

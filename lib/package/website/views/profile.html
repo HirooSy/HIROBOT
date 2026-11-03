@@ -323,7 +323,7 @@
                   <div class="subbot-menu-section">
                     <div class="subbot-menu-title">Menu Settings</div>
                     <div id="subbot-menu-form"></div>
-                    <input type="file" id="subbot-menu-file" style="display:none" onchange="subbotMenuUpload(this)">
+                    <input type="file" id="subbot-menu-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="subbotMenuUpload(this)">
                     <div class="subbot-menu-actions" id="subbot-menu-actions">
                       <button type="button" class="btn btn-small btn-flat" onclick="subbotMenuSave()">Save</button>
                     </div>
@@ -1240,14 +1240,24 @@ function subbotRenderPrefix(d) {
   const root = document.getElementById('subbot-prefix')
   if (!root) return
   if (!document.getElementById('subbot-prefix-input')) {
-    root.innerHTML = `<div class="subbot-prefix"><div class="subbot-prefix-head"><div class="subbot-row-title">Custom prefix</div><div class="subbot-row-sub" id="subbot-prefix-hint"></div></div><div class="subbot-prefix-box"><button type="button" class="switch" id="subbot-prefix-toggle" role="switch" aria-label="Custom prefix" onclick="subbotPrefixToggle()"><span class="switch-knob"></span></button><input type="text" class="subbot-prefix-input" id="subbot-prefix-input" maxlength="3" placeholder="Prefix" onkeydown="if (event.key === 'Enter') subbotPrefixAdd()"><button type="button" class="subbot-prefix-add" onclick="subbotPrefixAdd()" aria-label="Add prefix" title="Add prefix">+</button></div><div class="subbot-prefix-list" id="subbot-prefix-list"></div></div>`
+    root.innerHTML = `<div class="subbot-prefix"><div class="subbot-row subbot-mode-row"><div class="subbot-mode-text"><div class="subbot-row-title">Custom prefix</div><div class="subbot-row-sub" id="subbot-prefix-hint"></div></div><button type="button" class="switch" id="subbot-prefix-toggle" role="switch" aria-label="Custom prefix" onclick="subbotPrefixToggle()"><span class="switch-knob"></span></button></div><div class="subbot-prefix-box"><input type="text" class="subbot-prefix-input" id="subbot-prefix-input" maxlength="3" placeholder="> input your prefix..." onkeydown="if (event.key === 'Enter') subbotPrefixAdd()"><button type="button" class="subbot-prefix-add" id="subbot-prefix-add" onclick="subbotPrefixAdd()" aria-label="Add prefix" title="Add prefix">+</button></div><div class="subbot-prefix-list" id="subbot-prefix-list"></div></div>`
   }
   const on = !!d.customPrefix
   const toggle = document.getElementById('subbot-prefix-toggle')
   toggle.classList.toggle('on', on)
   toggle.setAttribute('aria-checked', on ? 'true' : 'false')
   root.querySelector('.subbot-prefix').classList.toggle('is-off', !on)
-  document.getElementById('subbot-prefix-hint').textContent = on ? 'Only these prefixes work for this subbot' : `Default prefixes: ${(d.activePrefixes || []).join(' ')}`
+  const input = document.getElementById('subbot-prefix-input')
+  input.disabled = !on
+  document.getElementById('subbot-prefix-add').disabled = !on
+  if (on) {
+    if (input.dataset.state === 'default') input.value = ''
+    input.dataset.state = 'custom'
+  } else {
+    input.value = `Default: [ ${(d.activePrefixes || []).join(' ')} ]`
+    input.dataset.state = 'default'
+  }
+  document.getElementById('subbot-prefix-hint').textContent = on ? 'Only these prefixes work for this subbot' : 'Turn on to use your own prefixes'
   const list = Array.isArray(d.prefixes) ? d.prefixes : []
   document.getElementById('subbot-prefix-list').innerHTML = list.length
     ? list.map((p, i) => `<span class="subbot-prefix-chip">${escapeHtml(p)}<button type="button" class="subbot-prefix-x" onclick="subbotPrefixRemove(${i})" aria-label="Remove ${escapeHtml(p)}" title="Remove">×</button></span>`).join('')
@@ -1306,6 +1316,7 @@ const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document']
 const SUBBOT_MENU_MEDIA_OPTIONAL = ['button-location', 'location']
 const SUBBOT_MENU_SELECT_LABEL = '✦ SHOW ALL MENU'
 const SUBBOT_MENU_MEDIA_LIMIT = 8 * 1024 * 1024
+const SUBBOT_MENU_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const SUBBOT_MENU_LIST_MAX = 10
 const SUBBOT_MENU_LIST_LABEL_MAX = 20
 const SUBBOT_MENU_OPTION_TITLE_MAX = 24
@@ -1371,7 +1382,7 @@ function menuThumbnailRowHtml() {
   const value = media && media.source === 'url' ? media.url : ''
   const placeholder = media && media.source !== 'url' ? media.name : 'https://...'
   const control = `<div class="subbot-mode-control"><button type="button" class="subbot-mode-icon" onclick="subbotMenuPickFile('${target}')" aria-label="Upload" title="Upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button><input type="text" class="subbot-mode-input" maxlength="256" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}" oninput="menuSetThumbnailUrl(this.value)"></div>`
-  return menuRowHtml(required ? 'Media' : 'Thumbnail', required ? 'Required for this message type' : 'Optional for this message type', control)
+  return menuRowHtml(required ? 'Media' : 'Thumbnail', (required ? 'Required for this message type' : 'Optional for this message type') + '. Images only: JPEG, PNG or WEBP.', control)
 }
 
 function menuEditorHtml(page, chips) {
@@ -1543,12 +1554,12 @@ function menuPreviewBubble(part, values, quote, footer) {
   if (!['reply', 'location'].includes(message) && !part.buttons.length) message = 'reply'
   const src = media && media.source === 'url' ? media.url : ''
   const image = `<img src="${escapeHtml(src)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('is-broken')">`
-  const mediaBox = label => `<div class="subbot-preview-media">${src ? image : ''}<span>${escapeHtml(label)}</span></div>`
+  const mediaBox = (label, extra = '') => `<div class="subbot-preview-media${extra}">${src ? image : ''}<span>${escapeHtml(label)}</span></div>`
   let header = ''
   if (message === 'button-image') header = mediaBox(media.name || 'Image')
-  if (message === 'button-location') header = mediaBox(media?.name || 'Location') + `<div class="subbot-preview-loc">${escapeHtml(values.botName)}</div>`
+  if (message === 'button-location') header = mediaBox(media?.name || 'Location', ' is-location') + `<div class="subbot-preview-loc">${escapeHtml(values.botName)}</div>`
   if (message === 'button-document') header = `<div class="subbot-preview-doc"><div class="subbot-preview-doc-thumb">${src ? image : ''}${menuPreviewIcon('file')}</div><div class="subbot-preview-doc-info"><b>${escapeHtml(values.botName)}</b><small>${escapeHtml(menuPreviewExt(media))}</small></div><span class="subbot-preview-doc-dl">${menuPreviewIcon('download')}</span></div>`
-  if (message === 'location') header = mediaBox(media?.name || 'Location')
+  if (message === 'location') header = mediaBox(media?.name || 'Location', ' is-location')
   let body = part.text
   let footerHtml = footer ? `<div class="subbot-preview-footer">${escapeHtml(footer)}</div>` : ''
   let buttons = ''
@@ -1730,9 +1741,7 @@ function menuMoveButton(index, step) {
 
 function subbotMenuPickFile(page) {
   menuUploadPage = page
-  const input = document.getElementById('subbot-menu-file')
-  input.accept = menuDraft && menuDraft.pages[page].message === 'button-image' ? 'image/*' : ''
-  input.click()
+  document.getElementById('subbot-menu-file').click()
 }
 
 function subbotMenuReadFile(file) {
@@ -1749,6 +1758,7 @@ async function subbotMenuUpload(input) {
   input.value = ''
   const page = menuUploadPage
   if (!file || !menuDraft) return
+  if (!SUBBOT_MENU_IMAGE_TYPES.includes(file.type)) return showToast('Only image files are allowed. Use JPEG, PNG or WEBP.', 'error')
   if (file.size > SUBBOT_MENU_MEDIA_LIMIT) return showToast('File must be 8 MB or smaller.', 'error')
   let data
   try {

@@ -3343,6 +3343,8 @@ button {
 
 .page-profile .subbot-preview-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
+.page-profile .subbot-preview-media.is-location { aspect-ratio: 300 / 173; min-height: 0; }
+
 .page-profile .subbot-preview-media span { padding: 8px; text-align: center; overflow-wrap: anywhere; }
 
 .page-profile .subbot-preview-media img + span { display: none; }
@@ -3444,6 +3446,10 @@ button {
 .page-profile .subbot-prefix-input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--text); font-size: 10px; font-family: var(--font); }
 
 .page-profile .subbot-prefix-input::placeholder { color: var(--muted); }
+
+.page-profile .subbot-prefix-input:disabled { color: var(--muted2); cursor: not-allowed; }
+
+.page-profile .subbot-prefix-add:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .page-profile .subbot-prefix-add { flex-shrink: 0; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: #ffffff; border: none; color: #080808; font-size: 16px; font-weight: 700; line-height: 1; cursor: pointer; }
 
