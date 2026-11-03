@@ -341,7 +341,8 @@ const defaultMenu = {
 
 const ORDER = ['Info', 'Utility', 'Moderation', 'Roles', 'Settings', 'Server', 'Music', 'AI', 'Downloader', 'Tools', 'Sticker', 'Canvas', 'Group', 'Adult', 'Owner']
 
-const menuPlaceholders = (text, values) => String(text ?? '').replace(/__([A-Za-z]+)__/g, (match, key) => Object.hasOwn(values, key) ? String(values[key]) : match)
+const MENU_TEXT_PLACEHOLDERS = ['botName', 'userName', 'status', 'prefix', 'totalCommands', 'totalUsers', 'runtime', 'timezone', 'version', 'readMore']
+const menuPlaceholders = (text, values, keys) => String(text ?? '').replace(/__([A-Za-z]+)__/g, (match, key) => keys.includes(key) && Object.hasOwn(values, key) ? String(values[key]) : match)
 
 const MENU_ESCAPES = { 0: '\0', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v', s: ' ', '"': '"', "'": "'", '`': '`', '\\': '\\' }
 
@@ -383,7 +384,18 @@ function menuIcons(entry) {
   return `${entry.premium ? 'Ⓟ' : ''}${entry.premium && entry.limit ? ' ' : ''}${entry.limit ? 'Ⓛ' : ''}`
 }
 
-const menuTagText = (template, entries, _p) => String(template ?? '').split('\n').flatMap(line => /__(commands|example|icons)__/.test(line) ? entries.map(entry => menuUnescape(line.split('__commands__').join(`${_p}${entry.name}`).split('__example__').join(`${_p}${entry.usage}`).split('__icons__').join(menuIcons(entry))).trimEnd()) : [menuUnescape(line)]).join('\n')
+const menuExample = entry => entry.usage.slice(entry.name.length).trim()
+
+const menuCommandLine = (line, entry, _p) => {
+  let out = line.split('__commands__').join(`${_p}${entry.name}`)
+  const example = menuExample(entry)
+  out = example ? out.split('__example__').join(example) : out.replace(/ ?__example__/g, '')
+  const icons = menuIcons(entry)
+  out = icons ? out.split('__icons__').join(icons) : out.replace(/ ?__icons__/g, '')
+  return menuUnescape(out).trimEnd()
+}
+
+const menuTagText = (template, entries, _p, tagName) => String(template ?? '').split('\n').flatMap((line, index) => index === 0 ? [menuPlaceholders(menuUnescape(line), { tagName }, ['tagName'])] : /__(commands|example|icons)__/.test(line) ? entries.map(entry => menuCommandLine(line, entry, _p)) : [menuUnescape(line)]).join('\n')
 
 const menuRows = (allPlugins, tags, _p) => tags.filter(tag => tag !== 'all').map(tag => {
   const commands = menuTagEntries(allPlugins, tag).map(entry => entry.name)
@@ -392,9 +404,9 @@ const menuRows = (allPlugins, tags, _p) => tags.filter(tag => tag !== 'all').map
   return { title: `• ${menuTagLabel(tag)}`, description: description.slice(0, 72), id: `${_p}menu ${tag}` }
 }).slice(0, 30)
 
-const menuAllText = (allPlugins, tags, _p, template, values) => tags.filter(tag => tag !== 'all').map(tag => {
+const menuAllText = (allPlugins, tags, _p, template) => tags.filter(tag => tag !== 'all').map(tag => {
   const commands = menuTagEntries(allPlugins, tag)
-  return commands.length ? menuPlaceholders(menuTagText(template, commands, _p), { ...values, tagName: menuTagLabel(tag) }) : ''
+  return commands.length ? menuTagText(template, commands, _p, menuTagLabel(tag)) : ''
 }).filter(Boolean).join('\n\n')
 
 async function menuQuoted(conn, m, quote, name, order = {}) {
@@ -434,11 +446,12 @@ async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p,
   const rows = key === 'select' ? menuRows(allPlugins, tags, _p) : []
   const tagCommands = key === 'tags' ? menuTagEntries(allPlugins, tag) : []
   const pageText = menuUnescape(page.text)
-  const source = key === 'tags' ? menuTagText(page.text, tagCommands, _p) : pageText
-  const commands = key === 'all' ? menuAllText(allPlugins, tags, _p, cfg.pages.tags.text, values) : ''
-  const pageValues = { ...values, tagName: key === 'tags' ? menuTagLabel(tag) : '', commands }
-  const text = [menuPlaceholders(source, pageValues), commands && !/__commands__/.test(pageText) ? commands : ''].filter(Boolean).join('\n\n')
-  const footer = menuPlaceholders(menuUnescape(cfg.footer), pageValues)
+  const source = key === 'tags' ? menuTagText(page.text, tagCommands, _p, menuTagLabel(tag)) : pageText
+  const commands = key === 'all' ? menuAllText(allPlugins, tags, _p, cfg.pages.tags.text) : ''
+  const pageValues = { ...values, commands }
+  const textKeys = key === 'all' ? [...MENU_TEXT_PLACEHOLDERS, 'commands'] : MENU_TEXT_PLACEHOLDERS
+  const text = [key === 'tags' ? source : menuPlaceholders(source, pageValues, textKeys), commands && !/__commands__/.test(pageText) ? commands : ''].filter(Boolean).join('\n\n')
+  const footer = menuPlaceholders(menuUnescape(cfg.footer), values, MENU_TEXT_PLACEHOLDERS)
   const quoted = await menuQuoted(conn, m, cfg.quote, name, { text: cfg.quoteText, count: cfg.quoteCount })
   const buttons = key === 'select' ? cfg.buttons : cfg.buttons.filter(item => item.kind !== 'select')
   const buttonLabel = item => item.text || '\u0000'

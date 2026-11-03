@@ -1419,13 +1419,20 @@ function menuThumbnailRowHtml() {
   return menuRowHtml(required ? 'Media' : 'Thumbnail', (required ? 'Required for this message type' : 'Optional for this message type') + '. Images only: JPEG, PNG or WEBP.', control)
 }
 
-function menuChipsHtml(keys) {
-  return `<div class="subbot-menu-chips">${keys.map(key => `<span>${key}</span>`).join('')}</div>`
+function menuPlaceholderTableHtml(isSelect) {
+  const columns = [
+    isSelect ? SUBBOT_MENU_PLACEHOLDERS : [...SUBBOT_MENU_PLACEHOLDERS, '__commands__'],
+    ['__tagName__'],
+    ['__commands__', '__example__', '__icons__']
+  ]
+  const rows = Math.max(...columns.map(column => column.length))
+  const body = Array.from({ length: rows }, (_, r) => `<tr>${columns.map(column => `<td>${column[r] ? `<span>${column[r]}</span>` : ''}</td>`).join('')}</tr>`).join('')
+  return `<div class="subbot-menu-field"><span class="subbot-menu-label">Placeholders</span><div class="subbot-menu-table-wrap"><table class="subbot-menu-table"><thead><tr><th>Menu text</th><th>Tags label</th><th>Commands list</th></tr></thead><tbody>${body}</tbody></table></div></div>`
 }
 
-function menuEditorHtml(page, chips) {
+function menuEditorHtml(page) {
   const text = menuDraft.pages[page].text
-  return `<div class="subbot-menu-field"><span class="subbot-menu-label">${escapeHtml(SUBBOT_MENU_TEXT_TITLE[page])}</span>${menuChipsHtml(chips)}<div class="subbot-plugin-editor subbot-menu-editor"><div class="subbot-editor-body"><div class="subbot-editor-gutter" id="subbot-menu-gutter-${page}" aria-hidden="true"></div><textarea class="subbot-editor-code" id="subbot-menu-text-${page}" maxlength="4000" spellcheck="false" wrap="off" autocapitalize="off" autocorrect="off" oninput="menuTextInput('${page}', this)" onscroll="menuEditorScroll('${page}')">${escapeHtml(text)}</textarea></div></div></div>`
+  return `<div class="subbot-menu-field"><span class="subbot-menu-label">${escapeHtml(SUBBOT_MENU_TEXT_TITLE[page])}</span><div class="subbot-plugin-editor subbot-menu-editor"><div class="subbot-editor-body"><div class="subbot-editor-gutter" id="subbot-menu-gutter-${page}" aria-hidden="true"></div><textarea class="subbot-editor-code" id="subbot-menu-text-${page}" maxlength="4000" spellcheck="false" wrap="off" autocapitalize="off" autocorrect="off" oninput="menuTextInput('${page}', this)" onscroll="menuEditorScroll('${page}')">${escapeHtml(text)}</textarea></div></div></div>`
 }
 
 function menuTagsParts(text) {
@@ -1444,7 +1451,7 @@ function menuSetTagsPart(index, value) {
 
 function menuTagsRowsHtml() {
   const [label, commands] = menuTagsParts(menuDraft.pages.tags.text)
-  return menuRowHtml('Tags label', 'Heading of each category page', `<input type="text" class="subbot-mode-input" maxlength="60" spellcheck="false" autocapitalize="off" autocorrect="off" value="${escapeHtml(label)}" oninput="menuSetTagsPart(0, this.value)">`) + menuRowHtml('Commands list', 'One line per command', `<input type="text" class="subbot-mode-input" maxlength="120" spellcheck="false" autocapitalize="off" autocorrect="off" value="${escapeHtml(commands)}" oninput="menuSetTagsPart(1, this.value)">`) + `<div class="subbot-menu-field"><span class="subbot-menu-label">Placeholders</span>${menuChipsHtml(['__commands__', '__example__', '__icons__'])}</div>`
+  return menuRowHtml('Tags label', 'Heading of each category page', `<input type="text" class="subbot-mode-input" maxlength="60" spellcheck="false" autocapitalize="off" autocorrect="off" value="${escapeHtml(label)}" oninput="menuSetTagsPart(0, this.value)">`) + menuRowHtml('Commands list', 'One line per command', `<input type="text" class="subbot-mode-input" maxlength="120" spellcheck="false" autocapitalize="off" autocorrect="off" value="${escapeHtml(commands)}" oninput="menuSetTagsPart(1, this.value)">`)
 }
 
 function menuOptionHtml(index, optionIndex, option) {
@@ -1488,8 +1495,9 @@ function subbotMenuRender() {
   for (const page of pages) parts.push(menuPageMessageRow(page))
   parts.push(menuThumbnailRowHtml())
   parts.push(menuRowHtml('Quote message', 'Quoted with every reply', menuQuoteControlHtml(), 'subbot-quote-row'))
-  if (isSelect) parts.push(menuEditorHtml('select', SUBBOT_MENU_PLACEHOLDERS))
-  else parts.push(menuEditorHtml('all', [...SUBBOT_MENU_PLACEHOLDERS, '__commands__']))
+  parts.push(menuPlaceholderTableHtml(isSelect))
+  if (isSelect) parts.push(menuEditorHtml('select'))
+  else parts.push(menuEditorHtml('all'))
   parts.push(menuTagsRowsHtml())
   const footerMessages = isSelect ? [m.pages.select.message, m.pages.tags.message] : [m.pages.all.message]
   if (footerMessages.some(message => message !== 'reply')) parts.push(`<div class="subbot-menu-field"><span class="subbot-menu-label">Footer</span><input type="text" class="input-field" maxlength="60" value="${escapeHtml(m.footer)}" oninput="menuSetField('footer', this.value)"></div>`)
@@ -1531,8 +1539,10 @@ function menuPreviewValues() {
   }
 }
 
-function menuPreviewFill(text, values) {
-  return String(text ?? '').replace(/__([A-Za-z]+)__/g, (match, key) => Object.hasOwn(values, key) ? String(values[key]) : match)
+const MENU_PREVIEW_TEXT_KEYS = ['botName', 'userName', 'status', 'prefix', 'totalCommands', 'totalUsers', 'runtime', 'timezone', 'version', 'readMore']
+
+function menuPreviewFill(text, values, keys) {
+  return String(text ?? '').replace(/__([A-Za-z]+)__/g, (match, key) => keys.includes(key) && Object.hasOwn(values, key) ? String(values[key]) : match)
 }
 
 const MENU_PREVIEW_ESCAPES = { 0: '\0', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v', s: ' ', '"': '"', "'": "'", '`': '`', '\\': '\\' }
@@ -1546,8 +1556,20 @@ function menuPreviewUnescape(text) {
   })
 }
 
-function menuPreviewTagText(template, prefix) {
-  return String(template ?? '').split('\n').flatMap(line => /__(commands|example|icons)__/.test(line) ? MENU_PREVIEW_ENTRIES.map(entry => menuPreviewUnescape(line.split('__commands__').join(prefix + entry.name).split('__example__').join(prefix + entry.usage).split('__icons__').join(entry.icons)).trimEnd()) : [menuPreviewUnescape(line)]).join('\n')
+function menuPreviewExample(entry) {
+  return entry.usage.slice(entry.name.length).trim()
+}
+
+function menuPreviewCommandLine(line, entry, prefix) {
+  let out = line.split('__commands__').join(prefix + entry.name)
+  const example = menuPreviewExample(entry)
+  out = example ? out.split('__example__').join(example) : out.replace(/ ?__example__/g, '')
+  out = entry.icons ? out.split('__icons__').join(entry.icons) : out.replace(/ ?__icons__/g, '')
+  return menuPreviewUnescape(out).trimEnd()
+}
+
+function menuPreviewTagText(template, prefix, tagName) {
+  return String(template ?? '').split('\n').flatMap((line, index) => index === 0 ? [menuPreviewFill(menuPreviewUnescape(line), { tagName }, ['tagName'])] : /__(commands|example|icons)__/.test(line) ? MENU_PREVIEW_ENTRIES.map(entry => menuPreviewCommandLine(line, entry, prefix)) : [menuPreviewUnescape(line)]).join('\n')
 }
 
 function menuPreviewFormat(text) {
@@ -1572,15 +1594,14 @@ function menuPreviewQuote(quote, values) {
 function menuPreviewParts() {
   const m = menuDraft
   const values = menuPreviewValues()
-  const tagValues = { ...values, tagName: MENU_PREVIEW_TAG }
   const rows = [{ title: '• ' + MENU_PREVIEW_TAG, description: MENU_PREVIEW_COMMANDS.join(', ') }]
-  const tagText = menuPreviewFill(menuPreviewTagText(m.pages.tags.text, values.commandPrefix), tagValues)
+  const tagText = menuPreviewTagText(m.pages.tags.text, values.commandPrefix, MENU_PREVIEW_TAG)
   if (m.type === 'select') return [
-    { caption: 'Selection page', message: m.pages.select.message, text: menuPreviewFill(menuPreviewUnescape(m.pages.select.text), values), media: m.pages.select.media, buttons: m.buttons, rows },
+    { caption: 'Selection page', message: m.pages.select.message, text: menuPreviewFill(menuPreviewUnescape(m.pages.select.text), values, MENU_PREVIEW_TEXT_KEYS), media: m.pages.select.media, buttons: m.buttons, rows },
     { caption: 'Menu tags', message: m.pages.tags.message, text: tagText, media: m.pages.tags.media, buttons: m.buttons.filter(item => item.kind !== 'select'), rows: [] }
   ]
   const pageText = menuPreviewUnescape(m.pages.all.text)
-  const text = menuPreviewFill(pageText, { ...values, commands: tagText })
+  const text = menuPreviewFill(pageText, { ...values, commands: tagText }, [...MENU_PREVIEW_TEXT_KEYS, 'commands'])
   return [{ caption: 'Menu', message: m.pages.all.message, text: /__commands__/.test(pageText) ? text : [text, tagText].filter(Boolean).join('\n\n'), media: m.pages.all.media, buttons: m.buttons.filter(item => item.kind !== 'select'), rows: [] }]
 }
 
@@ -1655,7 +1676,7 @@ function menuPreviewRender() {
   }
   const values = menuPreviewValues()
   const quote = menuPreviewQuote(menuDraft.quote, { ...values, quoteText: menuDraft.quoteText, quoteCount: menuDraft.quoteCount })
-  const footer = menuPreviewFill(menuPreviewUnescape(menuDraft.footer), values)
+  const footer = menuPreviewFill(menuPreviewUnescape(menuDraft.footer), values, MENU_PREVIEW_TEXT_KEYS)
   stage.innerHTML = menuPreviewParts().map(part => `<div class="subbot-preview-part"><div class="subbot-preview-caption">${escapeHtml(part.caption)}</div>${menuPreviewBubble(part, values, quote, footer)}</div>`).join('')
   menuPreviewLayoutButtons()
 }
