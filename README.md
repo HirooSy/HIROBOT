@@ -552,15 +552,8 @@ conn.sendButton(m.chat, {
         }
     ]
 }, m)
-```
-</sub></details>
 
-<details> <summary>🔘 Button Template</summary>
-  <sub>
-
-Quick reply buttons only, up to 3 buttons. The header comes from `image`, `document`, `location` or `head`. Native flow options such as `optionText` and `lto*` are not used.
-
-```javascript
+/** @Template — Old button type **/
 conn.sendButton(m.chat, {
     image: { url: './path/to/image.jpg' },
     caption: 'Template!',

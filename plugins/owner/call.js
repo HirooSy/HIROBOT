@@ -139,6 +139,6 @@ handler.help = ['voipcall <number>', 'voipend', 'voipsilent', 'voipreact <emoji>
 handler.tags = ['owner']
 handler.command = /^(voipcall|voipend|voipsilent|voipreact)$/i
 
-handler.platform = { whatsapp: { permission: ['rowner'] }, discord: false }
+handler.platform = { whatsapp: { permission: ['owner'] }, discord: false }
 
 export default handler
