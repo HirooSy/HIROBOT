@@ -1298,8 +1298,8 @@ let menuUploadPage = 'all'
 let menuLimits = { select: 10, all: 10 }
 const SUBBOT_MENU_PAGES = ['all', 'select', 'tags']
 const SUBBOT_MENU_TYPE_OPTIONS = [['select', 'Select'], ['all', 'Show all']]
-const SUBBOT_MENU_MESSAGE_OPTIONS = [['button', 'NativeFlow'], ['button-location', 'NativeFlow - Location'], ['button-document', 'NativeFlow - Document'], ['button-image', 'NativeFlow - Image'], ['button-v2', 'Button'], ['button-v2-location', 'Button - Location'], ['button-v2-image', 'Button - Image'], ['location', 'Location'], ['reply', 'Reply']]
-const SUBBOT_MENU_V2_MESSAGES = ['button-v2', 'button-v2-location', 'button-v2-document', 'button-v2-image']
+const SUBBOT_MENU_MESSAGE_OPTIONS = [['button', 'Button'], ['button-location', 'Button - Location'], ['button-document', 'Button - Document'], ['button-image', 'Button - Image'], ['button-v2-location', 'Template - Location'], ['location', 'Location'], ['reply', 'Reply']]
+const SUBBOT_MENU_V2_MESSAGES = ['button-v2-location']
 const SUBBOT_MENU_V2_MAX = 3
 const SUBBOT_MENU_QUOTE_OPTIONS = [['text', 'Text'], ['contact', 'Contact'], ['order', 'Order'], ['none', 'None']]
 const MENU_QUOTE_TEXT_MAX = 60
@@ -1311,14 +1311,11 @@ const SUBBOT_MENU_NOTES = {
   'button-location': 'Buttons with a location header.',
   'button-document': 'Buttons with a document attached.',
   'button-image': 'Buttons with an image attached.',
-  'button-v2': 'Quick reply buttons. Up to 3, no lists or links.',
   'button-v2-location': 'Quick reply buttons with a location header. Up to 3.',
-  'button-v2-document': 'Quick reply buttons with a document attached. Up to 3.',
-  'button-v2-image': 'Quick reply buttons with an image attached. Up to 3.',
   location: 'Sent as a location card. Buttons are not shown.',
   reply: 'Sent as plain text. Buttons are written as a list.'
 }
-const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document', 'button-v2-image', 'button-v2-document']
+const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document']
 const SUBBOT_MENU_MEDIA_OPTIONAL = ['button-location', 'button-v2-location', 'location']
 const SUBBOT_MENU_SELECT_LABEL = '✦ SHOW ALL MENU'
 const SUBBOT_MENU_MEDIA_LIMIT = 8 * 1024 * 1024

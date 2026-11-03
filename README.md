@@ -571,7 +571,7 @@ conn.sendButton(m.chat, {
 
 /** @Template — Old button type **/
 conn.sendButton(m.chat, {
-    image: { url: './path/to/image.jpg' },
+    location: { url: './path/to/image.jpg', name: 'My Bot', address: 'Template!' },
     caption: 'Template!',
     footer: 'My Bot',
     template: [

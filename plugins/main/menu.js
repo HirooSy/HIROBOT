@@ -467,7 +467,7 @@ async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p,
   const botPhoto = () => conn.profilePictureUrl(conn.decodeJid(conn.user.id), 'image', 4000).catch(() => undefined)
   const headerMedia = async () => (await readAttachment()) ?? await botPhoto()
   let message = page.message
-  if (['button-document', 'button-v2-document'].includes(message) && !attachment) message = message.startsWith('button-v2') ? 'button-v2' : 'button'
+  if (message === 'button-document' && !attachment) message = 'button'
   if (message.startsWith('button-v2') && !nativeFlow.length) message = message.replace('button-v2', 'button')
 
   if (message === 'location') {
@@ -492,9 +492,6 @@ async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p,
     }
   }
   const v2Buttons = buttons.map(item => ({ text: buttonLabel(item), id: item.value }))
-  if (message === 'button-v2') return conn.sendButton(m.chat, { text, footer, template: v2Buttons }, quoted)
-  if (message === 'button-v2-image') return conn.sendButton(m.chat, { text, footer, template: v2Buttons, image: attachment || await botPhoto() }, quoted)
-  if (message === 'button-v2-document') return conn.sendButton(m.chat, { text, footer, template: v2Buttons, document: attachment, mimetype: page.attachmentMimetype, fileName: values.botName, jpegThumbnail: await documentThumb() }, quoted)
   if (message === 'button-v2-location') return conn.sendButton(m.chat, { text, footer, template: v2Buttons, location: { buffer: await headerMedia(), name: values.botName, address: '' } }, quoted)
   if (message === 'button-document') return conn.sendButton(m.chat, { ...base, document: attachment, mimetype: page.attachmentMimetype, fileName: values.botName, jpegThumbnail: await documentThumb() }, quoted)
   if (message === 'button-location') return conn.sendButton(m.chat, { ...base, location: { buffer: await headerMedia(), name: values.botName, address: '' } }, quoted)

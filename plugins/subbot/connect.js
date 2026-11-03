@@ -26,11 +26,11 @@ const SUBBOT_MODE_LABEL = { self: 'Self', group: 'Group chat', private: 'Private
 const SUBBOT_PREFIX_MAX = 10
 const SUBBOT_LOG_LIMIT = 60
 const SUBBOT_MENU_TYPES = ['select', 'all']
-const SUBBOT_MENU_MESSAGES = ['button', 'button-location', 'button-document', 'button-image', 'button-v2', 'button-v2-location', 'button-v2-document', 'button-v2-image', 'location', 'reply']
-const SUBBOT_MENU_V2_MESSAGES = ['button-v2', 'button-v2-location', 'button-v2-document', 'button-v2-image']
+const SUBBOT_MENU_MESSAGES = ['button', 'button-location', 'button-document', 'button-image', 'button-v2-location', 'location', 'reply']
+const SUBBOT_MENU_V2_MESSAGES = ['button-v2-location']
 const SUBBOT_MENU_V2_MAX = 3
-const SUBBOT_MENU_BUTTON_MESSAGES = ['button', 'button-location', 'button-document', 'button-image', 'button-v2', 'button-v2-location', 'button-v2-document', 'button-v2-image']
-const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document', 'button-v2-image', 'button-v2-document']
+const SUBBOT_MENU_BUTTON_MESSAGES = ['button', 'button-location', 'button-document', 'button-image', 'button-v2-location']
+const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document']
 const SUBBOT_MENU_QUOTES = ['text', 'contact', 'order', 'none']
 const SUBBOT_MENU_QUOTE_TEXT_DEFAULT = '• LIST COMMANDS'
 const SUBBOT_MENU_QUOTE_TEXT_MAX = 60
@@ -1150,7 +1150,7 @@ function normalizeSubbotMenuPage(input, previous, key, strict, v2Allowed = false
     }
     if (strict) {
         if (SUBBOT_MENU_MEDIA_REQUIRED.includes(message) && !media) throw new Error(`Upload a file or enter a URL for ${name}.`)
-        if ((message === 'button-image' || message === 'button-v2-image') && media?.source === 'upload' && !String(media.mimetype || '').startsWith('image/')) throw new Error(`${name} needs an image file for ${message === 'button-image' ? 'NativeFlow - Image' : 'Button - Image'}.`)
+        if (message === 'button-image' && media?.source === 'upload' && !String(media.mimetype || '').startsWith('image/')) throw new Error(`${name} needs an image file for Button - Image.`)
     }
     return { message, text, media }
 }
