@@ -13,20 +13,24 @@ import Helper from '../../lib/utils/helper.js'
 import Connection, { generateQR, generateQRMatrix } from '../../lib/utils/connection.js'
 import { HelperConnection } from '../../lib/utils/simple.js'
 import { applyPlatformMeta } from '../../lib/utils/plugins.js'
-import { guestGenerateText, createGeminiClient, MODELS } from '../../lib/package/ai/mcp.js'
+import { guestGenerateText, createGeminiClient, MODELS, detectTimezoneFromNumber } from '../../lib/package/ai/mcp.js'
 import db, { loadDatabase } from '../../lib/utils/database.js'
 
 const subbotHandles = (global.subbotHandles ||= new Map())
 const subbotRuntime = (global.subbotRuntime ||= new Map())
 const subbotPlugins = (global.subbotPlugins ||= new Map())
+const subbotPhotos = (global.subbotPhotos ||= new Map())
+const SUBBOT_LOGGER = Helper.P({ level: 'silent' })
 const SUBBOT_TYPE_LABEL = { sql: 'SQL', multi: 'JSON multi-file', single: 'JSON single-file' }
 const SUBBOT_MODE_LABEL = { self: 'Self', group: 'Group chat', private: 'Private chat', public: 'Public' }
 const SUBBOT_PREFIX_MAX = 10
-const SUBBOT_LOG_LIMIT = 200
+const SUBBOT_LOG_LIMIT = 60
 const SUBBOT_MENU_TYPES = ['select', 'all']
-const SUBBOT_MENU_MESSAGES = ['button', 'button-location', 'button-document', 'button-image', 'location', 'reply']
-const SUBBOT_MENU_BUTTON_MESSAGES = ['button', 'button-location', 'button-document', 'button-image']
-const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document']
+const SUBBOT_MENU_MESSAGES = ['button', 'button-location', 'button-document', 'button-image', 'button-v2', 'button-v2-location', 'button-v2-document', 'button-v2-image', 'location', 'reply']
+const SUBBOT_MENU_V2_MESSAGES = ['button-v2', 'button-v2-location', 'button-v2-document', 'button-v2-image']
+const SUBBOT_MENU_V2_MAX = 3
+const SUBBOT_MENU_BUTTON_MESSAGES = ['button', 'button-location', 'button-document', 'button-image', 'button-v2', 'button-v2-location', 'button-v2-document', 'button-v2-image']
+const SUBBOT_MENU_MEDIA_REQUIRED = ['button-image', 'button-document', 'button-v2-image', 'button-v2-document']
 const SUBBOT_MENU_QUOTES = ['text', 'contact', 'order', 'none']
 const SUBBOT_MENU_QUOTE_TEXT_DEFAULT = '• LIST COMMANDS'
 const SUBBOT_MENU_QUOTE_TEXT_MAX = 60
@@ -131,15 +135,30 @@ function sanitizeCustomPairingCode(raw, { silent = false } = {}) {
 }
 
 async function fetchVersionWithTimeout(timeoutMs = 8000) {
+    let timer
     try {
         return await Promise.race([
             fetchLatestBaileysVersion(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('version fetch timeout')), timeoutMs))
+            new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('version fetch timeout')), timeoutMs) })
         ])
     } catch (e) {
         console.warn('[Subbot] Baileys version fetch failed, using bundled default:', e?.message || e)
         return { version: undefined, isLatest: false }
+    } finally {
+        clearTimeout(timer)
     }
+}
+
+let subbotVersionRequest = null
+
+function resolveSubbotVersion() {
+    if (!subbotVersionRequest) {
+        subbotVersionRequest = fetchVersionWithTimeout().then(result => {
+            if (!result.version) subbotVersionRequest = null
+            return result
+        })
+    }
+    return subbotVersionRequest
 }
 
 export function getSubbotConfig() {
@@ -554,8 +573,8 @@ export async function startSubBot(jid, opts = {}) {
     if (!Object.hasOwn(SUBBOT_TYPE_LABEL, readSubbotSetting(jid).type)) writeSubbotSetting(jid, { type })
     const { state, saveCreds } = await Connection.resolveAuthState(type, subbotSessionTarget(jid, type))
     await loadSubbotPlugins(jid)
-    const { version } = await fetchVersionWithTimeout()
-    const logger = Helper.P({ level: 'silent' })
+    const { version } = await resolveSubbotVersion()
+    const logger = SUBBOT_LOGGER
 
     let isReconnecting = false
     let connGeneration = 0
@@ -598,7 +617,7 @@ export async function startSubBot(jid, opts = {}) {
 
         let Handler
         try {
-            Handler = await import(`../../lib/utils/handler.js?t=${Date.now()}`).catch(console.error)
+            Handler = await Helper.importFile(Helper.__filename(path.resolve('lib/utils/handler.js'))).catch(console.error)
         } catch (e) {
             console.error(e)
         }
@@ -690,6 +709,7 @@ export async function startSubBot(jid, opts = {}) {
             Connection.conns.set(jid, subConn)
             const runtime = runtimeOf(jid)
             runtime.startedAt = Date.now()
+            subConn.startedAt = runtime.startedAt
             pushLog(jid, 'Connected to WhatsApp', 'ok')
             await opts.onOpen?.(subConn)
             return
@@ -832,6 +852,17 @@ export function subbotDisplayName(jid) {
     return getSubbotBotName(jid)
 }
 
+function subbotBotPhoto(jid) {
+    const live = Connection.conns.get(jid)
+    if (!live?.profilePictureUrl) return null
+    const cached = subbotPhotos.get(jid)
+    if (!cached || Date.now() - cached.time > 10 * 60 * 1000) {
+        subbotPhotos.set(jid, { url: cached?.url ?? null, time: Date.now() })
+        live.profilePictureUrl(jid, 'image', 4000).catch(() => null).then(url => subbotPhotos.set(jid, { url: url || null, time: Date.now() }))
+    }
+    return subbotPhotos.get(jid).url
+}
+
 export function webSubbotInfo(jid) {
     const { max } = getSubbotConfig()
     const entry = webSubbots.get(jid)
@@ -858,9 +889,11 @@ export function webSubbotInfo(jid) {
         runtime: { startedAt: runtime.startedAt },
         botName: storedSubbotBotName(jid),
         defaultBotName: getSubbotConfig().botname,
-        logs: runtime.logs.slice(-120),
+        logs: runtime.logs.slice(-SUBBOT_LOG_LIMIT),
         menu: subbotMenuState(jid),
-        menuLimits: SUBBOT_MENU_MAX
+        menuLimits: SUBBOT_MENU_MAX,
+        botPhoto: subbotBotPhoto(jid),
+        botTimezone: detectTimezoneFromNumber(jid)
     }
     if (state === 'pairing') {
         info.pairing = {
@@ -1088,13 +1121,13 @@ function migrateLegacySubbotMenu(src) {
     }
 }
 
-function normalizeSubbotMenuPage(input, previous, key, strict) {
+function normalizeSubbotMenuPage(input, previous, key, strict, v2Allowed = false) {
     const src = input && typeof input === 'object' ? input : {}
     const prev = previous && typeof previous === 'object' ? previous : {}
     const name = SUBBOT_MENU_PAGE_NAME[key]
     const defaults = SUBBOT_MENU_PAGE_DEFAULTS[key]
     let message = src.message ?? defaults.message
-    if (!SUBBOT_MENU_MESSAGES.includes(message)) {
+    if (!SUBBOT_MENU_MESSAGES.includes(message) || (SUBBOT_MENU_V2_MESSAGES.includes(message) && !v2Allowed)) {
         if (strict) throw new Error(`Invalid message type for ${name}.`)
         message = defaults.message
     }
@@ -1117,7 +1150,7 @@ function normalizeSubbotMenuPage(input, previous, key, strict) {
     }
     if (strict) {
         if (SUBBOT_MENU_MEDIA_REQUIRED.includes(message) && !media) throw new Error(`Upload a file or enter a URL for ${name}.`)
-        if (message === 'button-image' && media?.source === 'upload' && !String(media.mimetype || '').startsWith('image/')) throw new Error(`${name} needs an image file for Button - Image.`)
+        if ((message === 'button-image' || message === 'button-v2-image') && media?.source === 'upload' && !String(media.mimetype || '').startsWith('image/')) throw new Error(`${name} needs an image file for ${message === 'button-image' ? 'NativeFlow - Image' : 'Button - Image'}.`)
     }
     return { message, text, media }
 }
@@ -1139,14 +1172,15 @@ function normalizeSubbotMenu(input, previous) {
     const sourcePages = src.pages && typeof src.pages === 'object' ? src.pages : migrateLegacySubbotMenu(src)
     const prevPages = prev.pages && typeof prev.pages === 'object' ? prev.pages : {}
     const pages = {
-        all: normalizeSubbotMenuPage(sourcePages.all, prevPages.all, 'all', type === 'all'),
+        all: normalizeSubbotMenuPage(sourcePages.all, prevPages.all, 'all', type === 'all', type === 'all'),
         select: normalizeSubbotMenuPage(sourcePages.select, prevPages.select, 'select', type === 'select'),
         tags: normalizeSubbotMenuPage(sourcePages.tags, prevPages.tags, 'tags', true)
     }
     const thumbnail = [type === 'all' ? pages.all.media : pages.select.media, pages.all.media, pages.select.media, pages.tags.media].find(Boolean) || null
     for (const key of SUBBOT_MENU_PAGES) pages[key].media = thumbnail ? { ...thumbnail } : null
 
-    const max = SUBBOT_MENU_MAX[type]
+    const v2 = type === 'all' && SUBBOT_MENU_V2_MESSAGES.includes(pages.all.message)
+    const max = v2 ? SUBBOT_MENU_V2_MAX : SUBBOT_MENU_MAX[type]
     const sourceButtons = src.buttons === undefined ? (type === 'select' ? [{ kind: 'select' }] : []) : Array.isArray(src.buttons) ? src.buttons : []
     let buttons = []
     for (const item of sourceButtons) {
@@ -1169,7 +1203,8 @@ function normalizeSubbotMenu(input, previous) {
     }
     if (type === 'select' && !buttons.some(button => button.kind === 'select') && buttons.length < max) buttons.push(selectMenuButton())
     if (type === 'all') buttons = buttons.filter(button => button.kind !== 'select')
-    if (buttons.length > max) throw new Error(`Up to ${max} buttons are allowed for this menu type.`)
+    if (v2 && buttons.some(button => button.kind !== 'reply')) throw new Error('Button supports only command buttons, without lists or links.')
+    if (buttons.length > max) throw new Error(v2 ? `Button allows up to ${SUBBOT_MENU_V2_MAX} buttons.` : `Up to ${max} buttons are allowed for this menu type.`)
     if (type === 'all' && SUBBOT_MENU_BUTTON_MESSAGES.includes(pages.all.message) && !buttons.length) throw new Error('Add at least one button for the Menu page.')
 
     return { custom: src.custom === true, type, quote, quoteText, quoteCount, footer, buttons, pages }

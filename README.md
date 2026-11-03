@@ -525,7 +525,7 @@ conn.sendButton(m.chat, {
 ```
 </sub></details>
 
-<details> <summary>🔖 NativeFlow Button</summary>
+<details> <summary>🔖 Button Message</summary>
   <sub>
 
 ```javascript
@@ -550,6 +550,25 @@ conn.sendButton(m.chat, {
                 { title: '✨ Section 2', highlight_label: '🔥 Popular', rows: [{ header: '', title: '💭 Secret Ingredient', description: '', id: '#SecretIngredient' }] }
             ],
         }
+    ]
+}, m)
+```
+</sub></details>
+
+<details> <summary>🔘 Button Template</summary>
+  <sub>
+
+Quick reply buttons only, up to 3 buttons. The header comes from `image`, `document`, `location` or `head`. Native flow options such as `optionText` and `lto*` are not used.
+
+```javascript
+conn.sendButton(m.chat, {
+    image: { url: './path/to/image.jpg' },
+    caption: 'Template!',
+    footer: 'My Bot',
+    template: [
+        { text: '👋🏻 Greeting', id: '#Greeting' },
+        { text: '⚡ Ping', id: '#ping' },
+        { text: '👤 Owner', id: '#owner' }
     ]
 }, m)
 ```

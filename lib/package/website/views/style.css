@@ -3275,9 +3275,7 @@ button {
 
 .page-profile .subbot-menu-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 
-.page-profile .subbot-menu-chips button { padding: 4px 8px; border: 1px solid var(--border2); border-radius: 999px; background: var(--surface2); color: var(--muted2); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8px; cursor: pointer; }
-
-.page-profile .subbot-menu-chips button:hover { color: var(--text); border-color: rgba(255, 255, 255, 0.35); }
+.page-profile .subbot-menu-chips span { padding: 4px 8px; border: 1px solid var(--border2); border-radius: 999px; background: var(--surface2); color: var(--muted2); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8px; cursor: default; }
 
 .page-profile .subbot-menu-editor .subbot-editor-body { height: 180px; }
 
@@ -3410,6 +3408,11 @@ button {
 .page-profile .subbot-preview-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 12px; background: var(--pv-bubble); border: none; color: var(--pv-accent); font-size: 11px; font-weight: 600; cursor: pointer; }
 
 .page-profile .subbot-preview-btn svg { flex-shrink: 0; width: 14px; height: 14px; }
+.page-profile .subbot-preview-v2-wrap { display: flex; flex-direction: column; gap: 4px; width: max-content; max-width: 76%; }
+.page-profile .subbot-preview-v2-wrap > .subbot-preview-bubble { width: 100%; max-width: 100%; }
+.page-profile .subbot-preview-v2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.page-profile .subbot-preview-v2.is-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.page-profile .subbot-preview-v2-btn { padding: 10px 12px; background: var(--pv-bubble); border: none; border-radius: 8px; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25); color: var(--pv-accent); font-size: 11px; font-weight: 600; text-align: center; overflow-wrap: anywhere; cursor: default; }
 
 .page-profile .subbot-preview-options { display: none; }
 

@@ -5,13 +5,21 @@
 • Add status broadcast plugin for uploading photos, videos, and text directly to WhatsApp status
 • Add subbot API endpoints and control panel UI for custom prefix and menu settings management
 • Enhance subbot menu handler to support custom menu templates and placeholder replacements
+• Add sendButtonTemplate helper and quick reply button-v2 support (up to 3 buttons) for subbot menu
+• Add new menu placeholders (__totalUsers__, __runtime__, __timezone__) across menu handlers and web UI
+• Update baileys dependency to ^0.3.7 and export detectTimezoneFromNumber utility
+• Update README documentation for button templates and message types
 
 ________________________
 
+* Edit "README.md"
 + Add "plugins/owner/sw.js"
+* Edit "lib/package/ai/mcp.js"
 * Edit "lib/package/website/server.js"
 * Edit "lib/package/website/views/profile.html"
 * Edit "lib/package/website/views/style.css"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
 * Edit "plugins/main/menu.js"
 * Edit "plugins/owner/setpp.js"
 * Edit "plugins/subbot/connect.js"

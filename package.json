@@ -19,7 +19,7 @@
         "./chrome": "./lib/package/chrome/index.js"
     },
     "dependencies": {
-        "baileys": "npm:@hiroosy/baileys-lite@^0.3.6"
+        "baileys": "npm:@hiroosy/baileys-lite@^0.3.7"
     },
     "allowScripts": {
         "@hiroosy/baileys-lite": true

@@ -2,6 +2,7 @@ import { promises } from 'fs'
 import { join } from 'path'
 import os from 'os'
 import { plugins } from '../../lib/utils/plugins.js'
+import { detectTimezoneFromNumber } from '../../lib/package/ai/mcp.js'
 
 let handler = async (m, { conn, usedPrefix: _p, args, isPrems, isOwner, command: cmd, usedPrefix, platform }) => {
   const allPlugins = conn.customPlugins ? { ...plugins, ...conn.customPlugins } : plugins
@@ -165,6 +166,9 @@ const defaultMenu = {
         status: m.sender.split('@')[0] == dev ? 'Developer' : isOwner ? 'Owner' : isPrems ? 'Premium User' : 'User',
         prefix: (Array.isArray(conn.prefix) ? conn.prefix : Array.isArray(global.prefix) ? global.prefix : [_p]).join(' '),
         totalCommands: menuCommandNames(allPlugins).length,
+        totalUsers: Object.keys(db.data.users).filter(k => !k.startsWith('bf:')).length,
+        runtime: menuRuntime(conn.startedAt),
+        timezone: new Intl.DateTimeFormat('en-GB', { timeZone: detectTimezoneFromNumber(conn.user?.id), hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date()),
         version: _package.version || '-',
         readMore: '‎'.repeat(4001)
       }
@@ -339,7 +343,23 @@ const ORDER = ['Info', 'Utility', 'Moderation', 'Roles', 'Settings', 'Server', '
 
 const menuPlaceholders = (text, values) => String(text ?? '').replace(/__([A-Za-z]+)__/g, (match, key) => Object.hasOwn(values, key) ? String(values[key]) : match)
 
+const MENU_ESCAPES = { 0: '\0', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v', s: ' ', '"': '"', "'": "'", '`': '`', '\\': '\\' }
+
+const menuUnescape = text => String(text ?? '').replace(/\\(?:u\{([0-9a-fA-F]{1,6})\}|u([0-9a-fA-F]{4})|x([0-9a-fA-F]{2})|([\s\S]))/g, (match, brace, uni, hex, char) => {
+  if (brace !== undefined) return parseInt(brace, 16) <= 0x10FFFF ? String.fromCodePoint(parseInt(brace, 16)) : match
+  if (uni !== undefined) return String.fromCharCode(parseInt(uni, 16))
+  if (hex !== undefined) return String.fromCharCode(parseInt(hex, 16))
+  return Object.hasOwn(MENU_ESCAPES, char) ? MENU_ESCAPES[char] : match
+})
+
 const menuTagLabel = tag => tag.charAt(0).toUpperCase() + tag.slice(1)
+
+function menuRuntime(startedAt = Date.now()) {
+  const minutes = Math.max(0, Math.floor((Date.now() - startedAt) / 60000))
+  const days = Math.floor(minutes / 1440)
+  const hours = Math.floor((minutes % 1440) / 60)
+  return `${days ? `${days}d ` : ''}${days || hours ? `${hours}h ` : ''}${minutes % 60}m`
+}
 
 const menuCommandNames = plugins => Object.values(plugins)
   .filter(plugin => !plugin.disabled && plugin.help)
@@ -347,23 +367,33 @@ const menuCommandNames = plugins => Object.values(plugins)
   .map(h => h.split(' ')[0])
   .filter((h, i, arr) => arr.indexOf(h) === i)
 
-const menuTagCommands = (allPlugins, tag) => Object.values(allPlugins)
-  .filter(plugin => !plugin.disabled && plugin.tags?.includes(tag) && plugin.help)
-  .flatMap(plugin => Array.isArray(plugin.help) ? plugin.help : [plugin.help])
-  .map(h => h.split(' ')[0])
-  .filter((h, i, arr) => arr.indexOf(h) === i)
+const menuTagEntries = (allPlugins, tag) => {
+  const entries = []
+  for (const plugin of Object.values(allPlugins)) {
+    if (plugin.disabled || !plugin.tags?.includes(tag) || !plugin.help) continue
+    for (const help of Array.isArray(plugin.help) ? plugin.help : [plugin.help]) {
+      const name = String(help).split(' ')[0]
+      if (!entries.some(entry => entry.name === name)) entries.push({ name, usage: String(help), premium: !!plugin.premium, limit: !!plugin.limit })
+    }
+  }
+  return entries
+}
 
-const menuTagText = (template, commands, _p) => String(template ?? '').split('\n').flatMap(line => line.includes('__commands__') ? commands.map(cmd => line.split('__commands__').join(`${_p}${cmd}`)) : [line]).join('\n')
+function menuIcons(entry) {
+  return `${entry.premium ? 'Ⓟ' : ''}${entry.premium && entry.limit ? ' ' : ''}${entry.limit ? 'Ⓛ' : ''}`
+}
+
+const menuTagText = (template, entries, _p) => String(template ?? '').split('\n').flatMap(line => /__(commands|example|icons)__/.test(line) ? entries.map(entry => menuUnescape(line.split('__commands__').join(`${_p}${entry.name}`).split('__example__').join(`${_p}${entry.usage}`).split('__icons__').join(menuIcons(entry))).trimEnd()) : [menuUnescape(line)]).join('\n')
 
 const menuRows = (allPlugins, tags, _p) => tags.filter(tag => tag !== 'all').map(tag => {
-  const commands = menuTagCommands(allPlugins, tag)
+  const commands = menuTagEntries(allPlugins, tag).map(entry => entry.name)
   const shown = commands.slice(0, 5).join(', ')
   const description = !commands.length ? '-' : commands.length <= 5 ? shown : `${shown}, ...${commands.length - 5}+`
   return { title: `• ${menuTagLabel(tag)}`, description: description.slice(0, 72), id: `${_p}menu ${tag}` }
 }).slice(0, 30)
 
 const menuAllText = (allPlugins, tags, _p, template, values) => tags.filter(tag => tag !== 'all').map(tag => {
-  const commands = menuTagCommands(allPlugins, tag)
+  const commands = menuTagEntries(allPlugins, tag)
   return commands.length ? menuPlaceholders(menuTagText(template, commands, _p), { ...values, tagName: menuTagLabel(tag) }) : ''
 }).filter(Boolean).join('\n\n')
 
@@ -402,12 +432,13 @@ async function menuQuoted(conn, m, quote, name, order = {}) {
 async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p, name, tag }) {
   const page = cfg.pages[key]
   const rows = key === 'select' ? menuRows(allPlugins, tags, _p) : []
-  const tagCommands = key === 'tags' ? menuTagCommands(allPlugins, tag) : []
-  const source = key === 'tags' ? menuTagText(page.text, tagCommands, _p) : page.text
+  const tagCommands = key === 'tags' ? menuTagEntries(allPlugins, tag) : []
+  const pageText = menuUnescape(page.text)
+  const source = key === 'tags' ? menuTagText(page.text, tagCommands, _p) : pageText
   const commands = key === 'all' ? menuAllText(allPlugins, tags, _p, cfg.pages.tags.text, values) : ''
   const pageValues = { ...values, tagName: key === 'tags' ? menuTagLabel(tag) : '', commands }
-  const text = [menuPlaceholders(source, pageValues), commands && !/__commands__/.test(page.text) ? commands : ''].filter(Boolean).join('\n\n')
-  const footer = menuPlaceholders(cfg.footer, pageValues)
+  const text = [menuPlaceholders(source, pageValues), commands && !/__commands__/.test(pageText) ? commands : ''].filter(Boolean).join('\n\n')
+  const footer = menuPlaceholders(menuUnescape(cfg.footer), pageValues)
   const quoted = await menuQuoted(conn, m, cfg.quote, name, { text: cfg.quoteText, count: cfg.quoteCount })
   const buttons = key === 'select' ? cfg.buttons : cfg.buttons.filter(item => item.kind !== 'select')
   const buttonLabel = item => item.text || '\u0000'
@@ -420,13 +451,15 @@ async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p,
   const attachment = page.attachment
   const isUrl = typeof attachment === 'string' && /^https?:\/\//i.test(attachment)
   const readAttachment = async () => attachment && !isUrl ? promises.readFile(attachment) : attachment
+  const botPhoto = () => conn.profilePictureUrl(conn.decodeJid(conn.user.id), 'image', 4000).catch(() => undefined)
+  const headerMedia = async () => (await readAttachment()) ?? await botPhoto()
   let message = page.message
-  if (['button-image', 'button-document'].includes(message) && !attachment) message = 'button'
-  if (!['reply', 'location'].includes(message) && !nativeFlow.length) message = 'reply'
+  if (['button-document', 'button-v2-document'].includes(message) && !attachment) message = message.startsWith('button-v2') ? 'button-v2' : 'button'
+  if (message.startsWith('button-v2') && !nativeFlow.length) message = message.replace('button-v2', 'button')
 
   if (message === 'location') {
     const card = location => conn.sendButton(m.chat, { text, footer, nativeFlow: [], location }, quoted)
-    const thumbnail = await readAttachment()
+    const thumbnail = await headerMedia()
     const plain = { name: values.botName, address: '' }
     return thumbnail ? card({ ...plain, buffer: thumbnail }).catch(() => card(plain)) : card(plain)
   }
@@ -435,7 +468,7 @@ async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p,
     return conn.reply(m.chat, [text, lines.join('\n')].filter(Boolean).join('\n\n'), quoted)
   }
   const base = { text, footer, nativeFlow }
-  if (message === 'button-image') return conn.sendButton(m.chat, { ...base, image: attachment }, quoted)
+  if (message === 'button-image') return conn.sendButton(m.chat, { ...base, image: attachment || await botPhoto() }, quoted)
   const documentThumb = async () => {
     if (!/\.(png|jpe?g|webp|gif|bmp)$/i.test(page.attachmentName || '')) return undefined
     try {
@@ -445,8 +478,13 @@ async function sendCustomPage(conn, m, cfg, key, { values, allPlugins, tags, _p,
       return undefined
     }
   }
+  const v2Buttons = buttons.map(item => ({ text: buttonLabel(item), id: item.value }))
+  if (message === 'button-v2') return conn.sendButton(m.chat, { text, footer, template: v2Buttons }, quoted)
+  if (message === 'button-v2-image') return conn.sendButton(m.chat, { text, footer, template: v2Buttons, image: attachment || await botPhoto() }, quoted)
+  if (message === 'button-v2-document') return conn.sendButton(m.chat, { text, footer, template: v2Buttons, document: attachment, mimetype: page.attachmentMimetype, fileName: values.botName, jpegThumbnail: await documentThumb() }, quoted)
+  if (message === 'button-v2-location') return conn.sendButton(m.chat, { text, footer, template: v2Buttons, location: { buffer: await headerMedia(), name: values.botName, address: '' } }, quoted)
   if (message === 'button-document') return conn.sendButton(m.chat, { ...base, document: attachment, mimetype: page.attachmentMimetype, fileName: values.botName, jpegThumbnail: await documentThumb() }, quoted)
-  if (message === 'button-location') return conn.sendButton(m.chat, { ...base, location: { buffer: (await readAttachment()) ?? undefined, name: values.botName, address: '' } }, quoted)
+  if (message === 'button-location') return conn.sendButton(m.chat, { ...base, location: { buffer: await headerMedia(), name: values.botName, address: '' } }, quoted)
   return conn.sendButton(m.chat, base, quoted)
 }
 
