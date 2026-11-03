@@ -9,6 +9,7 @@
 • Add new menu placeholders (__totalUsers__, __runtime__, __timezone__) across menu handlers and web UI
 • Update baileys dependency to ^0.3.7 and export detectTimezoneFromNumber utility
 • Update README documentation for button templates and message types
+• Add native Node.js SQLite (DatabaseSync) support and automatic migration for legacy database files
 
 ________________________
 
@@ -23,6 +24,7 @@ ________________________
 * Edit "plugins/main/menu.js"
 * Edit "plugins/owner/setpp.js"
 * Edit "plugins/subbot/connect.js"
+* Edit "lib/utils/database.js"
 ```
 </sub>
 
@@ -155,7 +157,6 @@ ________________________
 * Edit "plugins/dl/mediafire.js"
 * Edit "plugins/dl/pinterest.js"
 * Edit "plugins/dl/pornhub.js"
-* Edit "plugins/dl/reddit.js"
 * Edit "plugins/dl/shinigami.js"
 * Edit "plugins/dl/spotify.js"
 * Edit "plugins/dl/yt.js"
