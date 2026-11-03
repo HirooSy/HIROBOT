@@ -1,34 +1,10 @@
 const IDENT = /^[A-Za-z_$][\w$]*$/
 const DROP_CTX = ['deviceListMetadata', 'messageSecret']
 
-const CACHE_MAX = 300
 const cache = (globalThis.__crmCache ||= new Map())
+const nodesCache = (globalThis.__crmNodesCache ||= new Map())
 
 const INLINE_MAX_BYTES = 2 * 1024
-
-const clone = v => {
-	try {
-		return structuredClone(v)
-	} catch {
-		return v
-	}
-}
-
-const hook = conn => {
-	if (!conn || conn.relayMessage?.__crm) return
-	const orig = conn.relayMessage
-	const wrapped = async function (jid, message, opts = {}) {
-		const id = await orig.call(this, jid, message, opts)
-		const key = typeof id === 'string' ? id : opts?.messageId
-		if (key) {
-			cache.set(key, clone(message))
-			if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value)
-		}
-		return id
-	}
-	wrapped.__crm = true
-	conn.relayMessage = wrapped
-}
 
 const isLong = v =>
 	v && typeof v === 'object' && typeof v.low === 'number' && typeof v.high === 'number'
@@ -216,6 +192,7 @@ let handler = async (m, { conn }) => {
 
 	const qid = m.quoted.id
 	let message = cache.get(qid)
+	const additionalNodes = nodesCache.get(qid)
 
 	if (!message) {
 		const stored = conn.loadMessage?.(m.quoted.sender, qid) || conn.loadMessage?.(qid)
@@ -280,11 +257,13 @@ let handler = async (m, { conn }) => {
 	}
 
 	const body = toCode(message, { urls }, 0)
+	const nodesCode = additionalNodes?.length ? toCode(additionalNodes, { urls }, 1) : undefined
+	const relayOpts = nodesCode ? `{\n\tadditionalNodes: ${nodesCode}\n}` : '{}'
 	let code
 	if (albumItems) {
 		code = `await conn.sendMessage(m.chat, {\n\talbum: [\n${albumItems.join(',\n')}\n\t]\n}, {})`
 	} else if (childMessages.length) {
-		const parts = [`const _album = await conn.relayMessage(m.chat, ${body}, {})`]
+		const parts = [`const _album = await conn.relayMessage(m.chat, ${body}, ${relayOpts})`]
 		for (const cm of childMessages) {
 			const childBody = toCode(cm, { urls }, 0)
 				.replace('"__CHAT__"', 'm.chat')
@@ -293,7 +272,7 @@ let handler = async (m, { conn }) => {
 		}
 		code = parts.join('\n\n')
 	} else {
-		code = `await conn.relayMessage(m.chat, ${body}, {})`
+		code = `await conn.relayMessage(m.chat, ${body}, ${relayOpts})`
 	}
 
 	const headerLines = []
@@ -306,10 +285,6 @@ let handler = async (m, { conn }) => {
 	for (let i = 0; i < out.length; i += MAX) {
 		await conn.sendMessage(m.chat, { text: out.slice(i, i + MAX) }, { quoted: m })
 	}
-}
-
-handler.all = async function () {
-	hook(this)
 }
 
 handler.help = ['crm']

@@ -10,6 +10,8 @@
 • Update baileys dependency to ^0.3.7 and export detectTimezoneFromNumber utility
 • Update README documentation for button templates and message types
 • Add native Node.js SQLite (DatabaseSync) support and automatic migration for legacy database files
+• Support product headers in interactive sendButton messages and rename LTO parameters to coupon
+• Record relayed message history centrally in connection helper and include additionalNodes in crm code generator
 
 ________________________
 
@@ -25,6 +27,8 @@ ________________________
 * Edit "plugins/owner/setpp.js"
 * Edit "plugins/subbot/connect.js"
 * Edit "lib/utils/database.js"
+* Edit "plugins/main/enable.js"
+* Edit "plugins/tools/crm.js"
 ```
 </sub>
 

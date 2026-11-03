@@ -515,9 +515,9 @@ conn.sendButton(m.chat, {
             image: { url: 'https://example.com/image.png' },
             caption: 'Image 2',
             footer: 'Image 2',
-            ltoText: 'New Coupon!',
-            ltoCode: 'HiroBot',
-            ltoUrl: 'https://example.com',
+            couponText: 'New Coupon!',
+            couponCode: 'HiroBot',
+            couponUrl: 'https://example.com',
             nativeFlow: [{ text: 'Source', url: 'https://example.com' }]
         }
     ]
@@ -535,9 +535,9 @@ conn.sendButton(m.chat, {
     footer: 'My Bot',
     optionText: 'Select Options',
     optionTitle: 'Select Options',
-    ltoText: 'HirooSy',
-    ltoCode: 'Hiro bot',
-    ltoUrl: 'https://example.com',
+    couponText: 'HirooSy',
+    couponCode: 'Hiro bot',
+    couponUrl: 'https://example.com',
     nativeFlow: [
         { text: '👋🏻 Greeting', id: '#Greeting' },
         { text: '📞 Call', call: '628123456789' },
@@ -550,6 +550,22 @@ conn.sendButton(m.chat, {
                 { title: '✨ Section 2', highlight_label: '🔥 Popular', rows: [{ header: '', title: '💭 Secret Ingredient', description: '', id: '#SecretIngredient' }] }
             ],
         }
+    ]
+}, m)
+
+conn.sendButton(m.chat, {
+    product: {
+        image: { url: './path/to/image.jpg' },
+        title: 'Product Name',
+        description: 'Product description',
+        url: 'https://example.com',
+        businessOwnerJid: '0@s.whatsapp.net'
+    },
+    caption: 'Check out this product!',
+    footer: 'My Bot',
+    nativeFlow: [
+        { text: '🛒 Buy Now', url: 'https://example.com', useWebview: true },
+        { text: '📋 Copy Code', copy: 'PROMO10' }
     ]
 }, m)
 

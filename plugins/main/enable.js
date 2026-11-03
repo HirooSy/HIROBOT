@@ -215,8 +215,8 @@ case "aichat":
       if (!/[01]/.test(command)) {
         return conn.sendButton(m.chat, {
             text: '',
-            ltoText: isEnable ? "Enable" : "Disable",
-            ltoUrl: '\u0000',
+            couponText: isEnable ? "Enable" : "Disable",
+            couponUrl: '\u0000',
             optionText: 'Select Options',
             optionTitle: 'Select Options',
             nativeFlow: options.map(opt => ({ text: `${opt}`, id: `${usedPrefix + command} ${opt}` }))
