@@ -13,7 +13,7 @@ let handler = async (ctx, { conn, text, usedPrefix, command, platform }) => {
     const filename = `ocr_${Date.now()}.${extension}`
 
     const result = await onlineOcr(buffer, filename, language)
-    const reply = `${result.text}\n\nSource: ${result.source}`
+    const reply = `${result.text}`
 
     if (platform === 'discord') return conn.discord(ctx.chat, { text: reply })
     await conn.sendMessage(ctx.chat, { text: reply }, { quoted: ctx })
