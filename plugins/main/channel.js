@@ -161,7 +161,8 @@ function summarizePosts(posts, followers) {
     return lines.join('\n')
 }
 
-async function upChannel(m, { conn, args, usedPrefix, command }) {
+async function upChannel(m, { conn, args, usedPrefix, command, isOwner }) {
+    if (!isOwner) return global.dfail('owner', m, conn)
     const input = args.find(a => CHANNEL_LINK.test(a) || NEWSLETTER_JID.test(a))
     if (!input) {
         throw `Usage: ${usedPrefix + command} <channel link> [question]\nReply to the message you want to send.`
@@ -304,6 +305,6 @@ handler.tags = ['info']
 handler.command = /^(upch(annel)?|statsch(annel)?|statusch(annel)?)$/i
 handler.ai = { risk: 'low', description: 'send a replied message (media, audio, poll, question) to a WhatsApp channel, or check channel stats (followers, views, reactions)' }
 
-handler.platform = { whatsapp: { permission: ['owner'] }, discord: false }
+handler.platform = { whatsapp: true, discord: false }
 
 export default handler

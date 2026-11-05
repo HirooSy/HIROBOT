@@ -33,13 +33,18 @@ let handler = async (m, { conn, text, platform }) => {
                 : conn.sendFile(m.chat, url, 'file', text, m);
         }
         
-        let txt = response.data.toString('utf-8');
-        try {
-            txt = format(JSON.parse(txt));
-        } catch (e) {
-        }
+        let raw = response.data.toString('utf-8');
+        let json = null;
+        try { json = JSON.parse(raw) } catch (e) {}
+        let isJson = json !== null;
+        let full = isJson ? JSON.stringify(json, null, 2) : raw;
         
-        m.reply(txt.slice(0, 65536));
+        if (full.length <= 2000) return m.reply(isJson ? format(json) : raw);
+        
+        let name = isJson ? 'result.json' : 'result.txt';
+        let buffer = Buffer.from(full, 'utf-8');
+        if (platform === 'discord') return m.reply({ files: [{ attachment: buffer, name }] });
+        return conn.sendMessage(m.chat, { document: buffer, mimetype: isJson ? 'application/json' : 'text/plain', fileName: name }, { quoted: m });
     } catch (e) {
         throw `${e.message}`;
     }

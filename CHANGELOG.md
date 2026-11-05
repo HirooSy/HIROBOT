@@ -1,3 +1,28 @@
+<h3>05/November/2026</h3>
+<sub>
+
+```diff
+• Restrict channel upchannel command execution strictly to bot owners with global.dfail authorization
+• Add Discord profile connections and snapshot data caching upon Discord OAuth login
+• Improve large API response handling in fetch tool by sending as document attachment
+• Refactor CRM helper functions and base64/data URI string formatting logic
+
+________________________
+
++ Add "lib/scrapers/src/igstalk.js"
++ Add "lib/scrapers/src/ocr.js"
++ Add "lib/scrapers/src/roblox.js"
++ Add "plugins/internet/discordstalk.js"
++ Add "plugins/internet/igstalk.js"
++ Add "plugins/internet/robloxstalk.js"
++ Add "plugins/tools/ocr.js"
+* Edit "lib/package/website/server.js"
+* Edit "plugins/main/channel.js"
+* Edit "plugins/tools/crm.js"
+* Edit "plugins/tools/fetch.js"
+```
+</sub>
+
 <h3>03/November/2026</h3>
 <sub>
 
@@ -281,60 +306,5 @@ ________________________
 + Add "lib/package/discord/"
 + Add "lib/package/website/views/connect.html"
 + Add "lib/utils/print.js"
-```
-</sub>
-
-<h3>17/October/2026</h3>
-<sub>
-
-```diff
-• Translate logs, error messages, and UI text from Indonesian to English
-• Update baileys dependency to v0.3.3
-• Refine baileys update logic and cloudflared tunnel logging
-
-________________________
-
-* Edit "lib/main.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/ai/prompt.txt"
-* Edit "lib/package/ai/tools/messaging.js"
-* Edit "lib/scrapers/src/ai-image.js"
-* Edit "lib/scrapers/src/nano.js"
-* Edit "lib/scrapers/src/pinterest.js"
-* Edit "lib/scrapers/src/tiktok.js"
-* Edit "lib/scrapers/src/x.js"
-* Edit "lib/start.js"
-* Edit "lib/utils/canvas.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/converter.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/ai/aicheck.js"
-* Edit "plugins/ai/notrack.js"
-* Edit "plugins/dl/drive.js"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/dl/tt.js"
-* Edit "plugins/dl/x.js"
-* Edit "plugins/dl/yt.js"
-* Edit "plugins/group/add.js"
-* Edit "plugins/group/fakemsg.js"
-* Edit "plugins/group/link.js"
-* Edit "plugins/group/promote.js"
-* Edit "plugins/group/setwelcome.js"
-* Edit "plugins/group/simulate.js"
-* Edit "plugins/main/menu.js"
-* Edit "plugins/main/profile.js"
-* Edit "plugins/main/speedtest.js"
-* Edit "plugins/sticker/telegram.js"
-* Edit "plugins/tools/alightmotion.js"
-* Edit "plugins/tools/convert.js"
-* Edit "plugins/tools/crm.js"
-* Edit "plugins/tools/dbmsg.js"
-* Edit "plugins/tools/exif.js"
-* Edit "plugins/tools/hd.js"
-* Edit "plugins/tools/reaction.js"
-* Edit "plugins/tools/wink.js"
 ```
 </sub>
