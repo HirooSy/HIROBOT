@@ -6,6 +6,7 @@
 • Add Discord profile connections and snapshot data caching upon Discord OAuth login
 • Improve large API response handling in fetch tool by sending as document attachment
 • Refactor CRM helper functions and base64/data URI string formatting logic
+• Improve conn.getName() contact name resolution by merging contact data from LID and JID mappings
 
 ________________________
 
@@ -20,6 +21,7 @@ ________________________
 * Edit "plugins/main/channel.js"
 * Edit "plugins/tools/crm.js"
 * Edit "plugins/tools/fetch.js"
+* Edit "lib/utils/simple.js"
 ```
 </sub>
 
@@ -248,7 +250,6 @@ ________________________
 * Edit "lib/scrapers/src/ig.js"
 * Edit "lib/scrapers/src/nano.js"
 * Edit "lib/scrapers/src/pinterest.js"
-* Edit "lib/scrapers/src/tiktok.js"
 * Edit "lib/scrapers/src/upload.js"
 * Edit "lib/scrapers/src/x.js"
 * Edit "lib/scrapers/src/ytsearch.js"
@@ -263,48 +264,5 @@ ________________________
 * Edit "lib/utils/simple.js"
 - Delete "plugins/discord"
 - Delete "plugins/whatsapp"
-```
-</sub>
-
-<h3>24/October/2026</h3>
-<sub>
-
-```diff
-• Massive project refactor: migrated all plugins to commands structure, modernized handler, and significantly updated website server and scraper modules
-• Clean up unused plugins and optimize project structure
-• Update README.md with Discord-WhatsApp bridge documentation
-• Cleanup and minor refinement of Discord profile and core handler logic
-
-________________________
-
-* Edit ".env.example"
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/main.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/ai/prompt.txt"
-* Edit "lib/package/ai/tools/convert.js"
-* Edit "lib/package/ai/tools/files.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/package/website/views/index.html"
-* Edit "lib/package/website/views/profile.html"
-* Edit "lib/package/website/views/style.css"
-* Edit "lib/scrapers/src/pinterest.js"
-* Edit "lib/scrapers/src/tiktok.js"
-* Edit "lib/scrapers/src/x.js"
-* Edit "lib/scrapers/src/ytdl.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/converter.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/helper.js"
-* Edit "lib/utils/plugins.js"
-* Edit "lib/utils/reload.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-+ Add "plugins/discord"
-+ Add "lib/package/discord/"
-+ Add "lib/package/website/views/connect.html"
-+ Add "lib/utils/print.js"
 ```
 </sub>
