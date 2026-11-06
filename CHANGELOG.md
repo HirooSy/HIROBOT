@@ -4,13 +4,17 @@
 ```diff
 • Add text_to_speech AI tool for converting text to spoken audio via Gemini TTS and sending as voice notes
 • Implement Gemini TTS helper geminiSpeech in MCP package with voice settings, style options, and API key cooldowns
+• Support TTS fallback across multiple Gemini models and update speech generation API handling in MCP package
 • Refactor hot-reload module to dynamically reload config.js changes without requiring a full process restart
+• Refactor reload watcher helper functions, ignore temporary swap files, and schedule process restarts
 • Add global.settings.ai.voice configuration option in config.js for default text-to-speech voice settings
 • Update AI message handler to alternate message quoting behavior when replying
+• Update AI_KEYS configuration documentation in .env.example and README.md for comma-separated API keys
 • Update README.md documentation with Gemini Guest vs API key capability matrix
 
 ________________________
 
+* Edit ".env.example"
 * Edit "README.md"
 * Edit "lib/config.js"
 * Edit "lib/package/ai/mcp.js"
