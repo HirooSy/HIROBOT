@@ -315,7 +315,7 @@
   }
 
   async function safeFetch(url, opts = {}) {
-    opts.headers = { ...(opts.headers || {}), 'bypass-tunnel-reminder': '1' }
+    opts.headers = { ...(opts.headers || {}), 'bypass-tunnel-reminder': '1', 'x-site-key': '__SITE_KEY__' }
     const res = await fetch(url, opts)
     const contentType = res.headers.get('content-type') || ''
     if (contentType.includes('text/html')) {

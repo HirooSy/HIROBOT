@@ -660,7 +660,7 @@ document.addEventListener('DOMContentLoaded', renderPrizeIconRows)
 function safeRedirect(url) { window.location.href = url }
 
 async function safeFetch(url, opts = {}, timeoutMs = 15000) {
-  opts.headers = { ...(opts.headers || {}), 'bypass-tunnel-reminder': '1' }
+  opts.headers = { ...(opts.headers || {}), 'bypass-tunnel-reminder': '1', 'x-site-key': '__SITE_KEY__' }
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {

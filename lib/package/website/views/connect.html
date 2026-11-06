@@ -76,7 +76,7 @@
   async function api(method, url, body) {
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': '1', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': '1', 'x-site-key': '__SITE_KEY__', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
       body: body ? JSON.stringify(body) : undefined
     })
     return res.json()

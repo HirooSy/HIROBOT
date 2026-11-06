@@ -1,5 +1,6 @@
 import axios from 'hiro/axios';
 import { format } from 'util';
+import { siteKey, isOwnSiteHost } from '../../lib/utils/helper.js';
 
 let handler = async (m, { conn, text, platform }) => {
     if (!/^https?:\/\//.test(text)) throw 'Prefix *URL* with http:// or https://';
@@ -15,6 +16,7 @@ let handler = async (m, { conn, text, platform }) => {
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language': 'en-US,en;q=0.9',
                 'Referer': 'https://www.google.com/',
+                ...(isOwnSiteHost(new URL(url).hostname) ? { 'x-site-key': siteKey } : {}),
             },
             timeout: 30000,
             maxRedirects: 5,
@@ -34,17 +36,19 @@ let handler = async (m, { conn, text, platform }) => {
         }
         
         let raw = response.data.toString('utf-8');
+        raw = raw.replaceAll(siteKey, '');
         let json = null;
         try { json = JSON.parse(raw) } catch (e) {}
         let isJson = json !== null;
         let full = isJson ? JSON.stringify(json, null, 2) : raw;
         
-        if (full.length <= 2000) return m.reply(isJson ? format(json) : raw);
-        
-        let name = isJson ? 'result.json' : 'result.txt';
+        let asHtmlDoc = /text\/html/i.test(contentType) && full.length <= 100 * 1024;
+        if (!asHtmlDoc && full.length <= 2000) return m.reply(isJson ? format(json) : raw);
+
+        let name = isJson ? 'result.json' : asHtmlDoc ? 'result.html' : 'result.txt';
         let buffer = Buffer.from(full, 'utf-8');
         if (platform === 'discord') return m.reply({ files: [{ attachment: buffer, name }] });
-        return conn.sendMessage(m.chat, { document: buffer, mimetype: isJson ? 'application/json' : 'text/plain', fileName: name }, { quoted: m });
+        return conn.sendMessage(m.chat, { document: buffer, mimetype: isJson ? 'application/json' : asHtmlDoc ? 'text/html' : 'text/plain', fileName: name }, { quoted: m });
     } catch (e) {
         throw `${e.message}`;
     }
