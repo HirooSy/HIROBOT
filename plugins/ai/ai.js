@@ -93,7 +93,9 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false,
     const platform  = platformOf(m)
     const adapter   = adapterOf(platform)
     const send      = (content) => adapter.send(conn, chat, content, { quoted: m })
-    const sendText  = (text) => send({ text })
+    const replyTo   = Math.random() < 0.5 ? m : null
+    const sendReply = (content) => adapter.send(conn, chat, content, { quoted: replyTo })
+    const sendText  = (text) => typeof conn.reply === 'function' ? conn.reply(chat, text, replyTo) : sendReply({ text })
 
     let explicitContextInfo = m.msg?.contextInfo || null
     if (!explicitContextInfo) {
@@ -196,7 +198,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false,
 
     if (thinkingOn) {
         try {
-            const sent = await send({ text: '> ...' })
+            const sent = await sendReply({ text: '> ...' })
             statusKey = sent?.key || null
             statusAlive = !!statusKey
         } catch (e) {
@@ -242,7 +244,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false,
             description: d.description,
             language: d.language || 'text',
             code: d.code || ''
-        }, { quoted: m })
+        }, { quoted: replyTo })
     }
 
     const sendButtons = async (d) => {
@@ -256,7 +258,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false,
         const msg = { text: d.body || '', nativeFlow: btns }
         if (d.footer) msg.footer = d.footer
         try {
-            return await adapter.button(conn, chat, msg, { quoted: m })
+            return await adapter.button(conn, chat, msg, { quoted: replyTo })
         } catch (_) {
             const lines = [d.body || '']
             if (d.footer) lines.push(`_${d.footer}_`)
@@ -288,6 +290,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false,
             onStep,
             access,
             contextInfo: explicitContextInfo,
+            quoteReply: !!replyTo,
         })
     } catch (err) {
         await clearStatus()

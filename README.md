@@ -95,22 +95,80 @@ HIROBOT
 > ```
 
 <table align=center>
-  <tr>
-    <td>Gemini 3.1 Lite-Flash</td>
-    <td>Daily Conversation </td>
-  </tr>
-  <tr>
-    <td>Gemini 3.1 Lite</td>
-    <td>Daily conversation but more complex</td>
-  </tr>
- <tr>
-    <td>Gemma-4-31b-it</td>
-    <td>AutoHeal system and coding</td>
-  </tr>
-  <tr>
-    <td>Gemma-4-26b-a4b-it</td>
-    <td>AutoHeal system and coding</td>
-  </tr>
+  <thead>
+    <tr>
+      <th>Capability</th>
+      <th>Gemini Guest (no API key)</th>
+      <th>Gemini API key (AI_KEYS)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Setup</td>
+      <td>Nothing to set up, works out of the box</td>
+      <td>Free key from Google AI Studio, put it in AI_KEYS (several keys can be rotated)</td>
+    </tr>
+    <tr>
+      <td>Model</td>
+      <td>Fixed Gemini web model, model choice is ignored</td>
+      <td>Chosen with the command, e.g. <code>ai:flash</code> or <code>ai:pro</code>, with fallback to other models if one fails</td>
+    </tr>
+    <tr>
+      <td>Chat and tool calls</td>
+      <td>Yes, but tool calls are written as text JSON, less reliable</td>
+      <td>Yes, native function calling</td>
+    </tr>
+    <tr>
+      <td>Chat history</td>
+      <td>Transcript capped at the last 12,000 characters</td>
+      <td>Last 50 user turns (<code>ai.limitHistory</code>)</td>
+    </tr>
+    <tr>
+      <td>Image understanding</td>
+      <td>Yes</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>Video</td>
+      <td>Converted to still frames plus audio track</td>
+      <td>Sent as native video</td>
+    </tr>
+    <tr>
+      <td>Audio and voice notes</td>
+      <td>Yes, but may fail</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>Web search</td>
+      <td>Answer only, no source links</td>
+      <td>Google Search grounding with source links</td>
+    </tr>
+    <tr>
+      <td>Text-to-speech and voice note replies</td>
+      <td>No</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>AutoHeal</td>
+      <td>No</td>
+      <td>Yes, uses gemma-4-31b-it</td>
+    </tr>
+    <tr>
+      <td>Image generation and edit</td>
+      <td>Yes</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>Rate limits</td>
+      <td>Single web session, no key rotation or cooldown</td>
+      <td>Key rotation with cooldown per model, falls back to guest mode on quota or overload</td>
+    </tr>
+    <tr>
+      <td>Stability</td>
+      <td>Uses unofficial Gemini web endpoints, may break when Google changes them</td>
+      <td>Official Gemini API</td>
+    </tr>
+  </tbody>
 </table>
 
 <h4 align=center>How to add a new tool</h4>
