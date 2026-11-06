@@ -16,12 +16,13 @@
 > 
 > <p align=center><b>Features:</b></p>
 > 
-> - [x] AI Agent Using Gemini.
+> - [x] Discord & Whatsapp Bot.
+> - [x] AI Agent & Chatbot Using Gemini.
 > - [x] Audio & Video Call.
 > - [x] Multi Sessions.
-> - [x] Database native sql / Mongodb / MySql2.
-> - [x] Support AI Rich and Button Message.
-> - [x] Cloudflared Tunnel Website.
+> - [x] Database native SQL / Mongodb / MySql2.
+> - [x] Support AI Rich, Poll, Button Message, Etc.
+> - [x] Website using Cloudflared Tunnel.
 > - [x] Lightweight & High-performance.
 
 ---
@@ -941,6 +942,9 @@ $ git clone https://github.com/HirooSy/HIROBOT.git
 $ cd HIROBOT
 $ npm i
 $ node .
+
+# or use this if you running on Vercel
+$ node lib/start.js --pair <yourNumber>
 ```
 </sub>
 
@@ -948,7 +952,7 @@ $ node .
 
   <a href="#"><img height="25" align=right src="https://img.shields.io/badge/Size-35_MB-black?style=for-the-badge"/> </a>
   
-  <a href="https://wispbyte.com"><img height="25" align=left src="https://img.shields.io/badge/Deploy-black?style=for-the-badge&logo=4chan&logoColor=blue"/></a>
+<a href="https://wispbyte.com"><img height="25" align=left src="https://img.shields.io/badge/Wispbyte-black?style=for-the-badge&logo=4chan&logoColor=blue"/></a><a href="https://vercel.com"><img height="25" align=left src="https://img.shields.io/badge/Vercel-black?style=for-the-badge&logo=vercel&logoColor=white"/></a>
 
 </div>
 
