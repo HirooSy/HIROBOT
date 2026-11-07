@@ -1,3 +1,32 @@
+<h3>07/November/2026</h3>
+<sub>
+
+```diff
+• Refactor global.settings.icon into global.settings.website object with icon, thumbnail, and description properties
+• Add dynamic OpenGraph and Twitter meta tag injection for website server responses
+• Implement WebSocket connection authorization callback handling in WebSocketServer
+• Increase random upload filename generation length to 20 bytes for enhanced uniqueness
+• Add strict 64-character hex format validation for authorization bearer tokens
+• Extract view scripts from connect, index, and profile templates into external assets directory
+• Update handler order message thumbnail references to global.settings.website.icon
+
+________________________
+
++ Add "lib/package/website/views/assets/connect-1.js"
++ Add "lib/package/website/views/assets/index-1.js"
++ Add "lib/package/website/views/assets/index-2.js"
++ Add "lib/package/website/views/assets/index-3.js"
++ Add "lib/package/website/views/assets/index-4.js"
++ Add "lib/package/website/views/assets/profile-1.js"
+* Edit "lib/config.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/package/website/views/connect.html"
+* Edit "lib/package/website/views/index.html"
+* Edit "lib/package/website/views/profile.html"
+* Edit "lib/utils/handler.js"
+```
+</sub>
+
 <h3>06/November/2026</h3>
 <sub>
 
@@ -241,54 +270,5 @@ ________________________
 * Edit "plugins/tools/resize.js"
 * Edit "plugins/tools/ssweb.js"
 * Edit "plugins/tools/wink.js"
-```
-</sub>
-
-<h3>29/October/2026</h3>
-<sub>
-
-```diff
-• Clean up unused Discord and WhatsApp plugin files to streamline project structure
-• Refactor AI tools and handler utilities to improve message processing and command execution
-• Update website server, scrapers, and core helper functions for enhanced performance
-
-________________________
-
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/ai/prompt.txt"
-* Edit "lib/package/ai/tools/convert.js"
-* Edit "lib/package/ai/tools/files.js"
-* Edit "lib/package/ai/tools/group.js"
-* Edit "lib/package/ai/tools/html.js"
-* Edit "lib/package/ai/tools/media.js"
-* Edit "lib/package/ai/tools/messaging.js"
-* Edit "lib/package/ai/tools/plugin.js"
-* Edit "lib/package/ai/tools/readchat.js"
-* Edit "lib/package/ai/tools/reminder.js"
-* Edit "lib/package/ai/tools/system.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/scrapers/src/animein.js"
-* Edit "lib/scrapers/src/brat.js"
-* Edit "lib/scrapers/src/ezgif.js"
-* Edit "lib/scrapers/src/facebook.js"
-* Edit "lib/scrapers/src/ig.js"
-* Edit "lib/scrapers/src/nano.js"
-* Edit "lib/scrapers/src/pinterest.js"
-* Edit "lib/scrapers/src/upload.js"
-* Edit "lib/scrapers/src/x.js"
-* Edit "lib/scrapers/src/ytsearch.js"
-* Edit "lib/utils/canvas.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/converter.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/helper.js"
-* Edit "lib/utils/plugins.js"
-* Edit "lib/utils/reload.js"
-* Edit "lib/utils/simple.js"
-- Delete "plugins/discord"
-- Delete "plugins/whatsapp"
 ```
 </sub>
