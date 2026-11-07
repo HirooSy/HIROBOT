@@ -7,17 +7,18 @@
 • Implement WebSocket connection authorization callback handling in WebSocketServer
 • Increase random upload filename generation length to 20 bytes for enhanced uniqueness
 • Add strict 64-character hex format validation for authorization bearer tokens
-• Extract view scripts from connect, index, and profile templates into external assets directory
+• Inline page view scripts back into templates and implement dynamic script externalization in server with SHA-1 hashing and immutable `/_p/:hash.js` endpoint caching
+• Remove external assets directory `lib/package/website/views/assets/`
 • Update handler order message thumbnail references to global.settings.website.icon
 
 ________________________
 
-+ Add "lib/package/website/views/assets/connect-1.js"
-+ Add "lib/package/website/views/assets/index-1.js"
-+ Add "lib/package/website/views/assets/index-2.js"
-+ Add "lib/package/website/views/assets/index-3.js"
-+ Add "lib/package/website/views/assets/index-4.js"
-+ Add "lib/package/website/views/assets/profile-1.js"
+- Delete "lib/package/website/views/assets/connect-1.js"
+- Delete "lib/package/website/views/assets/index-1.js"
+- Delete "lib/package/website/views/assets/index-2.js"
+- Delete "lib/package/website/views/assets/index-3.js"
+- Delete "lib/package/website/views/assets/index-4.js"
+- Delete "lib/package/website/views/assets/profile-1.js"
 * Edit "lib/config.js"
 * Edit "lib/package/website/server.js"
 * Edit "lib/package/website/views/connect.html"
@@ -230,8 +231,6 @@ ________________________
 * Edit "lib/scrapers/src/brat.js"
 * Edit "lib/scrapers/src/e621.js"
 * Edit "lib/scrapers/src/ezgif.js"
-* Edit "lib/scrapers/src/facebook.js"
-* Edit "lib/scrapers/src/ig.js"
 * Edit "lib/scrapers/src/nano.js"
 * Edit "lib/scrapers/src/pinterest.js"
 * Edit "lib/scrapers/src/tiktok.js"
