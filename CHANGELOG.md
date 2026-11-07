@@ -8,17 +8,10 @@
 • Increase random upload filename generation length to 20 bytes for enhanced uniqueness
 • Add strict 64-character hex format validation for authorization bearer tokens
 • Inline page view scripts back into templates and implement dynamic script externalization in server with SHA-1 hashing and immutable `/_p/:hash.js` endpoint caching
-• Remove external assets directory `lib/package/website/views/assets/`
 • Update handler order message thumbnail references to global.settings.website.icon
 
 ________________________
 
-- Delete "lib/package/website/views/assets/connect-1.js"
-- Delete "lib/package/website/views/assets/index-1.js"
-- Delete "lib/package/website/views/assets/index-2.js"
-- Delete "lib/package/website/views/assets/index-3.js"
-- Delete "lib/package/website/views/assets/index-4.js"
-- Delete "lib/package/website/views/assets/profile-1.js"
 * Edit "lib/config.js"
 * Edit "lib/package/website/server.js"
 * Edit "lib/package/website/views/connect.html"
