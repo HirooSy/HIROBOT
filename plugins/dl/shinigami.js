@@ -1,27 +1,9 @@
-import axios from 'hiro/axios';
 import { waToDiscord } from '../../lib/package/discord/text.js';
-import { flowToDiscord } from '../../lib/package/discord/payload.js';
 import { img2pdf } from '../../lib/utils/converter.js';
 
 const sendOut = (conn, m, payload) => m.platform === 'discord'
     ? conn.discord(m.chat, payload)
     : conn.sendMessage(m.chat, payload, { quoted: m });
-
-
-const API_BASE = "https://api.shngm.io/v1";
-const COMMENT_BASE = "https://commento.shngm.io/api";
-
-const client = axios.create({
-    baseURL: API_BASE,
-    headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Origin: "https://g.shinigami.asia",
-        Referer: "https://g.shinigami.asia/",
-        "User-Agent": "Mozilla/5.0"
-    },
-    timeout: 20000
-});
 
 function sendList(conn, m, caption, rows, buttonText = 'Select', location = null) {
     if (m.platform === 'discord') {
@@ -37,163 +19,6 @@ function sendList(conn, m, caption, rows, buttonText = 'Select', location = null
     }, m);
 }
 
-function extractTaxonomyNames(taxonomyObj, key) {
-    if (!taxonomyObj || !taxonomyObj[key]) return [];
-    const items = taxonomyObj[key];
-    if (!Array.isArray(items)) return [];
-    return items.map(v => v?.name).filter(Boolean);
-}
-
-function stripHtml(html) {
-    if (!html) return '';
-    return html
-        .replace(/<details[\s\S]*?<\/details>/gi, '[spoiler]')
-        .replace(/<[^>]+>/g, '')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
-}
-
-async function searchManga(query, page = 1, pageSize = 24) {
-    const res = await client.get("/manga/list", {
-        params: {
-            page,
-            page_size: pageSize,
-            genre_include_mode: "or",
-            genre_exclude_mode: "or",
-            sort: "latest",
-            sort_order: "desc",
-            q: query
-        }
-    });
-    return res.data;
-}
-
-async function getProjectUpdateManga(page = 1, pageSize = 24) {
-    const res = await client.get("/manga/list", {
-        params: {
-            type: "project",
-            page,
-            page_size: pageSize,
-            is_update: true,
-            sort: "latest",
-            sort_order: "desc"
-        }
-    });
-    return res.data;
-}
-
-async function getDetailsWithChapters(mangaId, chapterPageSize = 50, commentPageSize = 10) {
-    const detailRes = await client.get(`/manga/detail/${mangaId}`);
-    const manga = detailRes?.data?.data;
-    if (!manga) throw new Error("Manga detail not found");
-
-    const firstChapterRes = await client.get(`/chapter/${mangaId}/list`, {
-        params: { page: 1, page_size: chapterPageSize, sort_by: "chapter_number", sort_order: "desc" }
-    });
-
-    const chapterMeta = firstChapterRes?.data?.meta || {};
-    const chapterTotalPage = chapterMeta.total_page || 1;
-
-    let chapters = Array.isArray(firstChapterRes?.data?.data) ? [...firstChapterRes.data.data] : [];
-
-    for (let page = 2; page <= chapterTotalPage; page++) {
-        const res = await client.get(`/chapter/${mangaId}/list`, {
-            params: { page, page_size: chapterPageSize, sort_by: "chapter_number", sort_order: "desc" }
-        });
-        if (Array.isArray(res?.data?.data)) chapters.push(...res.data.data);
-    }
-
-    chapters.sort((a, b) => a.chapter_number - b.chapter_number);
-
-    let allComments = [];
-    let totalComments = 0;
-    try {
-        const firstCommentRes = await axios.get(`${COMMENT_BASE}/comment`, {
-            params: { path: `series/${mangaId}`, page: 1, pageSize: commentPageSize, lang: "en", sortBy: "like_desc" }
-        });
-
-        const commentData = firstCommentRes?.data?.data || {};
-        const commentTotalPage = commentData.totalPages || 1;
-        totalComments = commentData.count || 0;
-
-        const flattenComments = (items) => {
-            let result = [];
-            if (!Array.isArray(items)) return result;
-            for (const item of items) {
-                if (item && item.nick && item.orig !== undefined) result.push(item);
-                if (Array.isArray(item?.children)) result.push(...item.children.filter(c => c && c.nick));
-            }
-            return result;
-        };
-
-        allComments = flattenComments(commentData.data);
-
-        for (let page = 2; page <= Math.min(commentTotalPage, 3); page++) {
-            const res = await axios.get(`${COMMENT_BASE}/comment`, {
-                params: { path: `series/${mangaId}`, page, pageSize: commentPageSize, lang: "en", sortBy: "like_desc" }
-            });
-            allComments.push(...flattenComments(res?.data?.data?.data));
-        }
-    } catch (_) {
-    }
-
-    const topComments = [...allComments].sort((a, b) => (b.like || 0) - (a.like || 0)).slice(0, 5);
-    const taxonomy = manga.taxonomy || {};
-
-    return {
-        manga_id: manga.manga_id,
-        title: manga.title,
-        alternative_title: manga.alternative_title,
-        description: manga.description,
-        status: manga.status,
-        cover: manga.cover_image_url,
-        views: manga.view_count,
-        bookmark: manga.bookmark_count,
-        rank: manga.rank,
-        taxonomy: {
-            author: extractTaxonomyNames(taxonomy, 'Author'),
-            artist: extractTaxonomyNames(taxonomy, 'Artist'),
-            genre: extractTaxonomyNames(taxonomy, 'Genre'),
-            format: extractTaxonomyNames(taxonomy, 'Format')
-        },
-        chapter_info: {
-            first: chapters[0] || null,
-            latest: chapters[chapters.length - 1] || null
-        },
-        total_chapter: chapters.length,
-        chapters,
-        comment_info: { total: totalComments },
-        comments: topComments
-    };
-}
-
-async function getChapterImages(chapterId) {
-    const res = await client.get(`/chapter/detail/${chapterId}`);
-    const data = res?.data?.data;
-    if (!data) throw new Error("Chapter detail not found");
-
-    const baseUrl = data.base_url || data.base_url_low || "";
-    const chapterPath = data.chapter?.path || "";
-    const files = data.chapter?.data || [];
-
-    let images = files.map(filename => `${baseUrl}${chapterPath}${filename}`);
-    if (images.length === 0 && Array.isArray(data.chapter_image)) {
-        images = data.chapter_image.map(img => img.image_url).filter(Boolean);
-    }
-
-    return {
-        chapter_id: data.chapter_id,
-        chapter_number: data.chapter_number,
-        images,
-        total_image: images.length
-    };
-}
-
 function buildDetailCaption(details) {
     let c = `━━━━━━━━━━━━━━\n`;
     if (details.alternative_title) c += `- *Alt:* ${details.alternative_title}\n`;
@@ -205,21 +30,8 @@ function buildDetailCaption(details) {
     if (details.taxonomy.genre.length) c += `- *Genre:* ${details.taxonomy.genre.join(', ')}\n`;
     c += `- *Chapters:* ${details.total_chapter}\n`;
     c += `━━━━━━━━━━━━━━\n`;
-    if (details.description) c += `${stripHtml(details.description).slice(0, 400)}...\n`;
+    if (details.description) c += `${global.scraper.shinigami.stripHtml(details.description).slice(0, 400)}...\n`;
     return c.trim();
-}
-
-async function downloadChapterImages(imageUrls) {
-    const buffers = [];
-    for (const url of imageUrls) {
-        const response = await axios.get(url, {
-            responseType: 'arraybuffer',
-            headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://g.shinigami.asia/' },
-            timeout: 30000
-        });
-        buffers.push(Buffer.from(response.data));
-    }
-    return buffers;
 }
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
@@ -233,7 +45,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         const page = parseInt(args[0]) || 1;
         await m.react('🔍');
 
-        const updateData = await getProjectUpdateManga(page, 24);
+        const updateData = await global.scraper.shinigami.getProjectUpdateManga(page, 24);
         if (!updateData.data?.length) return m.reply('No update data found.');
 
         const rows = updateData.data.map((manga, i) => ({
@@ -255,7 +67,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         if (!mangaId) return;
         await m.react('🔍');
 
-        const details = await getDetailsWithChapters(mangaId);
+        const details = await global.scraper.shinigami.getDetailsWithChapters(mangaId);
         if (!details.chapters?.length) {
             await m.react('❌');
             return m.reply('No chapters available for this manga.');
@@ -288,20 +100,20 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         if (!mangaId || !chapterNumber) return;
         await m.react('⬇️');
 
-        const details = await getDetailsWithChapters(mangaId);
+        const details = await global.scraper.shinigami.getDetailsWithChapters(mangaId);
         const foundChapter = details.chapters.find(ch => String(ch.chapter_number) === chapterNumber);
         if (!foundChapter) {
             await m.react('❌');
             return m.reply('Chapter not found.');
         }
 
-        const chapterData = await getChapterImages(foundChapter.chapter_id);
+        const chapterData = await global.scraper.shinigami.getChapterImages(foundChapter.chapter_id);
         if (!chapterData.images.length) {
             await m.react('❌');
             return m.reply('No images found for this chapter.');
         }
 
-        const buffers = await downloadChapterImages(chapterData.images);
+        const buffers = await global.scraper.shinigami.downloadChapterImages(chapterData.images);
         const pdfBuffer = await img2pdf(buffers);
 
         await m.react('✅');
@@ -317,7 +129,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     await m.react('🔍');
     const keyword = text.trim();
 
-    const searchResults = await searchManga(keyword);
+    const searchResults = await global.scraper.shinigami.searchManga(keyword);
     if (!searchResults.data?.length) {
         await m.react('❌');
         return m.reply('No results found.');

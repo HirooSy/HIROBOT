@@ -1,11 +1,9 @@
 import { flowToDiscord, renderGrid } from '../../lib/package/discord/payload.js'
 import fs from 'fs'
-import axios from 'hiro/axios'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
-import http2 from 'http2'
 const execFileAsync = promisify(execFile)
 const upload = global.scraper.upload.default
 const {
@@ -21,173 +19,22 @@ const {
 
 if (!global.pinterestSearchState) global.pinterestSearchState = {}
 
-const SEARCH_STATE_TTL = 15 * 60 * 1000
+const searchStateTtl = 15 * 60 * 1000
 
 function cleanupSearchState() {
   const now = Date.now()
   for (const key of Object.keys(global.pinterestSearchState)) {
-    if (now - global.pinterestSearchState[key].timestamp > SEARCH_STATE_TTL) {
+    if (now - global.pinterestSearchState[key].timestamp > searchStateTtl) {
       delete global.pinterestSearchState[key]
     }
   }
 }
-
-const FFMPEG_PATH = '/usr/bin/ffmpeg'
-const PREVIEW_UA = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36'
-const PREVIEW_CONCURRENCY = 30
-
-const isGifUrl = (u) => /\.gif(\?|$)/i.test(u || '')
 
 const escapeHtml = (str = '') => String(str)
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
   .replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;')
-
-function createFetcher() {
-  const sessions = new Map()
-  let h2Broken = false
-
-  const getSession = (origin) => {
-    let session = sessions.get(origin)
-    if (session && !session.closed && !session.destroyed) return session
-    session = http2.connect(origin)
-    session.on('error', () => sessions.delete(origin))
-    session.on('close', () => sessions.delete(origin))
-    sessions.set(origin, session)
-    return session
-  }
-
-  const headers = { 'user-agent': PREVIEW_UA, 'accept': 'image/*,*/*', 'referer': 'https://id.pinterest.com/' }
-
-  const viaHttp2 = (url) => new Promise((resolve, reject) => {
-    const u = new URL(url)
-    const req = getSession(u.origin).request({ ':path': u.pathname + u.search, ...headers })
-    const chunks = []
-    let status = 0
-    let type = ''
-    const timer = setTimeout(() => {
-      req.close(http2.constants.NGHTTP2_CANCEL)
-      reject(new Error('timeout'))
-    }, 10000)
-    req.on('response', (h) => {
-      status = h[':status']
-      type = h['content-type'] || ''
-    })
-    req.on('data', (c) => chunks.push(c))
-    req.on('end', () => {
-      clearTimeout(timer)
-      if (status === 200) return resolve({ data: Buffer.concat(chunks), type })
-      reject(Object.assign(new Error(`HTTP ${status}`), { response: { status } }))
-    })
-    req.on('error', (e) => {
-      clearTimeout(timer)
-      reject(e)
-    })
-    req.end()
-  })
-
-  const viaAxios = async (url) => {
-    const res = await axios.get(url, {
-      responseType: 'arraybuffer',
-      timeout: 10000,
-      headers: { 'User-Agent': PREVIEW_UA, referer: 'https://id.pinterest.com/' }
-    })
-    return { data: res.data, type: res.headers?.['content-type'] || '' }
-  }
-
-  return {
-    async get(url) {
-      if (!h2Broken) {
-        try {
-          return await viaHttp2(url)
-        } catch (e) {
-          if (e.response?.status >= 400) throw e
-          h2Broken = true
-        }
-      }
-      return viaAxios(url)
-    },
-    close() {
-      for (const session of sessions.values()) session.close()
-      sessions.clear()
-    }
-  }
-}
-
-async function fetchToFile(url, file, fetcher) {
-  const res = await fetcher.get(url)
-  if (!res.data?.length) throw new Error('empty response')
-  fs.writeFileSync(file, res.data)
-  return String(res.type || '').split(';')[0].trim()
-}
-
-async function firstFrame(input, output) {
-  const args = ['-y']
-  if (/^https?:\/\//i.test(input)) {
-    args.push('-user_agent', PREVIEW_UA, '-headers', 'referer: https://id.pinterest.com/\r\norigin: https://id.pinterest.com/\r\n')
-  }
-  args.push('-i', input, '-frames:v', '1', '-vf', 'scale=320:-2', '-q:v', '5', output)
-  await execFileAsync(FFMPEG_PATH, args, { timeout: 30000 })
-  if (!fs.existsSync(output) || fs.statSync(output).size === 0) throw new Error('empty frame')
-}
-
-const smallThumb = (u) => /i\.pinimg\.com\/(474x|736x|originals|orig)\//i.test(u)
-  ? u.replace(/i\.pinimg\.com\/(474x|736x|originals|orig)\//i, 'i.pinimg.com/236x/')
-  : u
-
-async function savePreview(item, dir, idx, fetcher) {
-  const out = join(dir, `pin_${idx}.jpg`)
-
-  const still = item.thumbUrl && !isGifUrl(item.thumbUrl) ? item.thumbUrl
-    : (item.type === 'image' && !isGifUrl(item.rawUrl) ? item.rawUrl : null)
-
-  if (still) {
-    const small = smallThumb(still)
-    try {
-      await fetchToFile(small, out, fetcher)
-    } catch (e) {
-      if (small === still) throw e
-      await fetchToFile(still, out, fetcher)
-    }
-    return out
-  }
-
-  if (item.type === 'gif') {
-    const guess = smallThumb(item.thumbUrl || item.rawUrl).replace(/\.gif(\?.*)?$/i, '.jpg')
-    try {
-      const type = await fetchToFile(guess, out, fetcher)
-      if (/^image\/jpe?g$/i.test(type)) return out
-    } catch {}
-  }
-
-  if (item.type === 'gif' || item.type === 'video') {
-    await firstFrame(item.rawUrl, out)
-    return out
-  }
-
-  throw new Error('no preview source')
-}
-
-async function downloadPreviews(items, dir) {
-  const fetcher = createFetcher()
-  let cursor = 0
-  const worker = async () => {
-    while (cursor < items.length) {
-      const i = cursor++
-      try {
-        items[i].localPath = await savePreview(items[i], dir, i, fetcher)
-      } catch {
-        items[i].localPath = null
-      }
-    }
-  }
-  try {
-    await Promise.all(Array.from({ length: Math.min(PREVIEW_CONCURRENCY, items.length) }, worker))
-  } finally {
-    fetcher.close()
-  }
-}
 
 function localImgSrc(file) {
   return `data:image/jpeg;base64,${fs.readFileSync(file).toString('base64')}`
@@ -423,7 +270,7 @@ let handler = async (m, { conn, args: rawArgs, text, command, platform }) => {
   const dir = fs.mkdtempSync(join(tmpdir(), 'pin_'))
 
   try {
-    await downloadPreviews(items, dir)
+    await global.scraper.pinterest.downloadPreviews(items, dir)
 
     const readyItems = items.filter(item => item.localPath)
     if (!readyItems.length) throw `Failed to load previews for: *${query}*`

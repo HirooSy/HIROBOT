@@ -1,13 +1,10 @@
-import axios from 'hiro/axios'
 
 const sendOut = (conn, m, payload) => m.platform === 'discord'
     ? conn.discord(m.chat, payload)
     : conn.sendMessage(m.chat, payload, { quoted: m });
 
 
-const BASE = 'https://salman555-upscale-images.hf.space'
-
-const MODES = {
+const modes = {
   2: { api_name: 'upscale_x2', label: '×2' },
   4: { api_name: 'standard_upscale', label: '×4' },
   8: { api_name: 'premium_upscale', label: '×8 🚀' }
@@ -22,18 +19,18 @@ let handler = async (m, { conn, args, platform }) => {
 
   let factor = parseInt(platform === 'discord' ? args.factor : args[0]) || 2
   if (![2, 4, 8].includes(factor)) factor = 2
-  const mode = MODES[factor]
+  const mode = modes[factor]
 
   await m.react('⏳')
 
   try {
     const buffer = await q.download()
 
-    const uploadedPath = await uploadToGradio(buffer)
+    const uploadedPath = await global.scraper.hd.uploadToGradio(buffer)
 
-    const resultUrl = await runUpscale(uploadedPath, mode.api_name)
+    const resultUrl = await global.scraper.hd.runUpscale(uploadedPath, mode.api_name)
 
-    const res = await axios.get(resultUrl, { responseType: 'arraybuffer', timeout: 120000 })
+    const res = await global.scraper.hd.downloadResult(resultUrl)
 
     await sendOut(conn, m, {
       image: Buffer.from(res.data),
@@ -61,76 +58,3 @@ handler.description = 'Upscale an image with AI'
 handler.platform = { whatsapp: true, discord: true }
 
 export default handler
-
-
-async function uploadToGradio(buffer) {
-  const form = new FormData()
-  form.append('files', new Blob([buffer], { type: 'image/jpeg' }), 'input.jpg')
-
-  const uploadRes = await axios.post(`${BASE}/gradio_api/upload`, form, {
-    timeout: 60000
-  })
-
-  return uploadRes.data[0]
-}
-
-async function runUpscale(uploadedPath, api_name) {
-  const session_hash = Math.random().toString(36).substring(2)
-
-  const payload = {
-    data: [
-      {
-        path: uploadedPath,
-        url: `${BASE}/gradio_api/file=${uploadedPath}`,
-        orig_name: 'input.jpg',
-        size: null,
-        mime_type: 'image/jpeg',
-        is_stream: false,
-        meta: { _type: 'gradio.FileData' }
-      }
-    ],
-    event_data: null,
-    fn_index: api_name === 'upscale_x2' ? 0 : api_name === 'standard_upscale' ? 1 : 2,
-    trigger_id: null,
-    session_hash
-  }
-
-  const joinRes = await axios.post(`${BASE}/gradio_api/queue/join`, payload, {
-    headers: { 'Content-Type': 'application/json' },
-    timeout: 60000
-  })
-  const event_id = joinRes.data.event_id
-
-  const sseRes = await axios.get(`${BASE}/gradio_api/queue/data`, {
-    params: { session_hash },
-    responseType: 'text',
-    timeout: 300000,
-    headers: { Accept: 'text/event-stream' },
-    transformResponse: [(data) => data]
-  })
-
-  const raw = sseRes.data
-  const lines = raw.split('\n').filter(l => l.startsWith('data: '))
-
-  let completedEvent = null
-  for (const line of lines) {
-    try {
-      const json = JSON.parse(line.slice(6))
-      if (json.event_id === event_id && json.msg === 'process_completed') {
-        completedEvent = json
-      }
-    } catch (e) {
-    }
-  }
-
-  if (!completedEvent) throw new Error('No result received from server (timeout/SSE disconnected)')
-  if (!completedEvent.success) throw new Error('Server failed to process the image')
-
-  const outputData = completedEvent.output?.data
-  if (!outputData || !outputData[0]) {
-    throw new Error('Result format is not as expected')
-  }
-
-  const fileData = outputData[0]
-  return fileData.url
-}

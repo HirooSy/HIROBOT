@@ -1,85 +1,54 @@
 <div align=center>
-<a href="#"><img src="https://files.catbox.moe/tl36qw.png"/></a> 
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://files.catbox.moe/544ivr.png" />
+    <source media="(prefers-color-scheme: light)" srcset="https://files.catbox.moe/4l0dky.png" />
+    <img src="https://files.catbox.moe/tl36qw.png" alt="hirobot" />
+  </picture>
+  
+  <a href="https://ko-fi.com/hiroosy"><img src="https://img.shields.io/badge/Sponsor-000000?style=for-the-badge&logo=githubsponsors"></a>
+  <a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img src="https://img.shields.io/badge/Change_log-000000.svg?&style=for-the-badge&logo=lmstudio&logoColor=white"></a>
+  <img src="https://img.shields.io/badge/Node_%3E%3D18-000000.svg?&style=for-the-badge&logo=node.js&labelColor=000000&logoColor=green">
+  <a href="https://www.npmjs.com/package/@hiroosy/baileys-lite"><img src="https://img.shields.io/npm/v/@hiroosy/baileys-lite?label=Baileys-lite&color=000000&style=for-the-badge&labelColor=000000&logoColor=CB3837"></a>
+  <img src="https://img.shields.io/badge/Database-Sql-000000.svg?labelColor=000000&style=for-the-badge&logoColor=white">
+  
+  <sub>
 
-  <a href="https://ko-fi.com/hiroosy"><img src="https://img.shields.io/badge/Sponsor-000000?style=for-the-badge&logo=githubsponsors"/></a>
-  <a href="https://github.com/HirooSy/HIROBOT/blob/main/CHANGELOG.md"><img src="https://img.shields.io/badge/Change_log-000000.svg?&style=for-the-badge&logo=lmstudio&logoColor=white"/></a>
-  <a href="#"><img src="https://img.shields.io/badge/NodeJS_%3E%3D18-000000.svg?&style=for-the-badge&logo=node.js&labelColor=000000&logoColor=green"/></a>
+**[About](#-overview)** ·
+**[AI Agent](#-about-ai-agent)** ·
+**[Website](#-website-configuration)** ·
+**[Message Types](#-message-type)** ·
+**[Install & Run](#-install)** 
+
+  </sub>
+  
 </div>
-
-> [!IMPORTANT]
-> Please read the [<code>LICENSE</code>](https://github.com/HirooSy/HIROBOT/blob/main/LICENSE) before using this project! You're free to recode it, but do not sell or claim this project as your own. <b>Do not change the License.</b> if you modify it, <b>please credit me in your License.</b>
-
-> [!NOTE]
-> High-performance Discord & WhatsApp bot with AI agent, VoIP calling capabilities, and a website feature. Built with Baileys and NodeJS v18+.
-> 
-> ---
-> 
-> <p align=center><b>Features:</b></p>
-> 
-> - [x] Discord & Whatsapp Bot.
-> - [x] AI Agent & Chatbot Using Gemini.
-> - [x] Audio & Video Call.
-> - [x] Multi Sessions.
-> - [x] Database native SQL / Mongodb / MySql2.
-> - [x] Support AI Rich, Poll, Button Message, Etc.
-> - [x] Website using Cloudflared Tunnel.
-> - [x] Lightweight & High-performance.
 
 ---
 
-<table align=center height=100>
-  <td>
-  <sub>
-    
-```env
-         ---Project Structure---
-HIROBOT
-├── 📁lib
-│   ├── 📁package
-│   │   ├── 📁ai
-│   │   ├── 📁chrome         # Playwright 
-│   │   ├── 📁discord
-│   │   ├── 📁voip           # Call
-│   │   ├── 📁website
-│   │   │   ├── 📁views      # HTML folder
-│   │   │   └── 📄server.js
-│   │   ├── 📄axios.js
-│   │   ├── 📄cheerio.js
-│   │   └── 📄canvas.js
-│   ├── 📁scrapers
-│   ├── 📁utils
-│   ├── 📄config.js        # bot's preference
-│   ├── 📄main.js
-│   └── 📄start.js
-├── 📁data
-│   ├── 📁bot
-│   │   ├── 📁subbot
-│   │   │   └── 📁<number>
-│   │   │       ├── 📄setting.json
-│   │   │       └── 📁plugins
-│   │   ├── 📄main.session
-│   │   ├── 📄store.db
-│   │   └── 📄database.db
-│   ├── 📁tunnel
-│   └── 📁tmp
-├── 📁plugins
-├── 📄.env                 # your tokens
-├── 📄LICENSE
-├── 📄package.json
-└── 📄README.md
-```
-</sub>
+> [!IMPORTANT]
+> <sub>Please read the [<code>LICENSE</code>](https://github.com/HirooSy/HIROBOT/blob/main/LICENSE) before using this project! You're free to recode it, but do not sell or claim this project as your own. <b>Do not change the License.</b> if you modify it, <b>please credit me in your License.</b></sub><br>
 
-  </td>
-</table><br>
+## ✦ Overview
+`HIROBOT` is a multi platform whatsapp & discord bot. AI-Powered, lightweight and High-performance, using [Baileys-lite](https://github.com/hiroosy/baileys-lite), without third-party API and NodeJS v18+. 
+<br><br>Web-based that allows multiple users to create, link, and manage multi-device Whatsapp bots, connect over 100 bots at the same time without consuming RAM.
 
+<p align=center><b>Features:</b></p>
 
-<details> 
-  <summary align=left><b>About AI Agent</b></summary>
-<p align=center>──────────────</p>
+- [x] Discord & Whatsapp Bot.
+- [x] AI Agent & Chatbot Using Gemini.
+- [x] Audio & Video Call.
+- [x] Multi Sessions.
+- [x] Database native SQL / Mongodb / MySql2.
+- [x] Support AI Rich, Poll, Button Message, Etc.
+- [x] Website using Cloudflared Tunnel.
+- [x] Lightweight & High-performance.
 
-<h4 align=center >How AutoHeal Works?</h4>
+---
 
+## ✦ About AI Agent
+
+> [!TIP]
+> *How Autoheal works?*
 > ```mermaid
 > flowchart LR
 >     A@{ shape: odd, label: "User Command" } --> Error
@@ -95,7 +64,7 @@ HIROBOT
 > style Error stroke:#f00
 > ```
 
-<table align=center>
+<table align=center height="400">
   <thead>
     <tr>
       <th>Capability</th>
@@ -172,10 +141,11 @@ HIROBOT
   </tbody>
 </table>
 
-<h4 align=center>How to add a new tool</h4>
+<details>
+  <summary align=center><code>How to add a new tool?</code></summary>
   
 <details>
-  <summary align=center><sub>All MCP Helper</sub></summary>
+  <summary><sub>View All MCP Helper</sub></summary>
   
 <table>
   <thead>
@@ -409,13 +379,11 @@ export default [
 </sub>
 </details>
 
-<details>
-   <summary align=left><b>About Website</b></summary>
-   <p align=center>──────────────</p>
+---
 
-<h4>.env Settings for Website</h4>
-
-<table align="center">
+## ✦ Website Configuration 
+<code>.env Configuration:</code>
+<table align="center" height="500">
   <tbody>
     <tr>
       <td rowspan="5"><b>SCENARIO 1</b><br><sub>No public address, using own domain</sub></td>
@@ -480,11 +448,7 @@ export default [
   </tbody>
 </table>
 
-</details>
-
-<details>
-   <summary align=left><b>Message types</b></summary>
-   <p align=center>──────────────</p>
+## ✦ Message Types
 
 <details> <summary>📖 Basic</summary>
   <sub>
@@ -642,7 +606,7 @@ conn.sendButton(m.chat, {
 ```
 </sub></details>
 
-<details><summary>❇️ Widget</summary>
+<details><summary>❇️ Widget / A2UI</summary>
 
 <sub>
   
@@ -867,10 +831,54 @@ call(m.sender, media, "720p").end()
 call(m.sender, media, "720p").silent()
 ```
 </sub></details>
-</details>
   
-<details>
-   <summary><b>Install and Run</b></summary><br>
+## ✦ Install
+
+<table align=center height=100>
+  <td>
+  <sub>
+    
+```env
+         ---Project Structure---
+HIROBOT
+├── 📁lib
+│   ├── 📁package
+│   │   ├── 📁ai
+│   │   ├── 📁chrome         # Playwright 
+│   │   ├── 📁discord
+│   │   ├── 📁voip           # Call
+│   │   ├── 📁website
+│   │   │   ├── 📁views      # HTML folder
+│   │   │   └── 📄server.js
+│   │   ├── 📄axios.js
+│   │   ├── 📄cheerio.js
+│   │   └── 📄canvas.js
+│   ├── 📁scrapers
+│   ├── 📁utils
+│   ├── 📄config.js        # bot's preference
+│   ├── 📄main.js
+│   └── 📄start.js
+├── 📁data
+│   ├── 📁bot
+│   │   ├── 📁subbot
+│   │   │   └── 📁<number>
+│   │   │       ├── 📄setting.json
+│   │   │       └── 📁plugins
+│   │   ├── 📄main.session
+│   │   ├── 📄store.db
+│   │   └── 📄database.db
+│   ├── 📁tunnel
+│   └── 📁tmp
+├── 📁plugins
+├── 📄.env                 # your tokens
+├── 📄LICENSE
+├── 📄package.json
+└── 📄README.md
+```
+</sub>
+
+  </td>
+</table>
 
 <table align="center">
   <tbody>
@@ -894,12 +902,15 @@ call(m.sender, media, "720p").silent()
   </tbody>
 </table>
 
-<h4>Configuration environment (.env)</h4>
+---
+
+<details>
+   <summary align=center><code>How To Config & Run</code></summary>
 
 1. Create file ".env"
 2. And set it with this code:
 
-<table align=center height=100>
+<table height=200>
   <td>
 <sub>
   

@@ -1,10 +1,3 @@
-import axios from 'hiro/axios';
-
-const POLLINATIONS_URL = 'https://text.pollinations.ai/openai';
-const POLLINATIONS_HEADERS = {
-  'Content-Type': 'application/json',
-  Referer: 'https://pollinations.ai/',
-};
 
 async function ask(sender, text, conn) {
 
@@ -18,19 +11,7 @@ async function ask(sender, text, conn) {
 
   conn.ai[sender].push({ role: 'user', content: text });
 
-  const payload = {
-    model: 'openai',
-    messages: conn.ai[sender],
-    stream: false
-  };
-
-  const { data } = await axios.post(
-    POLLINATIONS_URL,
-    payload,
-    { headers: POLLINATIONS_HEADERS }
-  );
-
-  const reply = data?.choices?.[0]?.message?.content?.trim() ?? '(empty)';
+  const reply = await global.scraper.pollination.complete(conn.ai[sender]);
   conn.ai[sender].push({ role: 'assistant', content: reply });
 
   if (conn.ai[sender].length > 20) {
@@ -58,7 +39,6 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     const reply = await ask(m.sender, trimmed, conn);
     return m.reply(reply);
   } catch (e) {
-    console.error('[ai]', e);
     return m.reply(`${e.message}`);
   }
 };

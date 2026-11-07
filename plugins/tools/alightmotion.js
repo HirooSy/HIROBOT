@@ -131,7 +131,7 @@ async function activatePremium(idToken) {
         }).post(VFY, {
             data: {
                 productId: 'am.full.sub.annual.19q4',
-                token    : 'mmgaobamlahbbeccfplmbkbb.AO-J1OzqG0or_GJJIx-ms8GrTm-jaglCRfhQSRPUZKpl2YspYS-oN7_94uv8RC5vQbvd_Ios2pPDStZ2n7F0hLE3FiOU7HS3R6Fquulv5xLXFECSv4ctElw',
+                token    : 'mmgaobamlahbbeccfplmbkbb.AO-J1OzqG0or_GJJIx-ms8GrTm-jaglCRfhQSRPUZKpl2YspYS-oN7_94uv8RC5vQbvd_Ios2pPDStZ2n7F0hLE3FiOU7HS3R6Fquulv5xLXFECSv4ctElW',
                 skuType  : 'subs',
                 orderId
             }
@@ -175,12 +175,42 @@ function saveSession(userJid, email, data) {
     db.saveSync?.() || db.write?.()
 }
 
+async function pollInbox(address, expectLink, maxWait = 90000) {
+    const { getInbox, readMessage } = await global.scraper.get('inboxkitten')
+    const start = Date.now()
+    await new Promise(r => setTimeout(r, 10000))
+    while (Date.now() - start < maxWait) {
+        try {
+            const messages = await getInbox(address, 5)
+            for (const msg of messages) {
+                const detail = await readMessage(msg.id).catch(() => null)
+                if (!detail) continue
+                const links = detail.links || []
+                for (const link of links) {
+                    if (extractCode(link)) return link
+                }
+                const text = detail.text || ''
+                const m = text.match(/https?:\/\/[^\s"'<>]+/g)
+                if (m) {
+                    for (const link of m) {
+                        if (extractCode(link)) return link
+                    }
+                }
+            }
+        } catch {}
+        await new Promise(r => setTimeout(r, 4000))
+    }
+    return null
+}
+
 let handler = async (m, { conn, text }) => {
     if (!text) return m.reply(`Usage:
 - \`.ampro <email>\` - send magic link to email
+- \`.ampro <name>\` - auto activate via inboxkitten
 - \`.amrefresh <email>\` - re-activate from saved session
 
-Example: \`.ampro user@gmail.com\``)
+Example: \`.ampro user@gmail.com\`
+Example: \`.ampro hiro\``)
 
     const userJid = conn.user.jid
 
@@ -204,24 +234,76 @@ ${email}
 Order: \`${r.orderId}\``)
     }
 
-    const email = text.trim().toLowerCase()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        return m.reply('Invalid email format.')
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text.trim())
 
-    await m.react(`📩`)
-    const r = await sendMagicLink(email)
-    if (!r.ok) return m.reply(`Failed to send link:
+    if (isEmail) {
+        const email = text.trim().toLowerCase()
+
+        await m.react(`📩`)
+        const r = await sendMagicLink(email)
+        if (!r.ok) return m.reply(`Failed to send link:
 \`${r.why}\``)
 
-    const prompt = await conn.sendMessage(m.chat, {
-        text: `Magic link sent to *${email}*!\n\nOpen your email and copy the link from AlightMotion.\n*Reply to this message* with the link.`
-    }, { quoted: m })
+        const prompt = await conn.sendMessage(m.chat, {
+            text: `Magic link sent to *${email}*!\n\nOpen your email and copy the link from AlightMotion.\n*Reply to this message* with the link.`
+        }, { quoted: m })
 
-    if (!conn.ampro) conn.ampro = {}
-    conn.ampro[m.sender] = {
-        email    : email,
-        messageId: prompt.key.id,
-        at       : Date.now()
+        if (!conn.ampro) conn.ampro = {}
+        conn.ampro[m.sender] = {
+            email    : email,
+            messageId: prompt.key.id,
+            at       : Date.now()
+        }
+        return
+    }
+
+    const name = text.trim().toLowerCase().replace(/@inboxkitten\.com$/, '')
+    if (!/^[a-z0-9._-]{1,40}$/.test(name))
+        return m.reply('Invalid name. Use letters, numbers, dots, underscores or dashes (max 40 characters).')
+
+    await m.react(`📩`)
+    try {
+        const { getDomains } = await global.scraper.get('inboxkitten')
+        const [domain] = await getDomains()
+        const email = `${name}@${domain}`
+
+        const s = await sendMagicLink(email)
+        if (!s.ok) return m.reply(`Failed to send link:
+\`${s.why}\``)
+
+        await m.reply(`Magic link sent to *${email}*\n\nWaiting for email in inboxkitten...`)
+
+        const link = await pollInbox(email, true)
+        if (!link) return m.reply(`No link received in inbox within timeout.\nEmail: *${email}*\n\nTry again: \`.ampro ${name}\``)
+
+        await m.react(`🕜`)
+        const v = await verifyLink(email, link)
+        if (!v.ok) return m.reply(`Verification failed:
+\`${v.why}\``)
+
+        await m.react('✅')
+        const p = await activatePremium(v.id)
+        if (!p.ok) {
+            saveSession(userJid, email, { id: v.id, ref: v.ref, uid: v.uid })
+            return m.reply(`Login OK but activation failed:
+\`${p.why}\`
+
+Try: \`.amrefresh ${email}\``)
+        }
+
+        saveSession(userJid, email, { id: v.id, ref: v.ref, uid: v.uid })
+
+        return m.reply(
+`*AlightMotion Premium Activated!*
+
+- Email: *${email}*
+- Order: \`${p.orderId}\`
+${v.new ? 'New account created' : 'Existing account updated'}
+
+_Use \`.amrefresh ${email}\` to re-activate anytime._`)
+    } catch (e) {
+        return m.reply(`Failed:
+\`${e.message}\``)
     }
 }
 
@@ -277,7 +359,7 @@ _Use \`.amrefresh ${state.email}\` to re-activate anytime._`)
     return true
 }
 
-handler.help    = ['ampro <email>', 'amrefresh <email>']
+handler.help    = ['ampro <email|name>', 'amrefresh <email>']
 handler.command = /^(ampro|amrefresh)$/i
 handler.tags    = ['tools']
 

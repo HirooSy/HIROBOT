@@ -1,10 +1,8 @@
-import { default as axios } from 'hiro/axios';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
-import http2 from 'http2';
 import { img2pdf, ZipFile } from '../../lib/utils/converter.js';
 import { waToDiscord } from '../../lib/package/discord/text.js';
 import { flowToDiscord, renderGrid, ratingFooter } from '../../lib/package/discord/payload.js';
@@ -20,7 +18,7 @@ const sendTo = (conn, chat, payload, quoted) => {
     if (converted.text) converted.text = waToDiscord(converted.text);
     return conn.discord(chat, converted);
 };
-const FFMPEG_PATH = '/usr/bin/ffmpeg';
+const ffmpegPath = '/usr/bin/ffmpeg';
 
 function getTmpDir() {
     const TMP_DIR = path.join(process.cwd(), 'data', 'tmp');
@@ -29,7 +27,6 @@ function getTmpDir() {
         fs.accessSync(TMP_DIR, fs.constants.W_OK);
         return TMP_DIR;
     } catch (e) {
-        console.error('[e621] Failed to create tmp folder:', e);
         return './tmp';
     }
 }
@@ -51,12 +48,7 @@ async function convertToMp4(fileUrl, inputExt) {
     const tmpInput = path.join(tmpDir, `tmp_in_${ts}.${inputExt}`);
     const tmpOutput = path.join(tmpDir, `tmp_out_${ts}.mp4`);
 
-    const headers = e621.getHeaders();
-    const res = await axios.get(fileUrl, {
-        responseType: 'stream',
-        headers: headers,
-        timeout: 60000
-    });
+    const res = await global.scraper.e621.getFileStream(fileUrl);
 
     await new Promise((resolve, reject) => {
         const writer = fs.createWriteStream(tmpInput);
@@ -70,7 +62,7 @@ async function convertToMp4(fileUrl, inputExt) {
     }
 
     try {
-        await execFileAsync(FFMPEG_PATH, [
+        await execFileAsync(ffmpegPath, [
             '-y',
             '-i', tmpInput,
             '-movflags', 'faststart',
@@ -94,71 +86,11 @@ async function convertToMp4(fileUrl, inputExt) {
     return tmpOutput;
 }
 
-function mapE621Post(post) {
-    if (!post) return null;
-    return {
-        id: post.id,
-        url: post.file?.url || null,
-        pageUrl: `https://e621.net/posts/${post.id}`,
-        previewUrl: post.preview?.url || post.sample?.url || null,
-        sampleUrl: post.sample?.url || null,
-        ext: post.file?.ext || 'unknown',
-        size: post.file?.size || 0,
-        rating: post.rating || '?',
-        favCount: post.fav_count || 0,
-        tags: post.tags || {}
-    };
-}
+const discordPageSize = 25;
+const pageSizeOf = platform => platform === 'discord' ? discordPageSize : global.scraper.e621.pageSize;
 
-const PAGE_SIZE = 30;
-const DISCORD_PAGE_SIZE = 25;
-const pageSizeOf = platform => platform === 'discord' ? DISCORD_PAGE_SIZE : PAGE_SIZE;
-
-async function searchTagsAccurate(keywords, page, size = PAGE_SIZE) {
-    try {
-        const res = await axios.get('https://e621.net/posts.json', {
-            params: { tags: keywords, limit: size, page },
-            headers: e621.getHeaders(),
-            timeout: 15000
-        });
-        const raw = res.data?.posts || [];
-        if (!raw.length) return { posts: [], hasNext: false };
-        const hasNext = raw.length >= size;
-        return { posts: raw.map(mapE621Post), hasNext };
-    } catch (error) {
-        console.error('[e621] tagsSearch error:', error.message);
-        return { posts: [], hasNext: false };
-    }
-}
-
-async function fetchAllPoolPosts(poolId) {
-    const info = await e621.getPoolInfo(poolId);
-    if (!info || !info.postIds.length) return null;
-
-    const chunkSize = 100;
-    const allPosts = [];
-    for (let i = 0; i < info.postIds.length; i += chunkSize) {
-        const idsChunk = info.postIds.slice(i, i + chunkSize);
-        try {
-            const res = await axios.get('https://e621.net/posts.json', {
-                params: { tags: `id:${idsChunk.join(',')}`, limit: idsChunk.length },
-                headers: e621.getHeaders(),
-                timeout: 20000
-            });
-            const byId = new Map((res.data?.posts || []).map(p => [p.id, mapE621Post(p)]));
-            for (const id of idsChunk) {
-                const post = byId.get(id);
-                if (post) allPosts.push(post);
-            }
-        } catch (error) {
-            console.error('[e621] fetchAllPoolPosts chunk error:', error.message);
-        }
-    }
-    return { info, posts: allPosts };
-}
-
-const STATIC_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp'];
-const MAX_DLALL_POSTS = 200;
+const staticImageExts = ['jpg', 'jpeg', 'png', 'webp'];
+const maxDlallPosts = 200;
 
 async function buildPoolPdf(posts) {
     const urls = posts.filter(p => p.url).map(p => p.url);
@@ -170,14 +102,9 @@ async function buildPoolZip(posts) {
     for (const post of posts) {
         if (!post.url) continue;
         try {
-            const res = await axios.get(post.url, {
-                responseType: 'arraybuffer',
-                headers: e621.getHeaders(),
-                timeout: 30000
-            });
+            const res = await global.scraper.e621.getFileBuffer(post.url);
             zip.file(`${post.id}.${post.ext || 'bin'}`, Buffer.from(res.data));
         } catch (error) {
-            console.error('[e621] zip fetch error for post', post.id, error.message);
         }
     }
     return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
@@ -187,12 +114,12 @@ const ratingMap = { s: 'Safe', q: 'Questionable', e: 'Explicit' };
 
 if (!global.e621SearchState) global.e621SearchState = {};
 
-const SEARCH_STATE_TTL = 15 * 60 * 1000;
+const searchStateTtl = 15 * 60 * 1000;
 
 function cleanupSearchState() {
     const now = Date.now();
     for (const key of Object.keys(global.e621SearchState)) {
-        if (now - global.e621SearchState[key].timestamp > SEARCH_STATE_TTL) {
+        if (now - global.e621SearchState[key].timestamp > searchStateTtl) {
             delete global.e621SearchState[key];
         }
     }
@@ -251,89 +178,16 @@ async function sende621Post(conn, chat, post, quoted) {
     return sendTo(conn, chat, { image: { url: post.url }, caption }, quoted);
 }
 
-const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-const VIDEO_EXTS = ['webm', 'mp4'];
-const LABELED_EXTS = ['webm', 'mp4', 'gif'];
-const PREVIEW_CONCURRENCY = 25;
-const GRID_COLUMNS = 3;
-const PREVIEW_UA = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36';
-
+const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+const videoExts = ['webm', 'mp4'];
+const labeledExts = ['webm', 'mp4', 'gif'];
+const previewConcurrency = 25;
+const gridColumns = 3;
 const escapeHtml = (str = '') => String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-
-function createFetcher() {
-    const sessions = new Map();
-    let h2Broken = false;
-
-    const getSession = (origin) => {
-        let session = sessions.get(origin);
-        if (session && !session.closed && !session.destroyed) return session;
-        session = http2.connect(origin);
-        session.on('error', () => sessions.delete(origin));
-        session.on('close', () => sessions.delete(origin));
-        sessions.set(origin, session);
-        return session;
-    };
-
-    const headers = { 'user-agent': PREVIEW_UA, 'accept': 'image/*,*/*', 'referer': 'https://e621.net/' };
-
-    const viaHttp2 = (url) => new Promise((resolve, reject) => {
-        const u = new URL(url);
-        const req = getSession(u.origin).request({ ':path': u.pathname + u.search, ...headers });
-        const chunks = [];
-        let status = 0;
-        let type = '';
-        const timer = setTimeout(() => {
-            req.close(http2.constants.NGHTTP2_CANCEL);
-            reject(new Error('timeout'));
-        }, 15000);
-        req.on('response', (h) => {
-            status = h[':status'];
-            type = h['content-type'] || '';
-        });
-        req.on('data', (c) => chunks.push(c));
-        req.on('end', () => {
-            clearTimeout(timer);
-            if (status === 200) return resolve({ data: Buffer.concat(chunks), type });
-            reject(Object.assign(new Error(`HTTP ${status}`), { response: { status } }));
-        });
-        req.on('error', (e) => {
-            clearTimeout(timer);
-            reject(e);
-        });
-        req.end();
-    });
-
-    const viaAxios = async (url) => {
-        const res = await axios.get(url, {
-            responseType: 'arraybuffer',
-            headers: { 'User-Agent': PREVIEW_UA, 'Accept': 'image/*,*/*', 'Referer': 'https://e621.net/' },
-            timeout: 15000
-        });
-        return { data: res.data, type: res.headers?.['content-type'] || '' };
-    };
-
-    return {
-        async get(url) {
-            if (!h2Broken) {
-                try {
-                    return await viaHttp2(url);
-                } catch (e) {
-                    if (e.response?.status >= 400) throw e;
-                    h2Broken = true;
-                }
-            }
-            return viaAxios(url);
-        },
-        close() {
-            for (const session of sessions.values()) session.close();
-            sessions.clear();
-        }
-    };
-}
 
 async function fetchToFile(url, file, fetcher) {
     const res = await fetcher.get(url);
@@ -349,7 +203,7 @@ async function firstFrame(input, output) {
         args.push('-user_agent', e621.getHeaders()['User-Agent'], '-headers', 'Referer: https://e621.net/\r\n');
     }
     args.push('-i', input, '-frames:v', '1', '-vf', 'scale=320:-2', '-q:v', '5', output);
-    await execFileAsync(FFMPEG_PATH, args, { timeout: 30000 });
+    await execFileAsync(ffmpegPath, args, { timeout: 30000 });
     if (!fs.existsSync(output) || fs.statSync(output).size === 0) throw new Error('empty frame');
 }
 
@@ -364,12 +218,12 @@ async function savePreview(post, dir, idx, fetcher) {
     }
 
     const out = `${base}.jpg`;
-    if ((VIDEO_EXTS.includes(ext) || ext === 'gif') && post.url) {
+    if ((videoExts.includes(ext) || ext === 'gif') && post.url) {
         await firstFrame(post.url, out);
         return { file: out, mime: 'image/jpeg' };
     }
 
-    if (IMAGE_EXTS.includes(ext) && post.url) {
+    if (imageExts.includes(ext) && post.url) {
         const raw = `${base}_raw`;
         try {
             await fetchToFile(post.url, raw, fetcher);
@@ -383,13 +237,13 @@ async function savePreview(post, dir, idx, fetcher) {
     throw new Error('no preview source');
 }
 
-const SHRINK_ABOVE_BYTES = 8 * 1024;
+const shrinkAboveBytes = 8 * 1024;
 
 async function shrinkIfLarge(result, dir, idx) {
-    if (!result || fs.statSync(result.file).size <= SHRINK_ABOVE_BYTES) return result;
+    if (!result || fs.statSync(result.file).size <= shrinkAboveBytes) return result;
     const out = path.join(dir, `e621_${idx}_s.jpg`);
     try {
-        await execFileAsync(FFMPEG_PATH, ['-y', '-i', result.file, '-frames:v', '1', '-vf', 'scale=150:150:force_original_aspect_ratio=increase,crop=150:150', '-q:v', '12', out], { timeout: 20000 });
+        await execFileAsync(ffmpegPath, ['-y', '-i', result.file, '-frames:v', '1', '-vf', 'scale=150:150:force_original_aspect_ratio=increase,crop=150:150', '-q:v', '12', out], { timeout: 20000 });
         if (fs.existsSync(out) && fs.statSync(out).size > 0) {
             fs.unlinkSync(result.file);
             return { file: out, mime: 'image/jpeg' };
@@ -402,7 +256,7 @@ async function downloadPreviews(posts, dir, { shrink = true } = {}) {
     const results = new Array(posts.length).fill(null);
     results.failures = [];
     const failures = results.failures;
-    const fetcher = createFetcher();
+    const fetcher = global.scraper.e621.createFetcher();
     let cursor = 0;
     const worker = async () => {
         while (cursor < posts.length) {
@@ -417,7 +271,7 @@ async function downloadPreviews(posts, dir, { shrink = true } = {}) {
         }
     };
     try {
-        await Promise.all(Array.from({ length: Math.min(PREVIEW_CONCURRENCY, posts.length) }, worker));
+        await Promise.all(Array.from({ length: Math.min(previewConcurrency, posts.length) }, worker));
     } finally {
         fetcher.close();
     }
@@ -428,7 +282,7 @@ function localImgSrc({ file, mime }) {
     return `data:${mime};base64,${fs.readFileSync(file).toString('base64')}`;
 }
 
-const RATING_COLORS = { s: '#34c759', q: '#ffcc00', e: '#ff3b30' };
+const ratingColors = { s: '#34c759', q: '#ffcc00', e: '#ff3b30' };
 
 function formatFav(n) {
     n = Number(n) || 0;
@@ -441,8 +295,8 @@ function buildPreviewHtml(posts, previews) {
         const preview = previews[i];
         const num = i + 1;
         const rating = String(post.rating || '?').toLowerCase();
-        const color = RATING_COLORS[rating] || '#8e8e93';
-        const tag = LABELED_EXTS.includes(ext) ? `<span class="tag">${ext.toUpperCase()}</span>` : '';
+        const color = ratingColors[rating] || '#8e8e93';
+        const tag = labeledExts.includes(ext) ? `<span class="tag">${ext.toUpperCase()}</span>` : '';
         const media = preview
             ? `<img src="${localImgSrc(preview)}" alt="${num}">`
             : `<div class="empty">${escapeHtml((post.ext || '?').toUpperCase())}</div>`;
@@ -466,7 +320,7 @@ function buildPreviewHtml(posts, previews) {
   :root { color-scheme: light dark; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { padding: 8px; font-family: sans-serif; background: transparent; }
-  .grid { display: grid; grid-template-columns: repeat(${GRID_COLUMNS}, 1fr); gap: 8px; }
+  .grid { display: grid; grid-template-columns: repeat(${gridColumns}, 1fr); gap: 8px; }
   .cell { border-radius: 10px; overflow: hidden; background: #1c1c1e; }
   .thumb { position: relative; aspect-ratio: 1 / 1; background: rgba(128,128,128,.2); }
   .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -517,7 +371,7 @@ async function sendGallery(conn, m, { type, keywords, poolId, label, posts, page
                     number: i + 1,
                     src: previews[i] ? localImgSrc(previews[i]) : null,
                     empty: (post.ext || '?').toUpperCase(),
-                    tag: LABELED_EXTS.includes(ext) ? ext.toUpperCase() : '',
+                    tag: labeledExts.includes(ext) ? ext.toUpperCase() : '',
                     footer: ratingFooter(post.rating, post.favCount)
                 };
             });
@@ -602,7 +456,7 @@ let handler = async (m, { conn, text, command, platform }) => {
                 hasNext = poolPage.totalPages > targetPage;
                 label = `*Pool:* ${poolPage.name}`;
             } else {
-                const { posts: fetchedPosts, hasNext: fetchedHasNext } = await searchTagsAccurate(state.keywords, targetPage, pageSizeOf(platform));
+                const { posts: fetchedPosts, hasNext: fetchedHasNext } = await global.scraper.e621.searchTagsAccurate(state.keywords, targetPage, pageSizeOf(platform));
                 if (!fetchedPosts.length) return m.reply(`No results on page ${targetPage}.`);
                 posts = fetchedPosts;
                 hasNext = fetchedHasNext;
@@ -629,15 +483,15 @@ let handler = async (m, { conn, text, command, platform }) => {
 
             await m.react('📦');
             try {
-                const all = await fetchAllPoolPosts(state.poolId);
+                const all = await global.scraper.e621.fetchAllPoolPosts(state.poolId);
                 if (!all || !all.posts.length) throw new Error('Failed to fetch pool contents.');
 
                 let posts = all.posts;
-                const truncated = posts.length > MAX_DLALL_POSTS;
-                if (truncated) posts = posts.slice(0, MAX_DLALL_POSTS);
+                const truncated = posts.length > maxDlallPosts;
+                if (truncated) posts = posts.slice(0, maxDlallPosts);
 
-                const isAllStaticImage = posts.every(p => STATIC_IMAGE_EXTS.includes((p.ext || '').toLowerCase()));
-                const truncNote = truncated ? ` (limited to first ${MAX_DLALL_POSTS})` : '';
+                const isAllStaticImage = posts.every(p => staticImageExts.includes((p.ext || '').toLowerCase()));
+                const truncNote = truncated ? ` (limited to first ${maxDlallPosts})` : '';
 
                 if (isAllStaticImage) {
                     const pdfBuffer = await buildPoolPdf(posts);
@@ -705,7 +559,7 @@ let handler = async (m, { conn, text, command, platform }) => {
             page = Math.max(1, parseInt(pageMatch[2]));
         }
 
-        const { posts, hasNext } = await searchTagsAccurate(keywords, page, pageSizeOf(platform));
+        const { posts, hasNext } = await global.scraper.e621.searchTagsAccurate(keywords, page, pageSizeOf(platform));
         if (!posts.length) return m.reply(`No results found${page > 1 ? ` on page ${page}` : ''}.`);
 
         await sendGallery(conn, m, {
@@ -720,7 +574,6 @@ let handler = async (m, { conn, text, command, platform }) => {
 
     } catch (e) {
         m.error = e;
-        console.error('[e621] Handler error:', e);
         await m.reply(`Error: ${e.message}`);
     }
 };
