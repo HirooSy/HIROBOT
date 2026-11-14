@@ -1027,7 +1027,6 @@ const discordHandlers = commands.map(toHandler).map(h => Object.assign(h, { plat
 const discordPlay = discordHandlers[0]
 
 const waSessions = (global.waMusicSessions ||= new Map())
-const waFooter = 'Music controls'
 
 async function waVoip(conn) {
   if (!conn.voipInstance) {
@@ -1086,7 +1085,7 @@ function waControlRows(session) {
 function sendWaControls(session) {
   return session.conn.sendButton(session.chat, {
     text: 'Select an action to control the music.',
-    footer: waFooter,
+    footer: '',
     nativeFlow: [{ text: 'Music controls', sections: [{ title: 'Controls', rows: waControlRows(session) }] }]
   }, undefined, { onlyShowTo: [session.requester] })
 }

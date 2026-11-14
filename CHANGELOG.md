@@ -9,6 +9,7 @@
 • Refactor handler, connection, database, and simple core utilities
 • Update web server dashboard views and API route handling
 • Update Spotify and Telegram scraper modules along with various group and downloader plugins
+• Fix sequence gap calculation logic in VoIP media session packet receiver and remove unused footer constant in WhatsApp music controls
 
 ________________________
 
