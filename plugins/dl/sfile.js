@@ -71,7 +71,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.help = ['sfile <query|url|reply>'];
 handler.command = /^(sfile)$/i;
-handler.tags = ['tools'];
+handler.tags = ['downloader'];
 handler.limit = 0;
 
 handler.platform = { whatsapp: true, discord: true };

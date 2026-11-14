@@ -14,31 +14,31 @@
 </head>
 <body class="page-index">
 
-<div class="phero">
+<section class="phero">
   <canvas class="phero-bg" id="ghostFibersCanvas"></canvas>
-  <div class="phero-inner">
+  <main class="phero-inner">
     <div class="phero-badge" id="phero-badge">
       <span class="phero-badge-item">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span id="phero-badge-uptime">—</span>
+        <span id="phero-badge-uptime">-</span>
       </span>
       <span class="phero-badge-item">
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span id="phero-badge-users">—</span>
+        <span id="phero-badge-users">-</span>
       </span>
     </div>
 
-    <div class="phero-title">
+    <h1 class="phero-title">
       <span class="accent" id="phero-title-b">Bot</span>
-    </div>
-    <div class="phero-desc" id="phero-desc">
-      Lightweight WhatsApp automation framework with AI agent, VoIP call, and WS Website, Built with Baileys and NodeJS v24+.
-    </div>
+    </h1>
+    <p class="phero-desc" id="phero-desc">
+      A lightweight WhatsApp bot with an AI agent, VoIP call handling and a website. Built with Baileys and Node.js v24+.
+    </p>
 
     <div class="phero-actions">
       <button class="phero-cta" onclick="handleAccountClick()">
         <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Get Started
+        Get started 
       </button>
       <a id="phero-trybot" href="#" target="_blank" rel="noopener" class="phero-link-btn">
         <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -50,28 +50,28 @@
       </a>
     </div>
 
-    <div class="doc-footer">
+    <footer class="doc-footer">
       <a href="#" data-enc="aHR0cHM6Ly9naXRodWIuY29tL2hpcm9vc3k=" id="gh-link" target="_blank" rel="noopener" aria-label="Source">
         <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       </a>
-    </div>
-  </div>
-</div>
+    </footer>
+  </main>
+</section>
 
 <div id="auth-overlay" class="auth-overlay" onclick="closeAuth(event)">
   <div class="container" onclick="event.stopPropagation()">
     <div class="auth-close" onclick="closeAuth()">&times;</div>
 
-    <div class="brand-side">
+    <header class="brand-side">
       <div class="brand-icon">
         <img src="" alt="" draggable="false" oncontextmenu="return false">
       </div>
       <div class="brand-text">
         <div class="brand-title" id="brand-title-modal">&nbsp;</div>
       </div>
-    </div>
+    </header>
 
-    <div class="form-side">
+    <section class="form-side">
       <div class="tabs">
         <div class="tabs-pill">
           <div class="tabs-highlight" id="tabs-highlight"></div>
@@ -81,10 +81,10 @@
       </div>
 
       <div class="panels-wrap" id="panels-wrap">
-      <div id="login-panel" class="form-panel active-panel">
+      <section id="login-panel" class="form-panel active-panel">
         <div id="login-alert" class="alert"></div>
         <div class="input-group panel-card">
-          <label>WhatsApp Number</label>
+          <label for="login-phone">WhatsApp Number</label>
           <div class="input-wrapper">
             <input type="tel" id="login-phone" placeholder="628123456789" inputmode="numeric">
             <svg class="icon-left" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@
           </div>
         </div>
         <div class="input-group panel-card">
-          <label>Password</label>
+          <label for="login-password">Password</label>
           <div class="input-wrapper">
             <input type="password" id="login-password" placeholder="••••••••">
             <svg class="icon-left" viewBox="0 0 24 24">
@@ -108,12 +108,12 @@
         </div>
         <button class="btn panel-card" id="login-btn" onclick="doLogin()">Login</button>
         <button type="button" class="btn panel-card btn-discord discord-login-btn" onclick="startDiscordLogin()" style="display:none">Continue with Discord</button>
-      </div>
+      </section>
 
-      <div id="register-panel" class="form-panel">
+      <section id="register-panel" class="form-panel">
         <div id="register-alert" class="alert"></div>
         <div class="input-group panel-card">
-          <label>WhatsApp Number</label>
+          <label for="register-phone">WhatsApp Number</label>
           <div class="input-wrapper">
             <input type="tel" id="register-phone" placeholder="628123456789" inputmode="numeric">
             <svg class="icon-left" viewBox="0 0 24 24">
@@ -122,7 +122,7 @@
           </div>
         </div>
         <div class="input-group panel-card">
-          <label>Password</label>
+          <label for="register-password">Password</label>
           <div class="input-wrapper">
             <input type="password" id="register-password" placeholder="min. 6 characters">
             <svg class="icon-left" viewBox="0 0 24 24">
@@ -136,7 +136,7 @@
           </div>
         </div>
         <div class="input-group panel-card">
-          <label>Confirm Password</label>
+          <label for="register-password2">Confirm Password</label>
           <div class="input-wrapper">
             <input type="password" id="register-password2" placeholder="••••••••">
             <svg class="icon-left" viewBox="0 0 24 24">
@@ -150,9 +150,9 @@
         </div>
         <button class="btn panel-card" id="register-btn" onclick="doRegister()">Register</button>
         <button type="button" class="btn panel-card btn-discord discord-login-btn" onclick="startDiscordLogin()" style="display:none">Continue with Discord</button>
+      </section>
       </div>
-      </div>
-    </div>
+    </section>
   </div>
 </div>
 
@@ -165,8 +165,8 @@
         <line x1="12" y1="17" x2="12.01" y2="17"></line>
       </svg>
     </div>
-    <div class="modal-title">Number Not Found</div>
-    <div class="modal-body" id="modal-body">This number is not listed in the database</div>
+    <h2 class="modal-title">Number not found</h2>
+    <p class="modal-body" id="modal-body">This number isn't in the database yet</p>
     <button class="modal-close" onclick="closeModal()">OK</button>
   </div>
 </div>
@@ -176,8 +176,8 @@
     <div class="modal-icon-glass">
       <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path><circle cx="12" cy="15.5" r="1.4" fill="var(--text)" stroke="none"></circle></svg>
     </div>
-    <div class="modal-title">Enter Code</div>
-    <div class="modal-body" id="otp-modal-body">We sent a 6-digit code to your WhatsApp. Enter it below.</div>
+    <h2 class="modal-title">Check WhatsApp</h2>
+    <p class="modal-body" id="otp-modal-body">Code sent to your WhatsApp. Type it below.</p>
     <input type="text" id="otp-code" class="otp-input otp-input-glass" placeholder="------" maxlength="6" inputmode="numeric" pattern="[0-9]*">
     <div class="alert" id="otp-alert"></div>
     <button class="modal-close modal-close-glass" id="otp-submit-btn" onclick="submitOtp()" style="width:100%;margin-bottom:10px;">Verify</button>
@@ -219,7 +219,7 @@
   function showModal(message) {
     const modal = document.getElementById('modal');
     const modalBody = document.getElementById('modal-body');
-    modalBody.textContent = message || 'This number is not listed in the database';
+    modalBody.textContent = message || "This number isn't in the database yet";
     modal.classList.add('show');
   }
 
@@ -328,9 +328,9 @@
 
   function friendlyFetchError(err) {
     if (err?.isTunnelInterstitial) {
-      return 'This link needs a one-time confirmation. Open the site URL directly in a new tab, tap "Click to Continue", then come back and try again.'
+      return 'This link needs a one-time confirmation. Open the site in a new tab, tap "Click to Continue", then come back here.'
     }
-    return 'Connection error.'
+    return "Couldn't reach the server."
   }
 
   function showAlert(panel, message, isError = true) {
@@ -460,7 +460,7 @@
     document.getElementById('otp-code').value = ''
     document.getElementById('otp-alert').classList.remove('show')
     document.getElementById('otp-modal-body').textContent =
-      `We sent a 6-digit code to the WhatsApp number ending in ${phone.slice(-4)}. Enter it below.`
+      `Code sent to the WhatsApp number ending in ${phone.slice(-4)}. Type it below.`
     document.getElementById('otp-modal').classList.add('show')
     startOtpResendCooldown()
     setTimeout(() => document.getElementById('otp-code').focus(), 150)
@@ -499,8 +499,9 @@
   async function submitOtp() {
     const code = document.getElementById('otp-code').value.trim()
     const btn = document.getElementById('otp-submit-btn')
+    if (btn.disabled) return
     if (!code || code.length !== 6) {
-      showOtpAlert('Enter the 6-digit code.')
+      showOtpAlert('Type the 6-digit code.')
       return
     }
     btn.disabled = true
@@ -517,7 +518,7 @@
         localStorage.setItem('phone', otpState.phone)
         window.location.href = '/profile'
       } else {
-        showOtpAlert(data.message || 'Verification failed.')
+        showOtpAlert(data.message || "That code didn't work.")
       }
     } catch (err) {
       showOtpAlert(friendlyFetchError(err))
@@ -539,10 +540,10 @@
       const data = await res.json()
       if (data.success) {
         otpState.pendingToken = data.pendingToken
-        showOtpAlert('A new code has been sent.')
+        showOtpAlert('New code sent.')
         startOtpResendCooldown()
       } else {
-        showOtpAlert(data.message || 'Failed to resend code.')
+        showOtpAlert(data.message || "Couldn't resend the code.")
         btn.disabled = false
       }
     } catch (err) {
@@ -554,6 +555,9 @@
   document.getElementById('otp-code')?.addEventListener('keypress', e => {
     if (e.key === 'Enter') submitOtp()
   })
+  document.getElementById('otp-code')?.addEventListener('input', e => {
+    if (/^\d{6}$/.test(e.target.value.trim())) submitOtp()
+  })
 
   async function doLogin() {
     let phone = document.getElementById('login-phone').value.trim()
@@ -563,7 +567,7 @@
     phone = phone.replace(/\D/g, '');
     
     if (!phone || !password) {
-      showAlert('login', 'Please fill in all fields.')
+      showAlert('login', 'Fill in all the fields.')
       return
     }
 
@@ -596,15 +600,15 @@
     phone = phone.replace(/\D/g, '');
 
     if (!phone || !password || !password2) {
-      showAlert('register', 'Please fill in all fields.')
+      showAlert('register', 'Fill in all the fields.')
       return
     }
     if (password !== password2) {
-      showAlert('register', 'Passwords do not match.')
+      showAlert('register', "Passwords don't match.")
       return
     }
     if (password.length < 6) {
-      showAlert('register', 'Password must be at least 6 characters.')
+      showAlert('register', 'Password needs at least 6 characters.')
       return
     }
 
@@ -612,12 +616,12 @@
     try {
       const exists = await checkNumberExists(phone)
       if (!exists) {
-        showModal(`Number ${phone} is not listed in the database.\n\nPlease make sure you have used the bot before registering.`)
+        showModal(`Number ${phone} isn't in the database yet.\n\nMessage the bot once, then come back to register.`)
         setLoading(btn, false)
         return
       }
     } catch (err) {
-      showAlert('register', 'Cannot verify number. Please try again.')
+      showAlert('register', "Couldn't check that number. Try again.")
       setLoading(btn, false)
       return
     }

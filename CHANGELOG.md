@@ -1,3 +1,78 @@
+<h3>14/November/2026</h3>
+<sub>
+
+```diff
+• Add SPR message tool plugin for targeted hidden message delivery
+• Add SoundCloud, Threads, TV schedule, and Text-to-Speech (TTS) scraper modules and plugins
+• Refactor VoIP call engine, media sessions, and relay handlers for enhanced WebRTC call handling
+• Update Discord module payload handling, permissions, text, and voice options
+• Refactor handler, connection, database, and simple core utilities
+• Update web server dashboard views and API route handling
+• Update Spotify and Telegram scraper modules along with various group and downloader plugins
+
+________________________
+
++ Add "lib/scrapers/src/soundcloud.js"
++ Add "lib/scrapers/src/threads.js"
++ Add "lib/scrapers/src/tts.js"
++ Add "lib/scrapers/src/tv.js"
++ Add "plugins/dl/soundcloud.js"
++ Add "plugins/dl/threads.js"
++ Add "plugins/internet/tv.js"
++ Add "plugins/tools/spr.js"
++ Add "plugins/tools/tts.js"
+* Edit "lib/config.js"
+* Edit "lib/main.js"
+* Edit "lib/package/discord/opus.js"
+* Edit "lib/package/discord/payload.js"
+* Edit "lib/package/discord/permissions.js"
+* Edit "lib/package/discord/text.js"
+* Edit "lib/package/discord/voice.js"
+* Edit "lib/package/voip/app-data/WaAppDataStream.js"
+* Edit "lib/package/voip/call/WaCallManager.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/index.js"
+* Edit "lib/package/voip/media/WaAudioEngine.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/package/voip/media/mlow-codec.js"
+* Edit "lib/package/voip/relay/WaManualRelay.js"
+* Edit "lib/package/voip/relay/dtls/handshake.js"
+* Edit "lib/package/voip/relay/relay-ack.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
+* Edit "lib/package/voip/relay/stun.js"
+* Edit "lib/package/voip/types.js"
+* Edit "lib/package/voip/voipClient.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/package/website/views/connect.html"
+* Edit "lib/package/website/views/index.html"
+* Edit "lib/package/website/views/profile.html"
+* Edit "lib/scrapers/src/spotify.js"
+* Edit "lib/scrapers/src/telegram.js"
+* Edit "lib/utils/botsManager.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/database.js"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/plugins.js"
+* Edit "lib/utils/print.js"
+* Edit "lib/utils/reload.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/dl/apkpure.js"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/dl/pinterest.js"
+* Edit "plugins/dl/sfile.js"
+* Edit "plugins/group/ban.js"
+* Edit "plugins/group/kick.js"
+* Edit "plugins/group/nickname.js"
+* Edit "plugins/group/role.js"
+* Edit "plugins/group/slowmode.js"
+* Edit "plugins/main/play.js"
+* Edit "plugins/main/profile.js"
+* Edit "plugins/owner/call.js"
+* Edit "plugins/sticker/telegram.js"
+```
+</sub>
+
 <h3>07/November/2026</h3>
 <sub>
 
@@ -251,70 +326,5 @@ ________________________
 * Edit "lib/utils/converter.js"
 * Edit "plugins/dl/pornhub.js"
 * Edit "plugins/dl/spotify.js"
-```
-</sub>
-
-<h3>31/October/2026</h3>
-<sub>
-
-```diff
-• Refactor and restructure canvas plugin and categories
-• General project refactoring and cleanup of scrapers and utilities for enhanced stability
-
-________________________
-
-+ Add "lib/package/axios.js"
-+ Add "lib/package/canvas.js"
-+ Add "lib/package/cheerio.js"
-- Delete "lib/utils/canvas.js"
-* Edit "lib/package/ai/platform.js"
-* Edit "lib/package/ai/tools/plugin.js"
-* Edit "lib/package/discord/payload.js"
-* Edit "lib/package/voip/index.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/scrapers/src/ai-image.js"
-* Edit "lib/scrapers/src/animein.js"
-* Edit "lib/scrapers/src/apkpure.js"
-* Edit "lib/scrapers/src/brat.js"
-* Edit "lib/scrapers/src/e621.js"
-* Edit "lib/scrapers/src/ezgif.js"
-* Edit "lib/scrapers/src/nano.js"
-* Edit "lib/scrapers/src/pinterest.js"
-* Edit "lib/scrapers/src/tiktok.js"
-* Edit "lib/scrapers/src/x.js"
-* Edit "lib/scrapers/src/ytsearch.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/converter.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/ai/aicheck.js"
-* Edit "plugins/ai/bing.js"
-* Edit "plugins/ai/gpt.js"
-* Edit "plugins/ai/notrack.js"
-* Edit "plugins/ai/pollination.js"
-* Edit "plugins/dl/drive.js"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/dl/mediafire.js"
-* Edit "plugins/dl/pinterest.js"
-* Edit "plugins/dl/pornhub.js"
-* Edit "plugins/dl/shinigami.js"
-* Edit "plugins/dl/spotify.js"
-* Edit "plugins/dl/yt.js"
-* Edit "plugins/group/role.js"
-* Edit "plugins/main/profile.js"
-* Edit "plugins/owner/files.js"
-* Edit "plugins/owner/setpp.js"
-* Edit "plugins/sticker/telegram.js"
-* Edit "plugins/tools/alightmotion.js"
-* Edit "plugins/tools/fetch.js"
-* Edit "plugins/tools/hd.js"
-* Edit "plugins/tools/iloveimg.js"
-* Edit "plugins/tools/reaction.js"
-* Edit "plugins/tools/removebg.js"
-* Edit "plugins/tools/resize.js"
-* Edit "plugins/tools/ssweb.js"
-* Edit "plugins/tools/wink.js"
 ```
 </sub>

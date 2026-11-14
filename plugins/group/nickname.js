@@ -10,7 +10,7 @@ let handler = async (m, { args, isOwner, conn }) => {
   }
   const name = String(args.name || '').trim() || null
   try {
-    await conn.mod.nick(m.guild, target.id, name, `Changed by ${m.member?.user?.username || 'bot'}`)
+    await m.guild.client.rest.patch(`/guilds/${m.guild.id}/members/${target.id}`, { body: { nick: name }, reason: `Changed by ${m.member?.user?.username || 'bot'}` })
     await m.reply(name ? `Nickname of <@${target.id}> set to **${name}**.` : `Nickname of <@${target.id}> reset.`)
   } catch {
     await m.reply({ ephemeral: true, content: 'I could not change that nickname, check my permissions.' })

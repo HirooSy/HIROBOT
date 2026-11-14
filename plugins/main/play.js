@@ -7,37 +7,37 @@ import { spawnSync } from 'child_process'
 import chalk from '../../lib/utils/color.js'
 import { ButtonStyle, ComponentType } from '../../lib/package/discord/constants.js'
 
-const EMBED_COLOR = 0x5865f2
-const MAX_QUEUE = 100
-const IDLE_LEAVE_MS = 2 * 60 * 1000
-const ALONE_LEAVE_MS = 60 * 1000
-const CONTROLS_TTL_MS = 6 * 60 * 60 * 1000
-const DEFAULT_VOLUME = 200
-const MIN_VOLUME = 1
-const MAX_VOLUME = 200
-const HISTORY_LIMIT = 50
-const PAST_LIMIT = 50
-const RESTART_THRESHOLD_MS = 3000
-const AUTOPLAY_CANDIDATES = 10
-const AUTOPLAY_MIN_SECONDS = 30
-const AUTOPLAY_MAX_SECONDS = 15 * 60
-const AUTOPLAY_MAX_FAILURES = 3
-const PROBE_TIMEOUT_MS = 15000
-const EPHEMERAL = 64
-const PREV_LABEL = '\u25C0\uFE0E'
-const NEXT_LABEL = '\u25B6\uFE0E'
-const LOOP_LABEL = '\u27F3'
-const YOUTUBE_ID = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|live\/|shorts\/)|[?&]v=)([a-zA-Z0-9_-]{11})/
+const embedColor = 0x5865f2
+const maxQueue = 100
+const idleLeaveMs = 2 * 60 * 1000
+const aloneLeaveMs = 60 * 1000
+const controlsTtlMs = 6 * 60 * 60 * 1000
+const defaultVolume = 200
+const minVolume = 1
+const maxVolume = 200
+const historyLimit = 50
+const pastLimit = 50
+const restartThresholdMs = 3000
+const autoplayCandidates = 10
+const autoplayMinSeconds = 30
+const autoplayMaxSeconds = 15 * 60
+const autoplayMaxFailures = 3
+const probeTimeoutMs = 15000
+const ephemeralFlag = 64
+const prevLabel = '\u25C0\uFE0E'
+const nextLabel = '\u25B6\uFE0E'
+const loopLabel = '\u27F3'
+const youtubeId = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|live\/|shorts\/)|[?&]v=)([a-zA-Z0-9_-]{11})/
 
-const TMP_DIR = path.join(os.tmpdir(), 'hirobot-music')
-const MAX_TRACK_BYTES = 80 * 1024 * 1024
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0'
+const tmpDir = path.join(os.tmpdir(), 'hirobot-music')
+const maxTrackBytes = 80 * 1024 * 1024
+const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0'
 const sessions = (global.discordMusicSessions ||= new Map())
 let ffmpegOk = null
 
 if (!global.discordMusicReady) {
   global.discordMusicReady = true
-  fs.rmSync(TMP_DIR, { recursive: true, force: true })
+  fs.rmSync(tmpDir, { recursive: true, force: true })
 }
 
 class MusicError extends Error {}
@@ -60,27 +60,27 @@ function trackLine(track) {
 }
 
 function embed(data) {
-  return { color: EMBED_COLOR, ...data }
+  return { color: embedColor, ...data }
 }
 
 function footerOf(session) {
   return { text: `Volume ${Math.round(session.volume * 100)}% • Loop ${session.loop} • Autoplay ${session.autoplay ? 'on' : 'off'}` }
 }
 
-function tempFile() {
-  fs.mkdirSync(TMP_DIR, { recursive: true })
-  return path.join(TMP_DIR, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`)
+function tempFile(extension = 'mp3') {
+  fs.mkdirSync(tmpDir, { recursive: true })
+  return path.join(tmpDir, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`)
 }
 
 async function downloadToFile(url, file) {
-  const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT, Accept: '*/*' }, redirect: 'follow' })
+  const res = await fetch(url, { headers: { 'User-Agent': userAgent, Accept: '*/*' }, redirect: 'follow' })
   if (!res.ok || !res.body) throw new MusicError(`Audio source returned ${res.status}`)
 
   let size = 0
   const counter = new Transform({
     transform(chunk, _encoding, callback) {
       size += chunk.length
-      if (size > MAX_TRACK_BYTES) return callback(new MusicError('Track is too large'))
+      if (size > maxTrackBytes) return callback(new MusicError('Track is too large'))
       callback(null, chunk)
     }
   })
@@ -89,9 +89,9 @@ async function downloadToFile(url, file) {
 
 async function probeStream(url) {
   const res = await fetch(url, {
-    headers: { 'User-Agent': USER_AGENT, Range: 'bytes=0-1' },
+    headers: { 'User-Agent': userAgent, Range: 'bytes=0-1' },
     redirect: 'follow',
-    signal: AbortSignal.timeout(PROBE_TIMEOUT_MS)
+    signal: AbortSignal.timeout(probeTimeoutMs)
   })
   try {
     await res.body?.cancel()
@@ -174,13 +174,39 @@ function makeTrack(info, requestedBy, { autoplay = false } = {}) {
   return track
 }
 
+function toVideo(song) {
+  return {
+    videoId: song.videoId,
+    url: `https://www.youtube.com/watch?v=${song.videoId}`,
+    title: song.title,
+    author: song.subtitle?.split(/\s*•\s*/)[0] || '',
+    thumbnail: song.thumbnail,
+    timestamp: song.duration || '',
+    seconds: song.duration?.split(':').reduce((total, part) => total * 60 + Number(part), 0) || 0
+  }
+}
+
+async function musicSearch(query) {
+  const search = global.scraper?.spotify?.ytmSearch
+  if (typeof search !== 'function') throw new MusicError('Music search is not available.')
+  const songs = await search(query)
+  return songs.map(toVideo)
+}
+
+async function relatedSongs(videoId) {
+  const radio = global.scraper?.spotify?.ytmRadio
+  if (typeof radio !== 'function') return []
+  const songs = await radio(videoId).catch(() => [])
+  return songs.map(toVideo)
+}
+
 async function resolveTrack(query, requestedBy) {
   const yts = global.scraper?.ytsearch?.search
   if (typeof yts !== 'function') throw new MusicError('YouTube search is not available.')
   const link = /https?:\/\/\S+/i.exec(query)?.[0]
 
   if (link) {
-    const id = YOUTUBE_ID.exec(link)?.[1]
+    const id = youtubeId.exec(link)?.[1]
     if (!id) {
       const name = decodeURIComponent(path.basename(new URL(link).pathname)) || link
       return makeTrack({ title: name, url: link, direct: true }, requestedBy)
@@ -195,32 +221,31 @@ async function resolveTrack(query, requestedBy) {
     }, requestedBy)
   }
 
-  const result = await yts(query).catch(() => null)
-  const video = result?.videos?.[0]
-  if (!video) throw new MusicError('No results found.')
+  const song = (await musicSearch(query).catch(() => []))[0]
+  if (!song) throw new MusicError('No results found.')
   return makeTrack({
-    title: video.title,
-    url: video.url,
-    duration: video.timestamp,
-    thumbnail: video.thumbnail || video.image,
-    author: video.author?.name
+    title: song.title,
+    url: song.url,
+    duration: song.timestamp,
+    thumbnail: song.thumbnail,
+    author: song.author
   }, requestedBy)
 }
 
 function trackId(track) {
-  return YOUTUBE_ID.exec(track.url || '')?.[1] || track.url || ''
+  return youtubeId.exec(track.url || '')?.[1] || track.url || ''
 }
 
 function rememberTrack(session, track) {
   const id = trackId(track)
   if (!id) return
   session.history.push(id)
-  if (session.history.length > HISTORY_LIMIT) session.history.shift()
+  if (session.history.length > historyLimit) session.history.shift()
 }
 
 function rememberPast(session, track) {
   session.past.push(track)
-  if (session.past.length > PAST_LIMIT) session.past.shift()
+  if (session.past.length > pastLimit) session.past.shift()
 }
 
 function cleanSeed(text) {
@@ -232,33 +257,54 @@ function cleanSeed(text) {
     .trim()
 }
 
-function autoplayQueries(seed) {
-  const artist = cleanSeed(String(seed.author || '').replace(/\s*-?\s*(VEVO|Topic)$/i, ''))
-  const title = cleanSeed(seed.title)
-  const queries = []
-  if (artist) queries.push(`${artist} songs`)
-  if (title) queries.push(title)
-  return queries
+function freshVideos(session, videos) {
+  return videos
+    .filter(video => video.videoId
+      && !session.history.includes(video.videoId)
+      && (!video.seconds || (video.seconds >= autoplayMinSeconds && video.seconds <= autoplayMaxSeconds)))
+    .slice(0, autoplayCandidates)
+}
+
+function pickRandom(pool) {
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
+async function seedArtist(seed) {
+  if (seed.author) return seed.author
+  const videoId = youtubeId.exec(seed.url || '')?.[1]
+  const search = global.scraper?.ytsearch?.search
+  if (!videoId || typeof search !== 'function') return ''
+  const meta = await search({ videoId }).catch(() => null)
+  return meta?.author?.name || ''
+}
+
+function shuffledCopy(items) {
+  const copy = [...items]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
+}
+
+async function autoplayPool(session, seed) {
+  const videoId = youtubeId.exec(seed.url || '')?.[1]
+  if (videoId) {
+    const related = freshVideos(session, await relatedSongs(videoId))
+    if (related.length) return related
+  }
+  const artist = cleanSeed(String(await seedArtist(seed)).replace(/\s*-?\s*(VEVO|Topic)$/i, ''))
+  if (!artist) return []
+  return freshVideos(session, await musicSearch(`${artist} songs`).catch(() => []))
 }
 
 async function findAutoplayVideo(session, seed) {
-  const search = global.scraper?.ytsearch?.search
-  if (typeof search !== 'function') return null
-  for (const query of autoplayQueries(seed)) {
-    const result = await search(query).catch(() => null)
-    const pool = (result?.videos || [])
-      .filter(video => video?.videoId && video.url
-        && !session.history.includes(video.videoId)
-        && video.seconds >= AUTOPLAY_MIN_SECONDS
-        && video.seconds <= AUTOPLAY_MAX_SECONDS)
-      .slice(0, AUTOPLAY_CANDIDATES)
-    if (pool.length) return pool[Math.floor(Math.random() * pool.length)]
-  }
-  return null
+  const pool = await autoplayPool(session, seed)
+  return pool.length ? pickRandom(pool) : null
 }
 
 async function autoplayNext(session, seed) {
-  if (!session.autoplay || seed.direct || session.autoplayFailures >= AUTOPLAY_MAX_FAILURES) return null
+  if (!session.autoplay || seed.direct || session.autoplayFailures >= autoplayMaxFailures) return null
   const video = await findAutoplayVideo(session, seed).catch(() => null)
   if (!video) return null
   return makeTrack({
@@ -266,7 +312,7 @@ async function autoplayNext(session, seed) {
     url: video.url,
     duration: video.timestamp,
     thumbnail: video.thumbnail || video.image,
-    author: video.author?.name
+    author: video.author
   }, null, { autoplay: true })
 }
 
@@ -366,15 +412,15 @@ function controlsRows(session) {
     type: ComponentType.Button,
     style,
     label,
-    custom_id: `hb:b:${session.registerAction(text, { shared: true, ttl: CONTROLS_TTL_MS })}`
+    custom_id: `hb:b:${session.registerAction(text, { shared: true, ttl: controlsTtlMs })}`
   })
   return [{
     type: ComponentType.ActionRow,
     components: [
-      button(PREV_LABEL, '.previous'),
+      button(prevLabel, '.previous'),
       button('Pause', '.toggle'),
-      button(NEXT_LABEL, '.skip'),
-      button(LOOP_LABEL, '.loop'),
+      button(nextLabel, '.skip'),
+      button(loopLabel, '.loop'),
       button('Stop', '.stop', ButtonStyle.Danger)
     ]
   }]
@@ -428,7 +474,7 @@ async function playTrack(session, track, { silent = false, rethrow = false } = {
   try {
     const data = await track.load()
     if (session.current !== track || sessions.get(session.guildId) !== session) return false
-    session.player.play(data.file || data.url, { volume: session.volume, userAgent: data.file ? null : USER_AGENT })
+    session.player.play(data.file || data.url, { volume: session.volume, userAgent: data.file ? null : userAgent })
     session.lastTrack = track
     rememberTrack(session, track)
     if (track.autoplay) session.autoplayFailures = 0
@@ -490,7 +536,7 @@ async function advance(session, { forceNext = false } = {}) {
 
   if (!next) {
     session.current = null
-    scheduleLeave(session, IDLE_LEAVE_MS, 'Left the voice channel because the queue has been empty for a while.')
+    scheduleLeave(session, idleLeaveMs, 'Left the voice channel because the queue has been empty for a while.')
     return
   }
   await playTrack(session, next, { silent: next === finished })
@@ -519,7 +565,7 @@ async function createSession(ctx, voiceChannel) {
     jumpTo: null,
     pendingAuto: null,
     history: [],
-    volume: DEFAULT_VOLUME / 100,
+    volume: defaultVolume / 100,
     loop: 'off',
     autoplay: true,
     autoplayFailures: 0,
@@ -575,7 +621,7 @@ async function guard(ctx, fn) {
     return await fn()
   } catch (err) {
     if (err instanceof MusicError) {
-      if (isButton(ctx)) await ctx.interaction.followUp({ content: err.message, flags: EPHEMERAL }).catch(() => {})
+      if (isButton(ctx)) await ctx.interaction.followUp({ content: err.message, flags: ephemeralFlag }).catch(() => {})
       else await ctx.reply({ ephemeral: true, content: err.message }).catch(() => {})
       ctx.failed = true
       return null
@@ -597,7 +643,7 @@ function play(ctx, query) {
     if (existing && existing.channelId !== channel.id && (existing.current || existing.queue.length)) {
       throw new MusicError(`I am already playing in <#${existing.channelId}>.`)
     }
-    if (existing && existing.queue.length >= MAX_QUEUE) throw new MusicError(`The queue is full (${MAX_QUEUE} tracks).`)
+    if (existing && existing.queue.length >= maxQueue) throw new MusicError(`The queue is full (${maxQueue} tracks).`)
 
     const track = await resolveTrack(text, ctx.discordUser)
     if (!existing?.current) track.load().catch(() => {})
@@ -658,7 +704,7 @@ function previous(ctx) {
     const session = requireSession(ctx)
     const current = session.current
     if (!current || !session.player.playing) throw new MusicError('Nothing is playing right now.')
-    const restart = session.player.position > RESTART_THRESHOLD_MS || !session.past.length
+    const restart = session.player.position > restartThresholdMs || !session.past.length
     const prev = restart ? null : session.past.pop()
     if (!prev) {
       await playTrack(session, current, { silent: true })
@@ -761,8 +807,8 @@ function setVolume(ctx, value) {
       return say(ctx, `Volume is ${Math.round(session.volume * 100)}%.`)
     }
     const percent = Number(value)
-    if (!Number.isFinite(percent) || percent < MIN_VOLUME || percent > MAX_VOLUME) {
-      throw new MusicError(`Volume must be between ${MIN_VOLUME} and ${MAX_VOLUME}.`)
+    if (!Number.isFinite(percent) || percent < minVolume || percent > maxVolume) {
+      throw new MusicError(`Volume must be between ${minVolume} and ${maxVolume}.`)
     }
     session.volume = Math.round(percent) / 100
     session.player.setVolume(session.volume)
@@ -832,7 +878,7 @@ function join(ctx) {
     if (existing && (existing.current || existing.queue.length)) throw new MusicError(`I am already playing in <#${existing.channelId}>.`)
     if (existing) destroySession(ctx.guild.id)
     const session = await createSession(ctx, channel)
-    scheduleLeave(session, IDLE_LEAVE_MS, 'Left the voice channel because nothing was played.')
+    scheduleLeave(session, idleLeaveMs, 'Left the voice channel because nothing was played.')
     await say(ctx, `Joined <#${channel.id}>.`)
   })
 }
@@ -868,7 +914,7 @@ function handleVoiceState(oldState, newState) {
           notify(session, { content: 'Left the voice channel because everyone left.' })
           destroySession(guildId)
         }
-      }, ALONE_LEAVE_MS)
+      }, aloneLeaveMs)
       session.aloneTimer.unref?.()
     }
   } else if (session.aloneTimer) {
@@ -980,30 +1026,371 @@ const toHandler = spec => Object.assign(async (m, extra) => spec.run(compat(m, e
 const discordHandlers = commands.map(toHandler).map(h => Object.assign(h, { platform: { whatsapp: false, discord: true } }))
 const discordPlay = discordHandlers[0]
 
-const waSearch = global.scraper.ytsearch.search
-const waYtdl = global.scraper.ytdl.ytdl
+const waSessions = (global.waMusicSessions ||= new Map())
+const waFooter = 'Music controls'
+
+async function waVoip(conn) {
+  if (!conn.voipInstance) {
+    const { default: Voip } = await import('hiro/voip')
+    conn.voipInstance ||= new Voip(conn, { voipLogLevel: 'silent' })
+  }
+  return conn.voipInstance
+}
+
+function removeFile(file) {
+  if (file) fs.promises.unlink(file).catch(() => {})
+}
+
+function waIsConnected(session) {
+  return session.phase !== 'calling' && session.phase !== 'ringing'
+}
+
+function waRequireConnected(session) {
+  if (!waIsConnected(session)) throw 'Wait until the call is connected.'
+}
+
+function waStatusText(session) {
+  if (session.phase === 'closed') return `Call ended (${session.endReason})`
+  if (session.phase === 'reconnecting') return session.reconnect?.attempt ? `Reconnecting (${session.reconnect.attempt}/${session.reconnect.max})...` : 'Reconnecting...'
+  if (session.phase === 'finished') return 'Queue finished'
+  if (session.phase === 'paused') return 'Paused'
+  if (session.phase === 'playing') return 'Playing'
+  return session.phase === 'ringing' ? 'Ringing...' : 'Calling...'
+}
+
+function waControlsText(session) {
+  const track = session.tracks[Math.max(session.index, 0)]
+  const details = []
+  if (track?.duration) details.push(`Duration ${track.duration}`)
+  if (track?.autoplay) details.push('Autoplay')
+  details.push(`Track ${Math.max(session.index, 0) + 1}/${session.tracks.length}`)
+  details.push(`Loop ${session.loop ? 'on' : 'off'}`)
+  return [
+    track ? `🎶 *${track.title}*` : '🎶 *Preparing...*',
+    details.join(' • '),
+    `Status: ${waStatusText(session)}`
+  ].join('\n')
+}
+
+function waControlRows(session) {
+  const prefix = session.prefix || ''
+  return [
+    { title: `${prevLabel} Previous`, description: 'Play the previous song', id: `${prefix}prev` },
+    { title: 'Pause / Resume', description: 'Pause or resume the music', id: `${prefix}pause` },
+    { title: `${nextLabel} Next`, description: 'Skip to the next song', id: `${prefix}next` },
+    { title: `${loopLabel} Loop`, description: 'Turn loop on or off', id: `${prefix}loop` },
+    { title: 'Stop', description: 'Stop the music and leave the call', id: `${prefix}stop` }
+  ]
+}
+
+function sendWaControls(session) {
+  return session.conn.sendButton(session.chat, {
+    text: 'Select an action to control the music.',
+    footer: waFooter,
+    nativeFlow: [{ text: 'Music controls', sections: [{ title: 'Controls', rows: waControlRows(session) }] }]
+  }, undefined, { onlyShowTo: [session.requester] })
+}
+
+async function editWaStatus(session) {
+  if (!session.statusKey) return
+  const text = waControlsText(session)
+  try {
+    await session.conn.sendMessage(session.chat, { text, edit: session.statusKey })
+  } catch {
+    const sent = await session.conn.sendMessage(session.chat, { text })
+    session.statusKey = sent?.key || session.statusKey
+  }
+}
+
+function refreshWaStatus(session) {
+  session.editChain = session.editChain.then(() => editWaStatus(session)).catch(() => {})
+  if (session.phase === 'playing' && session.statusKey && !session.controlsSent) {
+    session.controlsSent = true
+    session.editChain = session.editChain.then(() => sendWaControls(session)).catch(() => { session.controlsSent = false })
+  }
+}
+
+function scheduleWaIdle(session) {
+  clearIdle(session)
+  session.idleTimer = setTimeout(() => {
+    session.endReason = 'queue empty for a while'
+    session.call.hangup().catch(() => {})
+  }, idleLeaveMs)
+  session.idleTimer.unref?.()
+}
+
+function finishWaSession(session, reason) {
+  if (waSessions.get(session.chat) !== session) return
+  waSessions.delete(session.chat)
+  clearIdle(session)
+  session.phase = 'closed'
+  session.endReason = session.endReason || reason || 'ended'
+  for (const track of session.tracks) removeFile(track.file)
+  dropWaAuto(session)
+  refreshWaStatus(session)
+}
+
+async function startWaSession(m, { conn, usedPrefix }, track) {
+  let call
+  try {
+    call = await (await waVoip(conn)).call(m.sender, track.media, undefined, { autoEndCall: false })
+  } catch (err) {
+    removeFile(track.file)
+    throw `Failed to place call: ${err?.message || err}`
+  }
+  const session = {
+    conn,
+    chat: m.chat,
+    requester: m.sender,
+    prefix: usedPrefix,
+    call,
+    tracks: [track],
+    index: -1,
+    loop: false,
+    phase: 'calling',
+    editChain: Promise.resolve(),
+    statusKey: null,
+    controlsSent: false,
+    reconnect: null,
+    resumePhase: null,
+    history: [],
+    autoplay: true,
+    autoplaying: false,
+    autoplayFailures: 0,
+    pendingWaAuto: null,
+    idleTimer: null,
+    endReason: ''
+  }
+  call.on('ringing', () => {
+    if (session.phase !== 'calling') return
+    session.phase = 'ringing'
+    refreshWaStatus(session)
+  })
+  call.on('connected', () => {
+    session.phase = 'playing'
+    refreshWaStatus(session)
+  })
+  call.on('item', ({ index }) => {
+    session.index = index
+    session.phase = 'playing'
+    clearIdle(session)
+    rememberTrack(session, session.tracks[index])
+    prefetchWaAutoplay(session)
+    refreshWaStatus(session)
+  })
+  call.on('reconnecting', detail => {
+    if (session.phase !== 'reconnecting') session.resumePhase = session.phase
+    session.phase = 'reconnecting'
+    session.reconnect = detail
+    refreshWaStatus(session)
+  })
+  call.on('reconnected', () => {
+    if (session.phase !== 'reconnecting') return
+    session.phase = session.resumePhase || 'playing'
+    session.resumePhase = null
+    session.reconnect = null
+    refreshWaStatus(session)
+  })
+  call.on('silent', silenced => {
+    session.phase = silenced ? 'paused' : 'playing'
+    refreshWaStatus(session)
+  })
+  call.on('playlist_ended', () => {
+    session.phase = 'finished'
+    scheduleWaIdle(session)
+    refreshWaStatus(session)
+    waAutoplayAppend(session).catch(() => {})
+  })
+  call.on('ended', reason => finishWaSession(session, reason))
+  call.on('error', err => {
+    conn.sendMessage(session.chat, { text: `Music error: ${err?.message || err}` }).catch(() => {})
+  })
+  waSessions.set(m.chat, session)
+  try {
+    const sent = await conn.sendMessage(m.chat, { text: waControlsText(session) }, { quoted: m })
+    session.statusKey = sent?.key || null
+  } catch (err) {
+    waSessions.delete(m.chat)
+    call.hangup().catch(() => {})
+    removeFile(track.file)
+    throw `Failed to send the music status: ${err?.message || err}`
+  }
+  refreshWaStatus(session)
+}
+
+async function waFileTrack(input, isVideo) {
+  const data = await global.scraper.ytdl.ytdl(isVideo ? 'video' : 'audio', input)
+  const file = tempFile(isVideo ? 'mp4' : 'mp3')
+  await fs.promises.writeFile(file, data.buffer)
+  return {
+    title: String(data.title || 'Unknown'),
+    duration: data.duration || '',
+    file,
+    url: input,
+    autoplay: false,
+    media: isVideo ? { video: file, autoAdvance: true } : file
+  }
+}
+
+async function waStreamTrack(input, { autoplay = false } = {}) {
+  const scraper = global.scraper?.ytdl
+  if (typeof scraper?.ytdlUrl !== 'function') return null
+  const info = await scraper.ytdlUrl('audio', input).catch(() => null)
+  if (!info?.url) return null
+  if (!(await probeStream(info.url).catch(() => false))) return null
+  return {
+    title: String(info.title || 'Unknown'),
+    duration: '',
+    file: null,
+    url: input,
+    autoplay,
+    media: { audio: info.url }
+  }
+}
+
+async function waAutoplayTrack(url) {
+  const stream = await waStreamTrack(url, { autoplay: true }).catch(() => null)
+  if (stream) return stream
+  const file = await waFileTrack(url, false).catch(() => null)
+  return file ? { ...file, autoplay: true } : null
+}
+
+async function waResolveAutoplay(session, seed) {
+  const pool = await autoplayPool(session, seed).catch(() => [])
+  let track = null
+  for (const video of shuffledCopy(pool).slice(0, 3)) {
+    track = await waAutoplayTrack(video.url)
+    if (track) break
+  }
+  return { track, tried: pool.length > 0 }
+}
+
+function dropWaAuto(session) {
+  const pending = session.pendingWaAuto
+  session.pendingWaAuto = null
+  pending?.then(result => removeFile(result?.track?.file)).catch(() => {})
+}
+
+function prefetchWaAutoplay(session) {
+  dropWaAuto(session)
+  if (!session.autoplay || session.loop || session.autoplayFailures >= autoplayMaxFailures) return
+  if (session.tracks.length > session.index + 1) return
+  const seed = session.tracks[Math.max(session.index, 0)]
+  if (!seed) return
+  session.pendingWaAuto = waResolveAutoplay(session, seed).catch(() => ({ track: null, tried: false }))
+}
+
+async function waAutoplayAppend(session) {
+  if (session.autoplaying || !session.autoplay || session.autoplayFailures >= autoplayMaxFailures) return false
+  session.autoplaying = true
+  try {
+    const count = session.tracks.length
+    const pending = session.pendingWaAuto
+    session.pendingWaAuto = null
+    const { track, tried } = pending
+      ? await pending
+      : await waResolveAutoplay(session, session.tracks[Math.max(session.index, 0)])
+    if (!track) {
+      if (tried) session.autoplayFailures += 1
+      return false
+    }
+    if (waSessions.get(session.chat) !== session || session.tracks.length !== count) {
+      removeFile(track.file)
+      return false
+    }
+    session.tracks.push(track)
+    const appended = await session.call.append(track.media).catch(() => false)
+    if (!appended) {
+      session.tracks.pop()
+      removeFile(track.file)
+      session.autoplayFailures += 1
+      return false
+    }
+    session.autoplayFailures = 0
+    return true
+  } finally {
+    session.autoplaying = false
+  }
+}
+
+async function waSearchInput(query, isVideo) {
+  if (isVideo) return (await global.scraper.ytsearch.search(query)).videos[0]?.url
+  return (await musicSearch(query))[0]?.url
+}
 
 async function waPlay(m, { conn, text, usedPrefix, command }) {
   if (!text) throw `- [PlayAudio] ${usedPrefix + command} music\n- [PlayVideo] ${usedPrefix + command} video_name --video`
   const link = String(text).match(/https?:\/\/\S+/i)
   const isVideo = /--video/.test(text)
   const query = String(text).replace(/--video/g, '').trim()
-  const input = link ? link[0] : (await waSearch(query)).videos[0].url
+  const input = link ? link[0] : await waSearchInput(query, isVideo)
+  if (!input) throw 'No results found.'
   m.react('🎶')
 
-  const data = await waYtdl(isVideo ? 'video' : 'audio', input)
-  const description = `\`${data.title}\`\n\n- *Duration:* ${data.duration}\n- *Views:* ${(data.views).toSimpleNumber ? data.views.toSimpleNumber() : data.views}\n- *Url:* ${input.replace('https://', '')}`
-  let thumbBuffer = null
-  if (data.thumbnail) {
-    try { thumbBuffer = await conn.resize(await (await fetch(data.thumbnail)).buffer(), 150, 150) } catch (_) {}
+  const track = (isVideo ? null : await waStreamTrack(input)) || await waFileTrack(input, isVideo)
+
+  const session = waSessions.get(m.chat)
+  if (!session) return startWaSession(m, { conn, usedPrefix }, track)
+  if (session.tracks.length >= maxQueue) {
+    removeFile(track.file)
+    throw `The queue is full (${maxQueue} tracks).`
   }
-  conn.reply(m.chat, description, { key: { remoteJid: '0@s.whatsapp.net' }, message: { orderMessage: { orderId: '780642630945098', thumbnail: thumbBuffer, itemCount: 666, status: 1, surface: 1, message: 'YOUTUBE DOWNLOADER', orderTitle: 'Channel.', sellerJid: '6283143393763@s.whatsapp.net', token: 'AR6pyJ/fz5vRFxggGxURL7EA/vCtjKrhcJSNhHqX1iJh8A==', totalAmount1000: '0', totalCurrencyCode: 'IDR' } } })
-  await conn.sendMessage(m.chat, {
-    [isVideo ? 'video' : 'audio']: data.buffer,
-    mimetype: data.mime,
-    asDocument: db.data.chats[m.chat].useDocument,
-    fileName: isVideo ? 'YouTube.mp4' : 'YouTube.mp3'
-  }, {})
+  session.tracks.push(track)
+  try {
+    await session.call.append(track.media)
+  } catch (err) {
+    session.tracks.pop()
+    removeFile(track.file)
+    throw `Failed to queue the song: ${err?.message || err}`
+  }
+  refreshWaStatus(session)
+}
+
+async function waControl(m, isOwner, run) {
+  const session = waSessions.get(m.chat)
+  if (!session) throw 'Nothing is playing right now.'
+  if (m.sender !== session.requester && !isOwner) throw 'Only the person who started the music can control it.'
+  await run(session)
+}
+
+function waControlAction(command, run) {
+  return Object.assign((m, { isOwner }) => waControl(m, isOwner, run), {
+    command: [command],
+    tags: ['Music'],
+    help: [],
+    hidden: true,
+    platform: { whatsapp: true, discord: false }
+  })
+}
+
+function waPrevious(session) {
+  waRequireConnected(session)
+  return session.call.jump(Math.max(0, session.index - 1))
+}
+
+async function waNext(session) {
+  waRequireConnected(session)
+  const target = session.index + 1 < session.tracks.length ? session.index + 1 : session.loop ? 0 : -1
+  if (target >= 0) return session.call.jump(target)
+  const finished = session.phase === 'finished'
+  if (!(await waAutoplayAppend(session))) throw 'There is no next song in the queue.'
+  if (!finished) await session.call.jump(session.tracks.length - 1)
+}
+
+function waPause(session) {
+  waRequireConnected(session)
+  return session.call.silent()
+}
+
+function waLoop(session) {
+  session.loop = !session.loop
+  session.call.setLoop(session.loop)
+  refreshWaStatus(session)
+}
+
+function waStop(session) {
+  session.endReason = 'stopped'
+  return session.call.hangup()
 }
 
 const playHandler = Object.assign(async (m, extra) => {
@@ -1021,4 +1408,12 @@ const playHandler = Object.assign(async (m, extra) => {
   platform: { whatsapp: true, discord: true }
 })
 
-export default [playHandler, ...discordHandlers.slice(1)]
+export default [
+  playHandler,
+  ...discordHandlers.slice(1),
+  waControlAction('prev', waPrevious),
+  waControlAction('next', waNext),
+  waControlAction('pause', waPause),
+  waControlAction('loop', waLoop),
+  waControlAction('stop', waStop)
+]

@@ -17,9 +17,9 @@ let handler = async (m, { args, isOwner, conn, command }) => {
     const days = Math.min(Math.max(Number(args.days) || 0, 0), 7)
     const reason = args.reason ? String(args.reason) : null
     try {
-      await conn.mod.ban(m.guild, userId, {
-        reason: reason || `Banned by ${m.member?.user?.username || 'bot'}`,
-        deleteSeconds: days * 86400
+      await m.guild.client.rest.put(`/guilds/${m.guild.id}/bans/${userId}`, {
+        body: { delete_message_seconds: days * 86400 },
+        reason: reason || `Banned by ${m.member?.user?.username || 'bot'}`
       })
       await m.reply(`<@${userId}> was banned.${reason ? ` Reason: ${reason}` : ''}`)
     } catch {
@@ -29,7 +29,7 @@ let handler = async (m, { args, isOwner, conn, command }) => {
     const id = conn.find.id(args.userid)
     if (!id) return m.reply({ ephemeral: true, content: 'Give me a user ID or a mention.' })
     try {
-      await conn.mod.unban(m.guild, id, `Unbanned by ${m.member?.user?.username || 'bot'}`)
+      await m.guild.client.rest.delete(`/guilds/${m.guild.id}/bans/${id}`, { reason: `Unbanned by ${m.member?.user?.username || 'bot'}` })
       await m.reply(`<@${id}> was unbanned.`)
     } catch {
       await m.reply({ ephemeral: true, content: 'That user is not banned, or I could not unban them.' })

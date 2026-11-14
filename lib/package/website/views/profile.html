@@ -226,7 +226,7 @@
                   </div>
                 </div>
               </div>
-              <div class="subbot-note" id="subbot-connect-note" style="display:none">Subbot is available to premium users only.</div>
+              <div class="subbot-note" id="subbot-connect-note" style="display:none">Subbots are for premium users only.</div>
               <button class="btn" id="subbot-connect-btn" onclick="subbotConnect()">Connect</button>
             </div>
             <div id="subbot-pending" style="display:none">
@@ -356,7 +356,7 @@
                   <div class="subbot-plugin-head">
                     <div>
                       <div class="subbot-row-title">Custom plugins</div>
-                      <div class="subbot-row-sub">Run only for this subbot. Every file is reviewed by AI before it is saved.</div>
+                      <div class="subbot-row-sub">Runs only on this subbot. Each file gets an AI check before it's saved.</div>
                     </div>
                     <span class="subbot-slots" id="subbot-plugin-count">0</span>
                   </div>
@@ -504,7 +504,7 @@
         <div class="card-title">Gift Code Manager</div>
         <div class="text-xs text-muted2 mb-8">
           Format: <strong>CODE</strong> <span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg></span> <strong>type:value</strong><br>
-          Types: exp:2000 · limit:5 · premium:2 · level:1 · gems:50
+          Types: exp:2000, limit:5, premium:2, level:1, gems:50
         </div>
         <div class="flex-row gap-4 flex-wrap">
           <input type="text" id="gc-new-code" class="input-field" style="flex:1;min-width:80px;" placeholder="CODE" maxlength="32">
@@ -545,8 +545,8 @@
       <div class="prize-item"><div class="prize-icons" data-icon-row="spade" data-count="3"></div><div class="prize-value positive">+2k EXP <span style="font-size: 7px;color:var(--muted2)">2%</span></div></div>
       <div class="prize-item"><div class="prize-icons" data-icon-row="note" data-count="3"></div><div class="prize-value positive">+1k EXP <span style="font-size: 7px;color:var(--muted2)">3%</span></div></div>
       <div class="prize-item"><div class="prize-icons" data-icon-row="flower" data-count="3"></div><div class="prize-value positive">+500 EXP <span style="font-size: 7px;color:var(--muted2)">4%</span></div></div>
-      <div class="prize-item"><div class="prize-icons" data-icon-row="cross" data-count="3"></div><div class="prize-value negative">−300 EXP <span style="font-size: 7px;color:var(--muted2)">~30%</span></div></div>
-      <div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">−200 EXP <span style="font-size: 7px;color:var(--muted2)">~57.9%</span></div></div>
+      <div class="prize-item"><div class="prize-icons" data-icon-row="cross" data-count="3"></div><div class="prize-value negative">-300 EXP <span style="font-size: 7px;color:var(--muted2)">~30%</span></div></div>
+      <div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">-200 EXP <span style="font-size: 7px;color:var(--muted2)">~57.9%</span></div></div>
       </div>
       <div class="prize-item" style="border-top: none;margin-top:4px;padding-top:8px"><div class="prize-icons" style="font-size: 8px;color:var(--warn)"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.7l7.1-.6z"/></svg></span> PITY</div><div class="prize-value" style="font-size: 8px;color:var(--warn)">Guaranteed <span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>/7/<span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 6-5 14L7 8z"/></svg></span> every 100 losses</div></div>
     </div>
@@ -569,7 +569,7 @@
         <span class="badge-info-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 3.6 2 6.2 5 8-3 1.8-4.4 4.4-5 8-.6-3.6-2-6.2-5-8 3-1.8 4.4-4.4 5-8z"/></svg></span>
         <div>
           <div class="badge-info-name">Newcomer</div>
-          <div class="badge-info-desc">0–1 month of continuous premium.</div>
+          <div class="badge-info-desc">0 to 1 month of continuous premium.</div>
         </div>
       </div>
       <div class="badge-info-item">
@@ -588,7 +588,7 @@
       </div>
     </div>
     <div class="divider"></div>
-    <div class="badge-info-note">Missing a renewal breaks your streak, but you get a 1-day grace period after expiry to renew and keep it alive.</div>
+    <div class="badge-info-note">Miss a renewal and the streak breaks. You have 1 day after expiry to renew and keep it.</div>
   </div>
 
   <div class="user-profile-overlay" id="user-profile-overlay">
@@ -693,7 +693,7 @@ async function loadBotName() {
       document.getElementById('header-logo-img').src = data.icon
     }
     if (data && data.name) {
-      document.title = `Profile — ${data.name}`
+      document.title = `Profile - ${data.name}`
       document.getElementById('header-logo-text').textContent = data.name
       document.getElementById('header-logo-img').alt = data.name
     }
@@ -2421,7 +2421,7 @@ const PRIZE_META = {
 function fmtPrizeExp(n) {
   const abs = Math.abs(n)
   const body = abs >= 1000 ? `${Math.floor(abs / 100) / 10}k` : String(abs)
-  return (n < 0 ? '−' : '+') + body
+  return (n < 0 ? '-' : '+') + body
 }
 
 function fmtChance(c) { return String(+Number(c).toFixed(3)) + '%' }
@@ -2440,7 +2440,7 @@ function renderPrizeItems(s) {
     else if (sym.key === '7') { cls = 'jackpot'; amount = `<span class="shimmer-gold">${amount}</span>` }
     return `<div class="prize-item"><div class="prize-icons">${icons}</div><div class="prize-value ${cls}">${amount} ${sub((sym.key === '×' ? '~' : '') + fmtChance(sym.chance))}</div></div>`
   })
-  rows.push(`<div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">−200 EXP ${sub('~' + fmtChance(noMatch))}</div></div>`)
+  rows.push(`<div class="prize-item"><div class="prize-icons">No Match</div><div class="prize-value negative">-200 EXP ${sub('~' + fmtChance(noMatch))}</div></div>`)
   document.getElementById('prize-items').innerHTML = rows.join('')
 }
 
@@ -2822,7 +2822,7 @@ function renderTopBadgeRow(badge) {
   const container = document.getElementById('badge-icons')
   const items = getBadgeItems(badge)
   if (items.length === 0) {
-    container.innerHTML = '<span class="badge-row-icon">–</span>'
+    container.innerHTML = '<span class="badge-row-icon">-</span>'
     return
   }
   container.innerHTML = items.map((it, i) => it.type === 'premium' ? `

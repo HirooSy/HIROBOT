@@ -41,7 +41,7 @@
 
     <div class="step" id="step-phone">
       <h1>Connect WhatsApp</h1>
-      <p class="hint">Enter your WhatsApp number and password. If this number has no account yet, the password you enter will be used for the new account. Your progress from Discord is merged into it.</p>
+      <p class="hint">Enter your WhatsApp number and password. If this number has no account yet, the password you enter will be used to create one, and the progress you made on Discord is merged into it.</p>
       <label for="phone">WhatsApp Number</label>
       <input type="tel" id="phone" inputmode="numeric" placeholder="628123456789" autocomplete="tel">
       <label for="password">Password</label>
@@ -51,7 +51,7 @@
 
     <div class="step" id="step-code">
       <h1>Verify</h1>
-      <p class="hint">Enter the 6 digit code sent to your WhatsApp.</p>
+      <p class="hint">Type the 6 digit code we sent to your WhatsApp.</p>
       <label for="code">Code</label>
       <input type="text" id="code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
       <button class="go" id="verify-btn" onclick="verifyCode()">Connect</button>
@@ -61,7 +61,7 @@
 
     <div class="step" id="step-unavailable">
       <h1>Unavailable</h1>
-      <p class="hint">The WhatsApp bot is not running right now, so verification codes cannot be sent. Please try again later.</p>
+      <p class="hint">The bot is offline, so codes can't be sent right now. Try again later.</p>
     </div>
 
     <div class="msg" id="msg"></div>
@@ -109,11 +109,11 @@
       if (data.linked) return location.replace('/profile')
       document.getElementById('avatar').src = data.discord.avatar
       document.getElementById('name').textContent = data.discord.name
-      document.getElementById('sub').textContent = `${data.discord.exp} EXP · ${data.discord.limit} limit`
+      document.getElementById('sub').textContent = `${data.discord.exp} EXP, ${data.discord.limit} limit`
       showStep(data.whatsappAvailable ? 'phone' : 'unavailable')
     } catch {
       showStep('unavailable')
-      showMsg('Could not reach the server. Please reload the page.')
+      showMsg("Can't reach the server. Reload the page.")
     }
   }
 
@@ -126,13 +126,13 @@
     hideMsg()
     try {
       const data = await api('POST', '/api/discord/connect', { phone, password })
-      if (!data.success) return showMsg(data.message || 'Failed to send the code.')
+      if (!data.success) return showMsg(data.message || "Couldn't send the code.")
       pendingToken = data.pendingToken
       phoneDigits = data.phone || phone
       showStep('code')
       showMsg('Code sent to your WhatsApp.', true)
     } catch {
-      showMsg('Could not reach the server. Please try again.')
+      showMsg("Can't reach the server. Try again.")
     } finally {
       btn.disabled = false
     }
@@ -140,19 +140,20 @@
 
   async function verifyCode() {
     const btn = document.getElementById('verify-btn')
+    if (btn.disabled) return
     const code = document.getElementById('code').value.trim()
-    if (code.length !== 6) return showMsg('Enter the 6 digit code.')
+    if (code.length !== 6) return showMsg('Type the 6 digit code.')
     btn.disabled = true
     hideMsg()
     try {
       const data = await api('POST', '/api/discord/verify', { phone: phoneDigits, pendingToken, code })
-      if (!data.success) return showMsg(data.message || 'Verification failed.')
+      if (!data.success) return showMsg(data.message || "That code didn't work.")
       localStorage.setItem('token', data.token)
       localStorage.setItem('phone', data.phone || phoneDigits)
       showMsg('Accounts connected.', true)
       setTimeout(() => location.replace('/profile'), 600)
     } catch {
-      showMsg('Could not reach the server. Please try again.')
+      showMsg("Can't reach the server. Try again.")
     } finally {
       btn.disabled = false
     }
@@ -162,13 +163,17 @@
     hideMsg()
     try {
       const data = await api('POST', '/api/resend-otp', { phone: phoneDigits })
-      if (!data.success) return showMsg(data.message || 'Failed to resend the code.')
+      if (!data.success) return showMsg(data.message || "Couldn't resend the code.")
       pendingToken = data.pendingToken
       showMsg('Code resent.', true)
     } catch {
-      showMsg('Could not reach the server. Please try again.')
+      showMsg("Can't reach the server. Try again.")
     }
   }
+
+  document.getElementById('code').addEventListener('input', e => {
+    if (/^\d{6}$/.test(e.target.value.trim())) verifyCode()
+  })
 
   init()
 </script>

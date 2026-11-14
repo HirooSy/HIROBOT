@@ -154,7 +154,7 @@ let handler = async (m, { conn, args: rawArgs, text, command, platform }) => {
     const creator = result.uploader.full_name || result.uploader.username || ""
     const saves = formatNumber(result.statistics.saves || 0)
 
-    const infoText = `Pinterest Pin\n${title ? `- Title: ${title}\n` : ''}${desc ? `- Description: ${desc}\n` : ''}- Creator: ${creator}\n- Saves: ${saves}`
+    const infoText = `${title ? `- Title: ${title}\n` : ''}${desc ? `- Description: ${desc}\n` : ''}- Creator: ${creator}\n- Saves: ${saves}`
 
     if (media.type === 'gif' || media.url?.toLowerCase().includes('.gif')) {
       try {
@@ -177,7 +177,7 @@ let handler = async (m, { conn, args: rawArgs, text, command, platform }) => {
       if (!hls || !hls.qualities.length) throw 'Failed to get video quality.'
 
       const qualityList = hls.qualities.map((q, i) => `${i + 1}. ${q.resolution}`).join('\n')
-      const caption = `Pinterest Video\n${title ? `- Title: ${title}\n` : ''}${desc ? `- Description: ${desc}\n` : ''}- Creator: ${creator}\n- Saves: ${saves}\n\nChoose Resolution:\n${qualityList}`
+      const caption = `${title ? `- Title: ${title}\n` : ''}${desc ? `- Description: ${desc}\n` : ''}- Creator: ${creator}\n- Saves: ${saves}\n\nChoose Resolution:\n${qualityList}`
 
       if (platform === 'discord') {
         const best = hls.qualities.at(-1)

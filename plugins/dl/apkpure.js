@@ -30,7 +30,7 @@ let handler = async (m, { conn, text, usedPrefix, command, platform }) => {
                 id: `${usedPrefix}apkpure ${a.pkg}`
             }))
 
-            const searchText = `- *APKPure Search*\n- *Query:* ${text}\n- *Results:* ${list.length}\n\nSelect the app you want to download.`
+            const searchText = `Select the app you want to download.`
             if (platform === 'discord') {
                 await conn.discord(m.chat, {
                     text: searchText,
@@ -46,7 +46,7 @@ let handler = async (m, { conn, text, usedPrefix, command, platform }) => {
             } else {
                 await conn.sendButton(m.chat, {
                     text: searchText,
-                    footer: 'APKPure',
+                    footer: `Result: ${list.length}`,
                     nativeFlow: [{ text: 'Select App', sections: [{ title: 'Result', rows }] }]
                 }, m)
             }

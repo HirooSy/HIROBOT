@@ -22,7 +22,7 @@ let handler = async (m, { args, isOwner, conn, text, usedPrefix, command, platfo
   }
   const reason = args.reason ? String(args.reason) : null
   try {
-    await conn.mod.kick(m.guild, target.id, reason || `Kicked by ${m.member?.user?.username || 'bot'}`)
+    await m.guild.client.rest.delete(`/guilds/${m.guild.id}/members/${target.id}`, { reason: reason || `Kicked by ${m.member?.user?.username || 'bot'}` })
     await m.reply(`<@${target.id}> was kicked.${reason ? ` Reason: ${reason}` : ''}`)
   } catch {
     await m.reply({ ephemeral: true, content: 'I could not kick that member, check my permissions.' })

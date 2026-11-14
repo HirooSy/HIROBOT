@@ -10,6 +10,38 @@ function sortedRoles(list, everyoneId) {
 const fail = (m, content) => m.reply({ ephemeral: true, content })
 const actor = m => m.member?.user?.username || 'bot'
 
+function parseColor(input) {
+  const text = String(input ?? '').trim().toLowerCase()
+  if (['off', 'none', 'default', 'reset'].includes(text)) return 0
+  const match = /^(?:#|0x)?([0-9a-f]{6})$/.exec(text)
+  return match ? parseInt(match[1], 16) : null
+}
+
+async function resolvePairs(m, conn, isOwner, text) {
+  const pairs = String(text ?? '').split(',').map(part => part.trim()).filter(Boolean).map(part => {
+    const space = part.search(/\s/)
+    return space < 0 ? { emoji: part, role: '' } : { emoji: part.slice(0, space), role: part.slice(space).trim() }
+  })
+  if (!pairs.length) return { error: 'Use emoji and role pairs, for example `🎮 @Gamer, 🎵 @Music`.' }
+  if (pairs.length > 20) return { error: 'A panel can have at most 20 roles.' }
+  const seen = new Set()
+  const out = []
+  for (const pair of pairs) {
+    const emoji = conn.cfg.reactions.parseEmoji(pair.emoji)
+    if (!emoji) return { error: `"${pair.emoji}" is not a valid emoji.` }
+    if (seen.has(emoji.key)) return { error: `${emoji.display} is used more than once.` }
+    seen.add(emoji.key)
+    if (!pair.role) return { error: `Give a role after ${emoji.display}.` }
+    const role = await conn.find.role(m.guild, pair.role.startsWith('<@') ? pair.role : pair.role.replace(/^@/, ''))
+    if (!role) return { error: `Role "${pair.role}" was not found in this server.` }
+    if (role.id === m.guild.id) return { error: 'Pick a role other than @everyone.' }
+    const problem = await conn.roles.error(m.guild, m.member, role, isOwner)
+    if (problem) return { error: problem }
+    out.push({ emoji, role })
+  }
+  return { pairs: out }
+}
+
 async function pickRole(m, ctx) {
   const role = await ctx.conn.find.role(m.guild, ctx.args.role)
   if (!role) return { error: 'That role was not found in this server.' }
@@ -140,7 +172,7 @@ const actions = {
   async colorrole(m, ctx) {
     const { role, error } = await pickRole(m, ctx)
     if (error) return fail(m, error)
-    const color = ctx.conn.roles.color(ctx.args.color)
+    const color = parseColor(ctx.args.color)
     if (color === null) return fail(m, 'Use a hex color like `#ff8800`, or `off` to remove the color.')
     try {
       await role.edit({ color }, `Recolored by ${actor(m)}`)
@@ -183,7 +215,7 @@ const actions = {
     if (!ref) return fail(m, 'Give the message ID or link, or reply to the message.')
     if (!m.guild || (ref.guildId && ref.guildId !== m.guild.id)) return fail(m, 'That message is in another server.')
 
-    const resolved = await conn.cfg.reactions.resolve(m.guild, m.member, isOwner, pairsText)
+    const resolved = await resolvePairs(m, conn, isOwner, pairsText)
     if (resolved.error) return fail(m, resolved.error)
 
     try {
@@ -234,7 +266,7 @@ const actions = {
   },
 
   async rolepanel(m, { args, isOwner, conn }) {
-    const resolved = await conn.cfg.reactions.resolve(m.guild, m.member, isOwner, args.pairs)
+    const resolved = await resolvePairs(m, conn, isOwner, args.pairs)
     if (resolved.error) return fail(m, resolved.error)
 
     const lines = resolved.pairs.map(pair => `${pair.emoji.display}  →  <@&${pair.role.id}>`)

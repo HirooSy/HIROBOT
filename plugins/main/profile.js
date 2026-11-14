@@ -104,7 +104,7 @@ let handler = async (m, { conn, isPrems, isOwner, args, user: account, platform 
         text: caption,
         footer: '',
         nativeFlow: [{ text: 'More Info', url: `${getServerUrl()}`, useWebview: false }]
-    }, m);
+    }, m, { onlyShowTo: [m.sender] });
 }
 
 function card(embed, target, data, linked, tiers) {

@@ -1,5 +1,23 @@
-var handler = async (m, { conn, args }) => {
-	if (!args[0] || !args[0].match(/(https:\/\/t\.me\/addstickers\/)/gi)) throw 'Input Telesticker Url'
+var handler = async (m, { conn, args, text, usedPrefix, command }) => {
+	if (!args[0]) throw `- *Example:*\n> ${usedPrefix + command} prabowo\n> ${usedPrefix + command} https://t.me/addstickers/<name>`
+
+	if (!/https:\/\/t\.me\/addstickers\//i.test(args[0])) {
+		const packs = await global.scraper.telegram.Telesearch(text)
+		if (!packs.length) throw `> No sticker pack found for *${text}*`
+
+		const rows = packs.map((pack, i) => ({
+			header: `${i + 1}. ${pack.title || 'Untitled'}`.slice(0, 60),
+			title: pack.telegramUrl.split('/').pop().slice(0, 24),
+			description: String(pack.status || 'Telegram pack').slice(0, 72),
+			id: `${usedPrefix}stele ${pack.telegramUrl}`
+		}))
+
+		return conn.sendButton(m.chat, {
+			text: `- *Sticker Search*\n- *Query:* ${text}\n- *Results:* ${packs.length}\n\nSelect the pack you want to download.`,
+			footer: 'Telegram Stickers',
+			nativeFlow: [{ text: 'Select Pack', sections: [{ title: 'Result', rows }] }]
+		}, m)
+	}
 
 	let result = await global.scraper.telegram.Telesticker(args[0])
 	let stickers = result.stickers
@@ -42,10 +60,10 @@ var handler = async (m, { conn, args }) => {
 	}
 }
 
-handler.help = ["telesticker <url>"]
+handler.help = ['stele <query>', 'stele <url>']
 handler.tags = ['sticker']
 handler.command = /^(telestic?ker|stic?kertele|stele)$/i
-handler.limit = 3
+handler.limit = 1
 
 handler.platform = { whatsapp: true, discord: false }
 

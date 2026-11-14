@@ -2,15 +2,12 @@ import os from 'os'
 import path from 'path'
 import fs from 'fs'
 
-const voipInstances = new WeakMap()
 async function getVoip(conn) {
-    let voip = voipInstances.get(conn)
-    if (!voip) {
+    if (!conn.voipInstance) {
         const { default: Voip } = await import('hiro/voip')
-        voip = new Voip(conn, { voipLogLevel: 'info' })
-        voipInstances.set(conn, voip)
+        conn.voipInstance ||= new Voip(conn, { voipLogLevel: 'warn' })
     }
-    return voip
+    return conn.voipInstance
 }
 
 let activeCalls = new Map()

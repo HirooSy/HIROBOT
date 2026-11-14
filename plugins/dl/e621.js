@@ -356,7 +356,7 @@ async function sendGallery(conn, m, { type, keywords, poolId, label, posts, page
     if (page > 1) navFlow.push({ text: '◀︎Prev', id: `.${command} page ${token} ${page - 1}` });
     if (hasNext) navFlow.push({ text: '▶︎Next', id: `.${command} page ${token} ${page + 1}` });
 
-    const caption = `- ${label}\n- *Page:* ${page}\n- *Showing:* ${posts.length}\n\nChoose the number you want to download.`;
+    const caption = `- *Page:* ${page}\n- *Showing:* ${posts.length}\n\nChoose the number you want to download.`;
     const nativeFlow = [{ text: '\u0000', sections: [{ rows }] }, ...navFlow];
 
     if (m.platform === 'discord') {
@@ -397,7 +397,6 @@ async function sendGallery(conn, m, { type, keywords, poolId, label, posts, page
         try {
             const html = buildPreviewHtml(posts, previews);
             await conn.aiRich()
-                .setTitle(`e621 — ${String(keywords || label).replace(/[*_]/g, '')}`)
                 .addHtml(html)
                 .send(m.chat, { quoted: m });
         } catch (err) {
@@ -409,7 +408,7 @@ async function sendGallery(conn, m, { type, keywords, poolId, label, posts, page
 
         await conn.sendButton(m.chat, {
             text: caption,
-            footer: 'e621',
+            footer: '',
             nativeFlow
         }, m);
     } finally {

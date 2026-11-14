@@ -4,14 +4,15 @@ function formatSeconds(seconds) {
   return `${seconds}s`
 }
 
-let handler = async (m, { args, conn }) => {
+let handler = async (m, { args }) => {
   if (args.seconds === undefined || args.seconds === null) {
-    const current = await conn.mod.slowmodeOf(m.channel)
+    const data = await m.channel.client.rest.get(`/channels/${m.channel.id}`).catch(() => null)
+    const current = data?.rate_limit_per_user ?? 0
     return m.reply(current ? `Slowmode is ${formatSeconds(current)}.` : 'Slowmode is off.')
   }
   const seconds = Math.min(Math.max(Math.trunc(Number(args.seconds)) || 0, 0), 21600)
   try {
-    await conn.mod.slowmode(m.channel, seconds, `Set by ${m.member?.user?.username || 'bot'}`)
+    await m.channel.client.rest.patch(`/channels/${m.channel.id}`, { body: { rate_limit_per_user: seconds }, reason: `Set by ${m.member?.user?.username || 'bot'}` })
     await m.reply(seconds ? `Slowmode set to ${formatSeconds(seconds)}.` : 'Slowmode turned off.')
   } catch {
     await m.reply({ ephemeral: true, content: 'I could not change the slowmode here, check my permissions.' })
