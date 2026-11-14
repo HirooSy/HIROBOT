@@ -3,7 +3,7 @@
 
 ```diff
 • Add SPR message tool plugin for targeted hidden message delivery
-• Add SoundCloud, Threads, TV schedule, and Text-to-Speech (TTS) scraper modules and plugins
+• Add SoundCloud, Threads and TV stream channel scraper modules and plugins
 • Refactor VoIP call engine, media sessions, and relay handlers for enhanced WebRTC call handling
 • Update Discord module payload handling, permissions, text, and voice options
 • Refactor handler, connection, database, and simple core utilities
@@ -15,13 +15,11 @@ ________________________
 
 + Add "lib/scrapers/src/soundcloud.js"
 + Add "lib/scrapers/src/threads.js"
-+ Add "lib/scrapers/src/tts.js"
 + Add "lib/scrapers/src/tv.js"
 + Add "plugins/dl/soundcloud.js"
 + Add "plugins/dl/threads.js"
 + Add "plugins/internet/tv.js"
 + Add "plugins/tools/spr.js"
-+ Add "plugins/tools/tts.js"
 * Edit "lib/config.js"
 * Edit "lib/main.js"
 * Edit "lib/package/discord/opus.js"
