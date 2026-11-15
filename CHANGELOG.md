@@ -1,3 +1,16 @@
+<h3>15/November/2026</h3>
+<sub>
+
+```diff
+• Add isGroupTarget helper in simple.js to restrict hidden message delivery handling strictly to group chats
+• Simplify native flow node construction by removing redundant biz_bot tag attachment on non-group targets
+
+________________________
+
+* Edit "lib/utils/simple.js"
+```
+</sub>
+
 <h3>14/November/2026</h3>
 <sub>
 
@@ -280,50 +293,5 @@ ________________________
 * Edit "plugins/owner/backup.js"
 * Edit "plugins/owner/migratedb.js"
 * Edit "plugins/subbot/connect.js"
-```
-</sub>
-
-<h3>01/November/2026</h3>
-<sub>
-
-```diff
-• Add pure JS Chrome/Playwright browser automation module package
-• Add sticker reaction support and payload handling to react helper methods
-• Add username resolution fallback to LID-to-number mapping resolution
-• Update internal plugin documentation and structure guide
-• Add proxy cache limits and cleanup to website server
-• Refactor brat and converter plugins to use safe execFile with timeout/quiet flags
-• Refactor Pornhub downloader with temp cleanup, improved session management, and safe ffmpeg flags
-• Add search cache pruning limit to Spotify plugin
-
-________________________
-
-+ Add "lib/package/chrome/browser.js"
-+ Add "lib/package/chrome/challenge.js"
-+ Add "lib/package/chrome/context.js"
-+ Add "lib/package/chrome/dom.js"
-+ Add "lib/package/chrome/engine/"
-+ Add "lib/package/chrome/errors.js"
-+ Add "lib/package/chrome/index.js"
-+ Add "lib/package/chrome/input.js"
-+ Add "lib/package/chrome/launcher.js"
-+ Add "lib/package/chrome/launcher.js"
-+ Add "lib/package/chrome/locator.js"
-+ Add "lib/package/chrome/messages.js"
-+ Add "lib/package/chrome/network.js"
-+ Add "lib/package/chrome/stealth.js"
-+ Add "lib/package/chrome/transport.js"
-+ Add "lib/package/chrome/util.js"
-* Edit "README.md"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/tools/reaction.js"
-* Edit "lib/package/ai/toold/plugin.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/scrapers/src/brat.js"
-* Edit "lib/utils/converter.js"
-* Edit "plugins/dl/pornhub.js"
-* Edit "plugins/dl/spotify.js"
 ```
 </sub>
