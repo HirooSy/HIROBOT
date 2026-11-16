@@ -1,3 +1,21 @@
+<h3>16/November/2026</h3>
+<sub>
+
+```diff
+• Support concurrent VoIP call sessions per chat in call plugin and adjust maxConcurrentCalls limit
+• Add retry mechanism for YouTube download scraper and implement Spotify download fallback for music search
+• Pass full path flag to helper filename resolver in plugin utility
+
+________________________
+
+* Edit "lib/package/voip/index.js"
+* Edit "lib/scrapers/src/ytdl.js"
+* Edit "lib/utils/plugins.js"
+* Edit "plugins/main/play.js"
+* Edit "plugins/owner/call.js"
+```
+</sub>
+
 <h3>15/November/2026</h3>
 <sub>
 
@@ -259,39 +277,5 @@ ________________________
 + Add "lib/utils/botsManager.js"
 - Delete "plugins/subbot/connect.js"
 - Delete "plugins/subbot/list.js"
-```
-</sub>
-
-<h3>02/November/2026</h3>
-<sub>
-
-```diff
-• Refactor session and database storage paths to data/bot directory
-• Add subbot API management endpoints and UI for subbot type, mode, botname, and AI-assisted plugin management
-• Add subbot AI plugin editing endpoint and UI integration for modifying existing subbot plugins
-• Optimize web server proxy cache handling and memory management
-• Export guest text generation utility in MCP AI package
-• Update project documentation and file tree in README.md
-• Add /api/user-profile endpoint for querying user data and badge status
-• Enhance subbotActiveList to include botName and user key for better UI integration
-• Add subbotDisplayName helper to subbot plugin for unified name resolution
-• Update stylesheet version for profile page
-
-________________________
-
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/package/website/views/profile.html"
-* Edit "lib/package/website/views/style.css"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/utils/handler.js"
-* Edit "plugins/ai/ai.js"
-* Edit "plugins/main/menu.js"
-* Edit "plugins/owner/backup.js"
-* Edit "plugins/owner/migratedb.js"
-* Edit "plugins/subbot/connect.js"
 ```
 </sub>

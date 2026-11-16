@@ -110,6 +110,24 @@ async function saveUrl(url) {
   }
 }
 
+async function spotifyFallback(input) {
+  const spotify = global.scraper?.spotify
+  if (typeof spotify?.spotifyDownloadByTrack !== 'function') return null
+  let result = null
+  if (/open\.spotify\.com/i.test(input)) {
+    result = await spotify.spotifyDownloadByUrl(input)
+  } else {
+    const videoId = youtubeId.exec(input)?.[1]
+    if (!videoId) return null
+    const meta = await global.scraper.ytsearch.search({ videoId })
+    if (!meta?.title) return null
+    result = await spotify.spotifyDownloadByTrack(meta.title, meta.author?.name)
+  }
+  const buffer = result?.links?.mp3
+  if (!buffer?.length) return null
+  return { title: result.metadata?.name, duration: '', buffer }
+}
+
 async function fetchYoutube(track) {
   const scraper = global.scraper?.ytdl
   if (!scraper) throw new MusicError('YouTube downloader is not available.')
@@ -130,6 +148,12 @@ async function fetchYoutube(track) {
     } catch (err) {
       lastError = err
     }
+  }
+  const fallback = await spotifyFallback(track.url).catch(() => null)
+  if (fallback) {
+    const file = tempFile()
+    await fs.promises.writeFile(file, fallback.buffer)
+    return { file }
   }
   throw new MusicError(lastError?.message || 'Failed to load the audio')
 }
@@ -1027,7 +1051,6 @@ const discordHandlers = commands.map(toHandler).map(h => Object.assign(h, { plat
 const discordPlay = discordHandlers[0]
 
 const waSessions = (global.waMusicSessions ||= new Map())
-const waFooter = 'Music controls'
 
 async function waVoip(conn) {
   if (!conn.voipInstance) {
@@ -1086,7 +1109,7 @@ function waControlRows(session) {
 function sendWaControls(session) {
   return session.conn.sendButton(session.chat, {
     text: 'Select an action to control the music.',
-    footer: waFooter,
+    footer: '',
     nativeFlow: [{ text: 'Music controls', sections: [{ title: 'Controls', rows: waControlRows(session) }] }]
   }, undefined, session.isGroup ? { onlyShowTo: [session.requester] } : undefined)
 }
@@ -1219,8 +1242,19 @@ async function startWaSession(m, { conn, usedPrefix }, track) {
   refreshWaStatus(session)
 }
 
+async function waFetchMedia(input, isVideo) {
+  try {
+    return await global.scraper.ytdl.ytdl(isVideo ? 'video' : 'audio', input)
+  } catch (err) {
+    if (isVideo) throw err
+    const fallback = await spotifyFallback(input).catch(() => null)
+    if (fallback) return fallback
+    throw err
+  }
+}
+
 async function waFileTrack(input, isVideo) {
-  const data = await global.scraper.ytdl.ytdl(isVideo ? 'video' : 'audio', input)
+  const data = await waFetchMedia(input, isVideo)
   const file = tempFile(isVideo ? 'mp4' : 'mp3')
   await fs.promises.writeFile(file, data.buffer)
   return {

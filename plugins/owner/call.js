@@ -12,6 +12,22 @@ async function getVoip(conn) {
 
 let activeCalls = new Map()
 
+function addActiveCall(chat, entry) {
+    if (!activeCalls.has(chat)) activeCalls.set(chat, new Set())
+    activeCalls.get(chat).add(entry)
+}
+
+function removeActiveCall(chat, entry) {
+    const entries = activeCalls.get(chat)
+    if (!entries) return
+    entries.delete(entry)
+    if (entries.size === 0) activeCalls.delete(chat)
+}
+
+function chatCalls(chat) {
+    return [...(activeCalls.get(chat) ?? [])]
+}
+
 const VIDEO_EXT_RE = /\.(mp4|mov|webm|mkv|avi|m4v|3gp)(\?|#|$)/i
 
 async function downloadQuotedMedia(quoted) {
@@ -29,7 +45,8 @@ async function downloadQuotedMedia(quoted) {
 }
 
 function requireCall(m) {
-    const entry = activeCalls.get(m.chat)
+    const entries = chatCalls(m.chat)
+    const entry = entries[entries.length - 1]
     if (!entry) throw 'No call is currently in progress in this chat.'
     return entry
 }
@@ -38,9 +55,16 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     const voip = await getVoip(conn)
 
     if (command === 'voipend') {
-        await voip.end(args[0] === 'force')
-        activeCalls.delete(m.chat)
-        return void (await m.reply(args[0] === 'force' ? '✦ VOIP state force-reset.' : '✦ Hangup requested...'))
+        if (args[0] === 'force') {
+            await voip.end(true)
+            activeCalls.clear()
+            return void (await m.reply('✦ VOIP state force-reset.'))
+        }
+        const entries = chatCalls(m.chat)
+        if (entries.length === 0) throw 'No call is currently in progress in this chat.'
+        await Promise.all(entries.map((entry) => entry.call.hangup()))
+        for (const entry of entries) removeActiveCall(m.chat, entry)
+        return void (await m.reply('✦ Hangup requested...'))
     }
 
     if (command === 'voipreact') {
@@ -57,7 +81,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }
 
     if (!args[0]) throw `Usage: ${usedPrefix + command} <phone_number> [media_url_or_path ...] [resolution] [auto] [loop] (reply to audio/video, or provide one or more URLs — mixing video and audio URLs plays them as a playlist; add "auto" to hang up automatically once the playlist finishes, "loop" to replay it from the start instead)\nDuring a call: .voipsilent .voipreact <emoji> .voipend`
-    if (activeCalls.has(m.chat)) throw 'A call is already in progress in this chat, wait for it to finish (or `.voipend`).'
 
     const phoneNumber = args[0].replace(/\D/g, '')
     if (!phoneNumber) throw 'Invalid phone number.'
@@ -94,7 +117,8 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 
     try {
         const call = await voip.call(phoneNumber, media, resolution, { autoEndCall, loop })
-        activeCalls.set(m.chat, { call, key, phoneNumber })
+        const entry = { call, key, phoneNumber }
+        addActiveCall(m.chat, entry)
 
         call.on('ringing', () => {
             conn.sendMessage(m.chat, { text: `✦ Ringing ${phoneNumber}...`, edit: key })
@@ -110,7 +134,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             conn.sendMessage(m.chat, { text: '✦ All cameras are off, downgraded to audio.' })
         })
         call.on('ended', (reason) => {
-            activeCalls.delete(m.chat)
+            removeActiveCall(m.chat, entry)
             const friendlyText = reason === 'declined'
                 ? `✦ Call to ${phoneNumber} was declined.`
                 : `✦ Call ended for ${phoneNumber}: ${reason}`
@@ -119,14 +143,13 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         })
         call.on('error', (err) => {
             if (!voip.calls.includes(call)) {
-                activeCalls.delete(m.chat)
+                removeActiveCall(m.chat, entry)
                 cleanupTempFiles()
             }
             conn.reply(m.chat, `Call error: ${err?.message || err}`, m)
         })
     } catch (e) {
         console.error('[ VOIP ] voip.call() threw:', e)
-        activeCalls.delete(m.chat)
         cleanupTempFiles()
         throw `Failed to place call: ${e?.message || e}`
     }
