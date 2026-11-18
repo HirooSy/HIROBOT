@@ -7,10 +7,8 @@ const tv = {
   defaultResolution: '720p',
   maxResolution: 1080,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0',
-  categoryTitleLength: 24,
-  pageSize: 1000,
-  cardsPerMessage: 11,
-  messageBytes: 400000,
+  titleLength: 24,
+  joinWaitMs: 10 * 60_000,
   writerRetryLimit: 5,
   writerRetryDelayMs: 2000,
   pipeReleaseDelayMs: 1000,
@@ -66,75 +64,70 @@ function videoConfigOf(quality) {
   return { width: Math.round((height * 16) / 9 / 2) * 2, height, frameRate: 30 }
 }
 
-function cardBytes(card) {
-  return card.nativeFlow.reduce((total, button) => total
-    + Buffer.byteLength(button.text)
-    + button.sections.reduce((sum, section) => sum + section.rows.reduce((rows, row) => rows
-      + Buffer.byteLength(row.header) + Buffer.byteLength(row.title) + Buffer.byteLength(row.id), 0), 0), 0)
+function countryCode(channel) {
+  return String(channel.country || 'xx').toLowerCase()
 }
 
-function groupEntries(entries) {
-  const groups = []
-  for (const entry of entries) {
-    const last = groups[groups.length - 1]
-    if (last?.title === entry.country) last.items.push(entry)
-    else groups.push({ title: entry.country, items: [entry] })
-  }
-  return groups
+function countryRows(channels) {
+  const totals = new Map()
+  for (const channel of channels) totals.set(countryCode(channel), (totals.get(countryCode(channel)) || 0) + 1)
+  return [...totals]
+    .map(([code, total]) => ({ code, name: countryName(code), total }))
+    .sort((x, y) => x.name.localeCompare(y.name))
 }
 
-async function sendChannelList(m, { conn, usedPrefix }, args) {
-  const filter = parseListArgs(args)
-  const { channels, version } = await withSource(async source => ({
-    channels: await source.loadChannels(),
-    version: source.channelVersion()
-  }))
-  const entries = listEntries(channels, filter)
+function isCountryQuery(channels, query) {
+  return channels.some(channel => countryCode(channel) === query || countryName(countryCode(channel)).toLowerCase() === query)
+}
+
+function exactCountryEntries(channels, query) {
+  return listEntries(channels, '').filter(({ channel, country }) => countryCode(channel) === query || country.toLowerCase() === query)
+}
+
+async function loadCatalog() {
+  return withSource(async source => ({ channels: await source.loadChannels(), version: source.channelVersion() }))
+}
+
+async function sendSelect(conn, m, { heading, detail, buttonText, sectionTitle, rows }) {
+  await conn.sendButton(m.chat, {
+    text: `*${heading}*\n${detail}`,
+    nativeFlow: [{ text: buttonText, sections: [{ title: sectionTitle, rows }] }]
+  }, m)
+}
+
+async function sendCountryList(m, { conn, usedPrefix }) {
+  const { channels } = await loadCatalog()
+  const countries = countryRows(channels)
+  if (!countries.length) throw 'No channels found.'
+  await sendSelect(conn, m, {
+    heading: 'TV Countries',
+    detail: `- Total: ${countries.length} country(ies)\n\nSelect a country to see its channels.`,
+    buttonText: 'Select country',
+    sectionTitle: 'Countries',
+    rows: countries.map(country => ({
+      header: country.name,
+      title: country.name.slice(0, tv.titleLength),
+      description: `${country.total} channel(s)`,
+      id: `${usedPrefix}tv ${country.code}`
+    }))
+  })
+}
+
+async function sendChannelSelect(m, { conn, usedPrefix }, entries, version, heading) {
   if (!entries.length) throw 'No channels found for that filter.'
-
-  const cards = []
-  for (let start = 0; start < entries.length; start += tv.pageSize) {
-    const slice = entries.slice(start, start + tv.pageSize)
-    cards.push({
-      image: global.img?.profile?.bot,
-      text: `${start + 1}-${start + slice.length} of ${entries.length} channel(s)`,
-      optionText: 'Select',
-      optionTitle: 'Select',
-      nativeFlow: groupEntries(slice).map(group => ({
-        text: group.title.slice(0, tv.categoryTitleLength),
-        sections: [{
-          rows: group.items.map(({ channel, index }) => ({
-            header: channel.name,
-            title: `Watch live in ${channelQuality(channel)}`,
-            id: `${usedPrefix}tvpick ${version} ${index}`
-          }))
-        }]
-      }))
-    })
-  }
-
-  const batches = []
-  let batch = []
-  let batchBytes = 0
-  for (const card of cards) {
-    const bytes = cardBytes(card)
-    if (batch.length && (batch.length === tv.cardsPerMessage || batchBytes + bytes > tv.messageBytes)) {
-      batches.push(batch)
-      batch = []
-      batchBytes = 0
-    }
-    batch.push(card)
-    batchBytes += bytes
-  }
-  if (batch.length) batches.push(batch)
-
-  const header = `*TV Channels*\n- Country: ${filter || 'All'}\n- Total: ${entries.length} channel(s)\n\nSelect a country, then a channel to watch it live in its own resolution.`
-  for (const [index, group] of batches.entries()) {
-    await conn.sendButton(m.chat, {
-      text: index ? '*TV Channels* (continued)' : header,
-      cards: group
-    }, m)
-  }
+  const countries = [...new Set(entries.map(entry => entry.country))]
+  await sendSelect(conn, m, {
+    heading,
+    detail: `- Total: ${entries.length} channel(s)\n\nSelect a channel to watch it live in its own resolution.`,
+    buttonText: 'Select channel',
+    sectionTitle: (countries.length === 1 ? countries[0] : 'Channels').slice(0, tv.titleLength),
+    rows: entries.map(({ channel, index }) => ({
+      header: String(channel.name || ''),
+      title: String(channel.name || '').slice(0, tv.titleLength),
+      description: `Watch live in ${channelQuality(channel)}`,
+      id: `${usedPrefix}tvpick ${version} ${index}`
+    }))
+  })
 }
 
 async function voipOf(conn) {
@@ -217,15 +210,17 @@ function tvStatusLabel(session) {
   if (session.phase === 'closed') return `Ended (${session.endReason})`
   if (session.phase === 'reconnecting') return session.reconnect?.attempt ? `Reconnecting (${session.reconnect.attempt}/${session.reconnect.max})...` : 'Reconnecting...'
   if (session.phase === 'playing') return 'Live'
-  return session.phase === 'ringing' ? 'Ringing...' : 'Calling...'
+  return 'Waiting for viewers...'
 }
 
 function tvStatusText(session) {
-  return [
+  const lines = [
     `📺 *${session.channel.name}*`,
     `Quality: ${session.quality}`,
     `Status: ${tvStatusLabel(session)}`
-  ].join('\n')
+  ]
+  if (session.phase !== 'closed' && session.link) lines.push(`Join: ${session.link.replace(/^https?:\/\//i, '')}`)
+  return lines.join('\n')
 }
 
 async function editTvStatus(session) {
@@ -261,6 +256,7 @@ function releasePipes(session) {
 function finishTvSession(session, reason) {
   if (tv.sessions.get(session.chat) !== session) return
   tv.sessions.delete(session.chat)
+  clearTimeout(session.waitTimer)
   session.closed = true
   for (const [event, listener] of session.listeners) session.coordinator.off(event, listener)
   session.listeners = []
@@ -279,14 +275,11 @@ function bindCallEvents(session) {
 
   on('call_state', info => {
     if (info?.callId !== callId || session.closed) return
-    if (info.isRinging && session.phase === 'calling') {
-      session.phase = 'ringing'
-      refreshTvStatus(session)
-    }
     if (info.isActive && !session.connected) {
       session.connected = true
       session.phase = 'playing'
       session.writerRetries = 0
+      clearTimeout(session.waitTimer)
       startWriter(session)
       refreshTvStatus(session)
     }
@@ -325,12 +318,18 @@ async function startTvSession(m, { conn }, channel) {
   if (!coordinator) throw 'The calling service is not ready yet.'
 
   const quality = channelQuality(channel)
-  let callId
+  let room
   try {
-    callId = await coordinator.startCall({ peerJid: m.sender, isVideo: true, videoConfig: videoConfigOf(quality) })
+    room = await voip.createRoom('silence', videoConfigOf(quality), {
+      isVideo: true,
+      autoEndCall: false,
+      autoDowngrade: false,
+      safetyMs: tv.joinWaitMs * 2
+    })
   } catch (err) {
-    throw `Failed to place call: ${err?.message || err}`
+    throw `Failed to create the TV room: ${err?.message || err}`
   }
+  const callId = room.callId
 
   const session = {
     conn,
@@ -338,6 +337,7 @@ async function startTvSession(m, { conn }, channel) {
     requester: m.sender,
     coordinator,
     callId,
+    link: room.link,
     channel,
     quality,
     pipe: null,
@@ -352,10 +352,21 @@ async function startTvSession(m, { conn }, channel) {
     reconnect: null,
     resumePhase: null,
     endReason: '',
-    listeners: []
+    listeners: [],
+    waitTimer: null
   }
+  room.on('error', err => {
+    if (!session.closed) sendNote(session, `TV error: ${err?.message || err}`)
+  })
   bindCallEvents(session)
   tv.sessions.set(m.chat, session)
+  session.waitTimer = setTimeout(() => {
+    if (session.closed || session.connected) return
+    coordinator.endCall(callId).catch(() => {})
+    sendNote(session, 'Nobody joined the TV room in time, so it was closed. Send .tv to start again.')
+    finishTvSession(session, 'no viewers')
+  }, tv.joinWaitMs)
+  session.waitTimer.unref?.()
 
   try {
     session.pipe = openPipe()
@@ -369,7 +380,7 @@ async function startTvSession(m, { conn }, channel) {
     throw `Failed to start the stream: ${err?.message || err}`
   }
 
-  if (session.closed) throw 'The call ended before it started.'
+  if (session.closed) throw 'The TV room closed before it started.'
   try {
     const sent = await conn.sendMessage(m.chat, { text: tvStatusText(session) }, { quoted: m })
     session.statusKey = sent?.key || null
@@ -395,7 +406,7 @@ async function switchVideo(session) {
 }
 
 async function tuneSession(session, channel) {
-  if (!session.connected) throw 'Wait until the call is connected.'
+  if (!session.connected) throw 'Wait until someone joins the TV room.'
   if (session.channel.url === channel.url) throw `${channel.name} is already playing.`
 
   const previous = session.pipe
@@ -418,7 +429,7 @@ async function tuneSession(session, channel) {
 }
 
 async function restartTvSession(m, extra, session, channel) {
-  if (!session.connected) throw 'Wait until the call is connected.'
+  if (!session.connected) throw 'Wait until someone joins the TV room.'
   session.endReason = 'switched'
   await session.coordinator.endCall(session.callId).catch(() => {})
   finishTvSession(session, 'switched')
@@ -441,10 +452,22 @@ async function playChannel(m, { conn, isOwner }, channel) {
 async function tvPlay(m, extra) {
   const { conn, text, usedPrefix, isOwner } = extra
   const query = String(text || '').trim()
-  if (!query) return sendChannelList(m, { conn, usedPrefix }, '')
+  if (!query) return sendCountryList(m, { conn, usedPrefix })
 
   const [first, ...rest] = query.split(/\s+/)
-  if (first.toLowerCase() === 'list') return sendChannelList(m, { conn, usedPrefix }, rest.join(' '))
+  if (first.toLowerCase() === 'list') {
+    const filter = rest.join(' ').trim().toLowerCase()
+    if (!filter) return sendCountryList(m, { conn, usedPrefix })
+    const { channels, version } = await loadCatalog()
+    return sendChannelSelect(m, { conn, usedPrefix }, listEntries(channels, filter), version, `TV Channels - ${filter}`)
+  }
+
+  const lower = query.toLowerCase()
+  const { channels, version } = await loadCatalog()
+  if (isCountryQuery(channels, lower)) {
+    const entries = exactCountryEntries(channels, lower)
+    return sendChannelSelect(m, { conn, usedPrefix }, entries, version, `TV Channels - ${entries[0]?.country || lower}`)
+  }
 
   const channel = await withSource(source => source.resolveChannel(query))
   return playChannel(m, { conn, isOwner }, channel)
@@ -460,10 +483,10 @@ async function tvPick(m, extra) {
 export default [
   Object.assign((m, extra) => tvPlay(m, extra), {
     command: ['tv'],
-    description: 'Browse live TV channels by country or watch one in a video call at its own resolution',
-    help: ['tv', 'tv list [country]', 'tv <channel name or stream url>'],
+    description: 'Browse live TV channels by country, or watch one through a call link at its own resolution',
+    help: ['tv', 'tv <country>', 'tv list [filter]', 'tv <channel name or stream url>'],
     tags: ['internet'],
-    ai: { risk: 'low', description: 'browse and watch live TV channels in a WhatsApp video call' },
+    ai: { risk: 'low', description: 'browse and watch live TV channels through a WhatsApp call link' },
     platform: { whatsapp: true, discord: false }
   }),
   Object.assign((m, extra) => tvPick(m, extra), {

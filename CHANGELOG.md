@@ -1,3 +1,23 @@
+<h3>19/November/2026</h3>
+<sub>
+
+```diff
+• Disable `autoDowngrade` in `VoipCall` constructor
+• Add worker communication for CLI questions in `start.js`
+• Refactor `question` promise in `connection.js` to support cross-process worker communication
+• Refactor `question` promise to include `getPairingPhone` with caching and timeout support
+• Switch to `rmWithRetry` for auth file cleanup
+• Refactor TV plugin stability/scraping logic
+
+________________________
+
+* Edit "lib/package/voip/index.js"
+* Edit "lib/start.js"
+* Edit "lib/utils/connection.js"
+* Edit "plugins/internet/tv.js"
+```
+</sub>
+
 <h3>18/November/2026</h3>
 <sub>
 
@@ -265,32 +285,5 @@ ________________________
 * Edit "lib/package/ai/tools/media.js"
 * Edit "lib/utils/reload.js"
 * Edit "plugins/ai/ai.js"
-```
-</sub>
-
-<h3>05/November/2026</h3>
-<sub>
-
-```diff
-• Restrict channel upchannel command execution strictly to bot owners with global.dfail authorization
-• Add Discord profile connections and snapshot data caching upon Discord OAuth login
-• Improve large API response handling in fetch tool by sending as document attachment
-• Refactor CRM helper functions and base64/data URI string formatting logic
-• Improve conn.getName() contact name resolution by merging contact data from LID and JID mappings
-
-________________________
-
-+ Add "lib/scrapers/src/igstalk.js"
-+ Add "lib/scrapers/src/ocr.js"
-+ Add "lib/scrapers/src/roblox.js"
-+ Add "plugins/internet/discordstalk.js"
-+ Add "plugins/internet/igstalk.js"
-+ Add "plugins/internet/robloxstalk.js"
-+ Add "plugins/tools/ocr.js"
-* Edit "lib/package/website/server.js"
-* Edit "plugins/main/channel.js"
-* Edit "plugins/tools/crm.js"
-* Edit "plugins/tools/fetch.js"
-* Edit "lib/utils/simple.js"
 ```
 </sub>
