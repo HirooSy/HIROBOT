@@ -36,7 +36,7 @@
 
 - [x] Discord & Whatsapp Bot.
 - [x] AI Agent & Chatbot Using Gemini.
-- [x] Audio & Video Call.
+- [x] Audio & Video Call, group calls, call links, and waiting rooms.
 - [x] Multi Sessions.
 - [x] Database native SQL / Mongodb / MySql2.
 - [x] Support AI Rich, Poll, Button Message, Etc.
@@ -812,23 +812,109 @@ conn.sendStickerPack(m.chat, {
 <details> <summary>📞 Call</summary>
   <sub>
 
+Calls use the `Voip` from `hiro/voip`. Create one per connection and reuse it, the bot keeps it on `conn.voipInstance`.
+
 ```javascript
-/** @Media
-URL — 'https://example.com/audio.mp3'
-Local — '/path/to/video.mp4'
-Support Array — [ url, path ]
-**/
+import Voip from 'hiro/voip'
 
-import Voip from "../../lib/package/voip/index.js"
-const call = new Voip(conn)
+const voip = conn.voipInstance ||= new Voip(conn, { voipLogLevel: 'warn' })
+```
 
-call(m.sender, media, "720p")
-      
-// hang up
-call(m.sender, media, "720p").end()
+`media` can be a URL, a local path, a quoted message, an array (playlist), or `'silence'` to ring with no media. Resolutions: `240p`, `360p`, `480p` (default), `720p`, `1080p`.
 
-// mute
-call(m.sender, media, "720p").silent()
+### 1:1 call
+
+```javascript
+const call = await voip.call('628111111111', media, '720p', { autoEndCall: true, loop: false })
+
+call.on('connected', () => {})
+call.on('ended', reason => {})
+
+await call.silent()     // toggle: mute mic and pause video
+await call.hangup()     // same as call.end()
+```
+
+### Group call
+
+```javascript
+const group = await voip.groupCall(['628111111111', '628222222222'], media, '480p', {
+  autoEndCall: false,
+  loop: false,
+  groupJid: '120363000000000000@g.us' // optional, the group chat the call belongs to
+})
+```
+
+It needs at least two numbers besides yourself. The `.voipgroup` command allows up to 31.
+
+### Call links and rooms
+
+```javascript
+const room = await voip.createRoom(media, '720p', { requireApproval: true, loop: false })
+room.link                                   // share this link
+await voip.getLink(room.callId)             // same link, by call id
+
+const joined = await voip.joinLink('https://call.whatsapp.com/voice/TOKEN', media, '720p', { loop: false })
+await voip.previewLink('https://call.whatsapp.com/voice/TOKEN')
+```
+
+`createRoom()` keeps the call open until you hang up. `requireApproval` turns the waiting room on once the call connects.
+
+### Participants and approval
+
+```javascript
+group.participants                          // group members: jid, pn, state, isSelf
+room.waitingRoom?.users                     // people waiting for approval
+
+await group.addParticipant('628333333333')  // invite
+await group.ringParticipant('628333333333') // invite and ring
+await room.setApprovalRequired(true)
+await room.admit('628444444444')            // let a waiting person in
+await room.deny('628555555555')             // reject a waiting person
+```
+
+Targets can be a number or a jid.
+
+### Events
+
+```javascript
+call.on('ringing', () => {})
+call.on('connected', () => {})
+call.on('item', ({ index, kind, source }) => {})   // playlist item started
+call.on('downgraded', () => {})                    // all cameras off, now audio only
+call.on('ended', reason => {})
+call.on('error', err => {})
+call.on('waiting_room', room => {})
+call.on('participants_changed', ({ added, removed }) => {})
+call.on('group_state', state => {})
+call.on('reconnecting', detail => {})
+call.on('reconnected', () => {})
+```
+
+### Commands
+
+Owner only, WhatsApp only.
+
+```text
+.voipcall <number> [media_url_or_path ...] [resolution] [auto] [loop]
+      reply to an audio or video message to call with it
+.voipgroup <n1> <n2> ... [media ...] [resolution] [loop]
+.voipgroup this                     inside a group chat, calls every member
+.voiproom [video] [approval|open] [media ...] [resolution] [loop]
+.voiplink                           link calls only, shows the call link
+.voipjoin <call_link> [media ...] [resolution] [loop]
+.voipadd <number|@mention>          add into the call
+.voipring <number|@mention>         add and ring
+.voipadmit <number|all>             all = everyone in the waiting room
+.voipdeny <number|all>
+.voipapproval <on|off>
+.voiphand [off]
+.voipinfo
+.voipsilent                         toggle mute and video pause
+.voipreact [emoji]                  default 👍
+.voipend                            hang up this chat's calls
+.voipend force                      reset all voip state
+
+.play <song>
 ```
 </sub></details>
   

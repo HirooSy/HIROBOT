@@ -12,7 +12,7 @@ const maxQueue = 100
 const idleLeaveMs = 2 * 60 * 1000
 const aloneLeaveMs = 60 * 1000
 const controlsTtlMs = 6 * 60 * 60 * 1000
-const defaultVolume = 200
+const defaultVolume = 100
 const minVolume = 1
 const maxVolume = 200
 const historyLimit = 50
@@ -23,6 +23,7 @@ const autoplayMinSeconds = 30
 const autoplayMaxSeconds = 15 * 60
 const autoplayMaxFailures = 3
 const probeTimeoutMs = 15000
+const statusSendTimeoutMs = 15000
 const ephemeralFlag = 64
 const prevLabel = '\u25C0\uFE0E'
 const nextLabel = '\u25B6\uFE0E'
@@ -137,8 +138,10 @@ async function fetchYoutube(track) {
     try {
       if (typeof scraper.ytdlUrl === 'function') {
         const info = await scraper.ytdlUrl('audio', track.url)
+        const saved = await saveUrl(info.url).catch(() => null)
+        if (saved) return saved
         if (await probeStream(info.url).catch(() => false)) return { url: info.url }
-        return await saveUrl(info.url)
+        throw new MusicError('Audio source is unavailable')
       }
       const data = await scraper.ytdl('audio', track.url)
       if (!data?.buffer?.length) throw new Error('empty audio')
@@ -1065,71 +1068,182 @@ function removeFile(file) {
 }
 
 function waIsConnected(session) {
-  return session.phase !== 'calling' && session.phase !== 'ringing'
+  return session.phase !== 'waiting'
 }
 
+
 function waRequireConnected(session) {
-  if (!waIsConnected(session)) throw 'Wait until the call is connected.'
+  if (!waIsConnected(session)) throw 'Wait until someone joins the call.'
 }
+
 
 function waStatusText(session) {
   if (session.phase === 'closed') return `Call ended (${session.endReason})`
+  if (session.phase === 'waiting') return 'Waiting for someone to join'
   if (session.phase === 'reconnecting') return session.reconnect?.attempt ? `Reconnecting (${session.reconnect.attempt}/${session.reconnect.max})...` : 'Reconnecting...'
   if (session.phase === 'finished') return 'Queue finished'
   if (session.phase === 'paused') return 'Paused'
-  if (session.phase === 'playing') return 'Playing'
-  return session.phase === 'ringing' ? 'Ringing...' : 'Calling...'
+  if (session.phase === 'playing') {
+    const listeners = session.present.size
+    return `Playing (${listeners} ${listeners === 1 ? 'listener' : 'listeners'})`
+  }
+  return 'Connecting...'
+}
+
+
+function waNumber(jid) {
+  return String(jid || '').split('@')[0].split(':')[0]
+}
+
+function waIdentitiesOf(m) {
+  return [m.sender, m.key?.participant, m.key?.participantAlt, m.key?.senderLid, m.key?.senderPn, m.key?.participantPn]
+    .filter(Boolean)
+    .map(waNumber)
+}
+
+function waLidOf(m) {
+  return [m.sender, m.key?.senderLid, m.key?.participant, m.key?.participantAlt, m.key?.remoteJidAlt, global.db?.data?.users?.[m.sender]?.lid]
+    .find(jid => typeof jid === 'string' && jid.endsWith('@lid')) || null
+}
+
+
+function waParticipantsOf(session) {
+  return (session.call.participants || []).filter(participant => !participant.isSelf && ['connected', 'receipt', 'outgoing', 'creating', 'visible', 'invisible'].includes(participant.state))
+}
+
+function waIsRequester(session, identities) {
+  return identities.some(id => session.requesterIds.includes(id))
+}
+
+function waCanControl(session, m) {
+  const identities = waIdentitiesOf(m)
+  if (waIsRequester(session, identities)) return !session.requesterLeft
+  return session.kind === 'link' && waParticipantsOf(session).some(participant => identities.includes(waNumber(participant.pn)) || identities.includes(waNumber(participant.jid)))
+}
+
+function waFindSession(m, id) {
+  const sessions = [...waSessions.values()]
+  if (id) return sessions.find(session => session.id === id) || null
+  const own = sessions.filter(session => session.chat === m.chat && waCanControl(session, m))
+  return own.find(session => waIsRequester(session, waIdentitiesOf(m))) || own[0] || null
 }
 
 function waControlsText(session) {
-  const track = session.tracks[Math.max(session.index, 0)]
+  const current = Math.max(session.index, 0)
+  const track = session.tracks[current]
   const details = []
   if (track?.duration) details.push(`Duration ${track.duration}`)
   if (track?.autoplay) details.push('Autoplay')
-  details.push(`Track ${Math.max(session.index, 0) + 1}/${session.tracks.length}`)
+  details.push(`Track ${session.index >= session.firstIndex ? session.index - session.firstIndex + 1 : 0}/${session.tracks.length - session.firstIndex}`)
   details.push(`Loop ${session.loop ? 'on' : 'off'}`)
   return [
     track ? `🎶 *${track.title}*` : '🎶 *Preparing...*',
     details.join(' • '),
-    `Status: ${waStatusText(session)}`
-  ].join('\n')
+    `Status: ${waStatusText(session)}`,
+    session.link ? `Call link: ${session.link.replace(/^https?:\/\//i, '')}` : null
+  ].filter(Boolean).join('\n')
 }
+
+
 
 function waControlRows(session) {
   const prefix = session.prefix || ''
+  const suffix = ` ${session.id}`
   return [
-    { title: `${prevLabel} Previous`, description: 'Play the previous song', id: `${prefix}prev` },
-    { title: 'Pause / Resume', description: 'Pause or resume the music', id: `${prefix}pause` },
-    { title: `${nextLabel} Next`, description: 'Skip to the next song', id: `${prefix}next` },
-    { title: `${loopLabel} Loop`, description: 'Turn loop on or off', id: `${prefix}loop` },
-    { title: 'Stop', description: 'Stop the music and leave the call', id: `${prefix}stop` }
+    { title: `${prevLabel} Previous`, description: 'Play the previous song', id: `${prefix}prev${suffix}` },
+    { title: 'Pause / Resume', description: 'Pause or resume the music', id: `${prefix}pause${suffix}` },
+    { title: `${nextLabel} Next`, description: 'Skip to the next song', id: `${prefix}next${suffix}` },
+    { title: `${loopLabel} Loop`, description: 'Turn loop on or off', id: `${prefix}loop${suffix}` },
+    { title: 'Stop', description: 'Stop the music and leave the call', id: `${prefix}stop${suffix}` }
   ]
 }
 
-function sendWaControls(session) {
-  return session.conn.sendButton(session.chat, {
+function sendWaControls(session, chat, onlyShowTo) {
+  return session.conn.sendButton(chat, {
     text: 'Select an action to control the music.',
-    footer: '',
     nativeFlow: [{ text: 'Music controls', sections: [{ title: 'Controls', rows: waControlRows(session) }] }]
-  }, undefined, session.isGroup ? { onlyShowTo: [session.requester] } : undefined)
+  }, undefined, onlyShowTo ? { onlyShowTo: [onlyShowTo] } : undefined)
+}
+
+async function waSendJoinerControls(session, participant) {
+  const direct = participant.pn ? (String(participant.pn).includes('@') ? String(participant.pn) : `${participant.pn}@s.whatsapp.net`) : null
+  if (session.isGroup) {
+    for (const jid of [direct, participant.jid].filter(Boolean)) {
+      try {
+        await sendWaControls(session, session.chat, jid)
+        return
+      } catch {}
+    }
+  }
+  if (direct) await sendWaControls(session, direct).catch(() => {})
+}
+
+
+function waRoster(session, state) {
+  const present = state.participants.filter(participant => !participant.isSelf && ['connected', 'receipt', 'outgoing', 'creating', 'visible', 'invisible'].includes(participant.state))
+  const listenersBefore = session.present.size
+  const requesterIn = present.some(participant => session.requesterIds.some(id => id === waNumber(participant.pn) || id === waNumber(participant.jid)))
+  for (const participant of present) {
+    if (!session.present.has(waNumber(participant.jid)) && !waIsRequester(session, [waNumber(participant.pn), waNumber(participant.jid)])) {
+      waSendJoinerControls(session, participant).catch(() => {})
+    }
+  }
+  session.present = new Set(present.map(participant => waNumber(participant.jid)))
+  if (session.phase === 'playing' && session.present.size !== listenersBefore) refreshWaStatus(session)
+  if (requesterIn) session.requesterSeen = true
+  session.requesterLeft = session.requesterSeen && !requesterIn
+  if (present.length > 0) {
+    session.everJoined = true
+    clearTimeout(session.emptyTimer)
+    session.emptyTimer = null
+    waStartPlayback(session)
+  } else if (session.everJoined && !session.emptyTimer) {
+    session.emptyTimer = setTimeout(() => {
+      session.endReason = 'everyone left'
+      session.call.hangup().catch(() => {})
+    }, session.emptyLeaveMs)
+    session.emptyTimer.unref?.()
+  }
+}
+
+
+function waStartPlayback(session) {
+  if (session.started) return
+  session.started = true
+  clearTimeout(session.joinTimer)
+  session.joinTimer = null
+  session.call.jump(session.firstIndex).then(ok => {
+    if (!ok) session.started = false
+  }).catch(() => {
+    session.started = false
+  })
+}
+
+
+function sendWithin(pending, ms) {
+  let timer = null
+  return Promise.race([
+    pending,
+    new Promise((resolve, reject) => {
+      timer = setTimeout(() => reject(new Error('status send timed out')), ms)
+      timer.unref?.()
+    })
+  ]).finally(() => clearTimeout(timer))
 }
 
 async function editWaStatus(session) {
   if (!session.statusKey) return
   const text = waControlsText(session)
-  try {
-    await session.conn.sendMessage(session.chat, { text, edit: session.statusKey })
-  } catch {
-    const sent = await session.conn.sendMessage(session.chat, { text })
-    session.statusKey = sent?.key || session.statusKey
-  }
+  if (text === session.statusText) return
+  await sendWithin(session.conn.sendMessage(session.chat, { text, edit: session.statusKey }), statusSendTimeoutMs)
+  session.statusText = text
 }
 
 function refreshWaStatus(session) {
   session.editChain = session.editChain.then(() => editWaStatus(session)).catch(() => {})
   if (session.phase === 'playing' && session.statusKey && !session.controlsSent) {
     session.controlsSent = true
-    session.editChain = session.editChain.then(() => sendWaControls(session)).catch(() => { session.controlsSent = false })
+    session.editChain = session.editChain.then(() => sendWithin(sendWaControls(session, session.chat, session.isGroup ? session.requester : undefined), statusSendTimeoutMs)).catch(() => { session.controlsSent = false })
   }
 }
 
@@ -1143,9 +1257,11 @@ function scheduleWaIdle(session) {
 }
 
 function finishWaSession(session, reason) {
-  if (waSessions.get(session.chat) !== session) return
-  waSessions.delete(session.chat)
+  if (waSessions.get(session.id) !== session) return
+  waSessions.delete(session.id)
   clearIdle(session)
+  clearTimeout(session.emptyTimer)
+  clearTimeout(session.joinTimer)
   session.phase = 'closed'
   session.endReason = session.endReason || reason || 'ended'
   for (const track of session.tracks) removeFile(track.file)
@@ -1153,27 +1269,45 @@ function finishWaSession(session, reason) {
   refreshWaStatus(session)
 }
 
+
 async function startWaSession(m, { conn, usedPrefix }, track) {
   let call
   try {
-    call = await (await waVoip(conn)).call(m.sender, track.media, undefined, { autoEndCall: false })
+    call = await (await waVoip(conn)).createRoom('silence', undefined, { autoEndCall: false, requireApproval: false, isVideo: !!track.media?.video })
+    if (!(await call.append(track.media))) throw new Error('the room has already closed')
   } catch (err) {
     removeFile(track.file)
-    throw `Failed to place call: ${err?.message || err}`
+    throw `Failed to create the music room: ${err?.message || err}`
   }
   const session = {
+    id: Math.random().toString(36).slice(2, 8),
+    kind: 'link',
     conn,
     chat: m.chat,
     requester: m.sender,
+    requesterIds: waIdentitiesOf(m),
+    isVideo: !!track.media?.video,
+    link: call.link || null,
+    requesterSeen: false,
+    requesterLeft: false,
+    emptyTimer: null,
+    emptyLeaveMs: 15000,
+    joinTimer: null,
+    joinWaitMs: 300000,
+    everJoined: false,
+    started: false,
+    present: new Set(),
     isGroup: !!m.isGroup,
     prefix: usedPrefix,
     call,
-    tracks: [track],
+    tracks: [{ title: 'Waiting for someone to join', duration: '', file: null, url: null, autoplay: false, media: 'silence', placeholder: true }, track],
+    firstIndex: 1,
     index: -1,
     loop: false,
-    phase: 'calling',
+    phase: 'waiting',
     editChain: Promise.resolve(),
     statusKey: null,
+    statusText: null,
     controlsSent: false,
     reconnect: null,
     resumePhase: null,
@@ -1185,16 +1319,17 @@ async function startWaSession(m, { conn, usedPrefix }, track) {
     idleTimer: null,
     endReason: ''
   }
-  call.on('ringing', () => {
-    if (session.phase !== 'calling') return
-    session.phase = 'ringing'
-    refreshWaStatus(session)
-  })
   call.on('connected', () => {
-    session.phase = 'playing'
+    session.link = call.link || session.link
     refreshWaStatus(session)
+    if (session.everJoined) setImmediate(() => waStartPlayback(session))
+  })
+  call.on('group_state', state => waRoster(session, state))
+  call.on('waiting_room', room => {
+    for (const user of room?.users ?? []) Promise.resolve(call.admit(user.jid)).catch(() => {})
   })
   call.on('item', ({ index }) => {
+    if (index < session.firstIndex) return
     session.index = index
     session.phase = 'playing'
     clearIdle(session)
@@ -1220,6 +1355,10 @@ async function startWaSession(m, { conn, usedPrefix }, track) {
     refreshWaStatus(session)
   })
   call.on('playlist_ended', () => {
+    if (session.loop) {
+      session.call.jump(session.firstIndex).catch(() => {})
+      return
+    }
     session.phase = 'finished'
     scheduleWaIdle(session)
     refreshWaStatus(session)
@@ -1229,18 +1368,28 @@ async function startWaSession(m, { conn, usedPrefix }, track) {
   call.on('error', err => {
     conn.sendMessage(session.chat, { text: `Music error: ${err?.message || err}` }).catch(() => {})
   })
-  waSessions.set(m.chat, session)
+  session.joinTimer = setTimeout(() => {
+    if (session.everJoined) return
+    session.endReason = 'nobody joined'
+    call.hangup().catch(() => {})
+  }, session.joinWaitMs)
+  session.joinTimer.unref?.()
+  waSessions.set(session.id, session)
   try {
-    const sent = await conn.sendMessage(m.chat, { text: waControlsText(session) }, { quoted: m })
-    session.statusKey = sent?.key || null
+    const text = waControlsText(session)
+    session.statusKey = (await conn.sendMessage(m.chat, { text }, { quoted: m }))?.key || null
+    session.statusText = text
   } catch (err) {
-    waSessions.delete(m.chat)
+    waSessions.delete(session.id)
+    clearTimeout(session.joinTimer)
     call.hangup().catch(() => {})
     removeFile(track.file)
     throw `Failed to send the music status: ${err?.message || err}`
   }
   refreshWaStatus(session)
 }
+
+
 
 async function waFetchMedia(input, isVideo) {
   try {
@@ -1283,11 +1432,19 @@ async function waStreamTrack(input, { autoplay = false } = {}) {
   }
 }
 
+async function waResolveAudio(input, options = {}) {
+  try {
+    return await waFileTrack(input, false)
+  } catch (err) {
+    const stream = await waStreamTrack(input, options)
+    if (stream) return stream
+    throw err
+  }
+}
+
 async function waAutoplayTrack(url) {
-  const stream = await waStreamTrack(url, { autoplay: true }).catch(() => null)
-  if (stream) return stream
-  const file = await waFileTrack(url, false).catch(() => null)
-  return file ? { ...file, autoplay: true } : null
+  const track = await waResolveAudio(url, { autoplay: true }).catch(() => null)
+  return track ? { ...track, autoplay: true } : null
 }
 
 async function waResolveAutoplay(session, seed) {
@@ -1329,7 +1486,7 @@ async function waAutoplayAppend(session) {
       if (tried) session.autoplayFailures += 1
       return false
     }
-    if (waSessions.get(session.chat) !== session || session.tracks.length !== count) {
+    if (waSessions.get(session.id) !== session || session.tracks.length !== count) {
       removeFile(track.file)
       return false
     }
@@ -1358,13 +1515,18 @@ async function waPlay(m, { conn, text, usedPrefix, command }) {
   const link = String(text).match(/https?:\/\/\S+/i)
   const isVideo = /--video/.test(text)
   const query = String(text).replace(/--video/g, '').trim()
+  const candidates = [...waSessions.values()].filter(item => item.chat === m.chat && waCanControl(item, m))
+  const session = candidates.find(item => waIsRequester(item, waIdentitiesOf(m))) || candidates[0]
   const input = link ? link[0] : await waSearchInput(query, isVideo)
   if (!input) throw 'No results found.'
   m.react('🎶')
 
-  const track = (isVideo ? null : await waStreamTrack(input)) || await waFileTrack(input, isVideo)
+  const track = isVideo ? await waFileTrack(input, true) : await waResolveAudio(input)
 
-  const session = waSessions.get(m.chat)
+  if (session && track.media?.video && !session.isVideo) {
+    removeFile(track.file)
+    throw 'This music call has no video. Use the Stop control, then play the video again.'
+  }
   if (!session) return startWaSession(m, { conn, usedPrefix }, track)
   if (session.tracks.length >= maxQueue) {
     removeFile(track.file)
@@ -1381,15 +1543,13 @@ async function waPlay(m, { conn, text, usedPrefix, command }) {
   refreshWaStatus(session)
 }
 
-async function waControl(m, isOwner, run) {
-  const session = waSessions.get(m.chat)
-  if (!session) throw 'Nothing is playing right now.'
-  if (m.sender !== session.requester && !isOwner) throw 'Only the person who started the music can control it.'
-  await run(session)
-}
-
 function waControlAction(command, run) {
-  return Object.assign((m, { isOwner }) => waControl(m, isOwner, run), {
+  return Object.assign(async (m, { args }) => {
+    const session = waFindSession(m, args?.[0])
+    if (!session) throw 'Nothing is playing right now.'
+    if (!waCanControl(session, m)) throw 'Only people in this call can control the music.'
+    await run(session)
+  }, {
     command: [command],
     tags: ['Music'],
     help: [],
@@ -1400,17 +1560,19 @@ function waControlAction(command, run) {
 
 function waPrevious(session) {
   waRequireConnected(session)
-  return session.call.jump(Math.max(0, session.index - 1))
+  return session.call.jump(Math.max(session.firstIndex, session.index - 1))
 }
+
 
 async function waNext(session) {
   waRequireConnected(session)
-  const target = session.index + 1 < session.tracks.length ? session.index + 1 : session.loop ? 0 : -1
+  const target = session.index + 1 < session.tracks.length ? session.index + 1 : session.loop ? session.firstIndex : -1
   if (target >= 0) return session.call.jump(target)
   const finished = session.phase === 'finished'
   if (!(await waAutoplayAppend(session))) throw 'There is no next song in the queue.'
   if (!finished) await session.call.jump(session.tracks.length - 1)
 }
+
 
 function waPause(session) {
   waRequireConnected(session)
@@ -1419,9 +1581,10 @@ function waPause(session) {
 
 function waLoop(session) {
   session.loop = !session.loop
-  session.call.setLoop(session.loop)
+  session.call.setLoop(false)
   refreshWaStatus(session)
 }
+
 
 function waStop(session) {
   session.endReason = 'stopped'

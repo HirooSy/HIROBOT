@@ -1,18 +1,77 @@
+<h3>18/November/2026</h3>
+<sub>
+
+```diff
+• Refactor VoIP call engine, media sessions, and signaling handlers for improved reliability, memory efficiency, and group call support
+• Update play and owner call plugins to integrate refined VoIP coordination and improved media handling
+• Minor documentation improvements and dependency configuration adjustments
+
+________________________
+
+* Edit "lib/package/voip/WaVoipCoordinator.js"
+* Edit "lib/package/voip/call/WaCallManager.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/call/call-state.js"
+* Edit "lib/package/voip/crypto/rtcp.js"
+* Edit "lib/package/voip/crypto/srtp.js"
+* Edit "lib/package/voip/crypto/ssrc.js"
+* Edit "lib/package/voip/index.js"
+* Edit "lib/package/voip/media/WaAudioEngine.js"
+* Edit "lib/package/voip/media/audio-codec.js"
+* Edit "lib/package/voip/media/mlow-codec.js"
+* Edit "lib/package/voip/relay/WaManualRelay.js"
+* Edit "lib/package/voip/relay/sctp/association.js"
+* Edit "lib/package/voip/relay/stun.js"
+* Edit "lib/package/voip/signaling/bridge.js"
+* Edit "lib/package/voip/signaling/signaling.js"
+* Edit "lib/package/voip/types.js"
+* Edit "lib/package/voip/voip-deps.js"
+* Edit "lib/package/voip/voipClient.js"
+* Edit "package.json"
+* Edit "plugins/main/play.js"
+* Edit "plugins/owner/call.js"
+* Edit "README.md"
+```
+</sub>
+
 <h3>16/November/2026</h3>
 <sub>
 
 ```diff
-• Support concurrent VoIP call sessions per chat in call plugin and adjust maxConcurrentCalls limit
-• Add retry mechanism for YouTube download scraper and implement Spotify download fallback for music search
-• Pass full path flag to helper filename resolver in plugin utility
+• Add VoIP group calls: ad-hoc, group-bound and invited calls with roster tracking, shared key epochs, per-participant media receive and audio mixing
+• Add call links: create a room, get the link of any call (1:1, group or room) with await voip.getLink(callId), preview a link and join through a link
+• Add waiting room controls: approval toggle, admit, deny and heartbeat
+• Add add/ring participant, group raise hand and group call commands to the owner call plugin
+• Add group relay allocation with sender/receiver subscriptions, HBH-FEC descriptors and forwarded packet unwrapping
+• Add rekeyable SRTP/SRTCP contexts and participant ID formatting for group media keys
+• Add call link to play: .play rings the requester into a link call (1:1 fallback), the link is shown in the status as an invite after the requester accepts, only people inside the call see and use the music controls (shown again on every join) and the call ends when nobody is left
+• Fix relay reconnect loop that kept opening UDP sockets and timers after a call had ended
+• Fix libopus WASM memory staying allocated forever, it is now released after the codecs have been idle
+• Reduce call memory: decode-only and encode-only codecs, Int16 audio source buffer and single buffer ffmpeg decoding
 
 ________________________
 
+* Edit "lib/package/voip/WaVoipCoordinator.js"
+* Edit "lib/package/voip/call/WaCallManager.js"
+* Edit "lib/package/voip/call/WaCallMediaSession.js"
+* Edit "lib/package/voip/call/call-state.js"
+* Edit "lib/package/voip/crypto/rtcp.js"
+* Edit "lib/package/voip/crypto/srtp.js"
+* Edit "lib/package/voip/crypto/ssrc.js"
 * Edit "lib/package/voip/index.js"
-* Edit "lib/scrapers/src/ytdl.js"
-* Edit "lib/utils/plugins.js"
+* Edit "lib/package/voip/media/WaAudioEngine.js"
+* Edit "lib/package/voip/media/audio-codec.js"
+* Edit "lib/package/voip/media/mlow-codec.js"
+* Edit "lib/package/voip/relay/WaManualRelay.js"
+* Edit "lib/package/voip/relay/stun.js"
+* Edit "lib/package/voip/signaling/bridge.js"
+* Edit "lib/package/voip/signaling/signaling.js"
+* Edit "lib/package/voip/types.js"
+* Edit "lib/package/voip/voip-deps.js"
+* Edit "lib/package/voip/voipClient.js"
 * Edit "plugins/main/play.js"
 * Edit "plugins/owner/call.js"
+* Edit "README.md"
 ```
 </sub>
 
@@ -233,49 +292,5 @@ ________________________
 * Edit "plugins/tools/crm.js"
 * Edit "plugins/tools/fetch.js"
 * Edit "lib/utils/simple.js"
-```
-</sub>
-
-<h3>03/November/2026</h3>
-<sub>
-
-```diff
-• Add status broadcast plugin for uploading photos, videos, and text directly to WhatsApp status
-• Add subbot API endpoints and control panel UI for custom prefix and menu settings management
-• Enhance subbot menu handler to support custom menu templates and placeholder replacements
-• Add sendButtonTemplate helper and quick reply button-v2 support (up to 3 buttons) for subbot menu
-• Add new menu placeholders (__totalUsers__, __runtime__, __timezone__) across menu handlers and web UI
-• Update baileys dependency to ^0.3.7 and export detectTimezoneFromNumber utility
-• Update README documentation for button templates and message types
-• Add native Node.js SQLite (DatabaseSync) support and automatic migration for legacy database files
-• Support product headers in interactive sendButton messages and rename LTO parameters to coupon
-• Record relayed message history centrally in connection helper and include additionalNodes in crm code generator
-• Move subbot management system from plugin into core botsManager utility
-• Add subbot API endpoints and web UI controls for Auto Read, Auto Typing, and Show Online settings
-• Refactor connection config to flatten main and subbot settings under global.settings.connection
-• Support optionText and optionTitle parameters in interactive button builder
-• Remove deprecated subbot plugin files and menu category
-
-________________________
-
-* Edit "README.md"
-+ Add "plugins/owner/sw.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/package/website/views/profile.html"
-* Edit "lib/package/website/views/style.css"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/main/menu.js"
-* Edit "plugins/owner/setpp.js"
-* Edit "lib/utils/database.js"
-* Edit "plugins/main/enable.js"
-* Edit "plugins/tools/crm.js"
-* Edit "lib/config.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/handler.js"
-+ Add "lib/utils/botsManager.js"
-- Delete "plugins/subbot/connect.js"
-- Delete "plugins/subbot/list.js"
 ```
 </sub>
