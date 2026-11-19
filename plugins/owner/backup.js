@@ -1,5 +1,5 @@
 import { ZipFile as JSZip } from '../../lib/utils/converter.js'
-import { join } from 'path'
+import { join, relative, sep } from 'path'
 import { statSync, readFileSync, readdirSync, existsSync, rmSync } from 'fs'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
@@ -65,7 +65,7 @@ async function addFolderRecursively(zip, folderPath, cwd, excludePaths) {
     if (stat.isDirectory()) {
       await addFolderRecursively(zip, fullPath, cwd, excludePaths)
     } else {
-      const zipPath = fullPath.replace(cwd + '/', '')
+      const zipPath = relative(cwd, fullPath).split(sep).join('/')
       zip.file(zipPath, readFileSync(fullPath))
     }
   }

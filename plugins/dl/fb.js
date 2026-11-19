@@ -7,7 +7,9 @@ const sendOut = (conn, m, payload) => m.platform === 'discord'
     : conn.sendMessage(m.chat, payload, { quoted: m });
 
 function tmpFile(ext) {
-    return path.join('/data/tmp', `fb_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
+    const dir = path.join(process.cwd(), 'data', 'tmp');
+    fs.mkdirSync(dir, { recursive: true });
+    return path.join(dir, `fb_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
 }
 
 function cleanFiles(...files) {

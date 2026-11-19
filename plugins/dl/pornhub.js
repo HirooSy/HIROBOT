@@ -2,9 +2,10 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
+import { tmpdir } from 'os'
 
 const execFileAsync = promisify(execFile)
-const ffmpegPath = '/usr/bin/ffmpeg'
+const ffmpegPath = process.platform === 'win32' ? 'ffmpeg' : '/usr/bin/ffmpeg'
 const phTmpDir = path.join(process.cwd(), 'data/tmp')
 
 const { scrapePornhub, searchPornhub } = global.scraper.pornhub
@@ -34,7 +35,7 @@ function ensureTmp() {
         fs.accessSync(phTmpDir, fs.constants.W_OK)
         return phTmpDir
     } catch {
-        return '/tmp'
+        return tmpdir()
     }
 }
 

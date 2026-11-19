@@ -1,6 +1,7 @@
 import os from 'os'
 import { cpus, platform as osPlatform, totalmem, freemem } from 'os'
-import { readFileSync } from 'fs'
+import { readFileSync, promises as fsp } from 'fs'
+import path from 'path'
 import { performance } from 'perf_hooks'
 import { exec } from 'child_process'
 import { promisify } from 'util'
@@ -49,7 +50,30 @@ function getCgroupMemory() {
   return null
 }
 
+async function dirSize(dir) {
+  let total = 0
+  for (const entry of await fsp.readdir(dir, { withFileTypes: true }).catch(() => [])) {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) total += await dirSize(full)
+    else if (entry.isFile()) total += (await fsp.stat(full).catch(() => ({ size: 0 }))).size
+  }
+  return total
+}
+
+async function storageInfoWin32() {
+  const root = process.cwd()
+  const used = await dirSize(root).catch(() => null)
+  const stats = await fsp.statfs(root).catch(() => null)
+  let total = stats ? Number(stats.blocks) * Number(stats.bsize) : null
+  if (process.env.SERVER_DISK && !isNaN(parseInt(process.env.SERVER_DISK))) {
+    total = parseInt(process.env.SERVER_DISK) * 1024 * 1024
+  }
+  if (used === null || total === null) return null
+  return { used, total }
+}
+
 async function getStorageInfo() {
+  if (process.platform === 'win32') return storageInfoWin32()
   let used = null, total = null
 
   try {
@@ -123,7 +147,7 @@ let handler = async (m, { conn, platform }) => {
     row('Cores', `${cpuList.length}`),
     row('RAM', `${format(ramUsed)} / ${format(ramTotal)}`),
     row('Disk', driveUsed),
-    row('System', `${osPlatform()} ${process.arch} (Node ${process.env.NODE_VERSION})`),
+    row('System', `${osPlatform()} ${process.arch} (Node ${process.version.replace(/^v/, '')})`),
   ].join('\n')
 
   const mem = [

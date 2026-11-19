@@ -9,7 +9,7 @@ const sendOut = (conn, m, payload) => m.platform === 'discord'
     : conn.sendMessage(m.chat, payload, { quoted: m });
 
 const execFileAsync = promisify(execFile);
-const FFMPEG_PATH = '/usr/bin/ffmpeg';
+const FFMPEG_PATH = process.platform === 'win32' ? 'ffmpeg' : '/usr/bin/ffmpeg';
 
 if (!global.igDownloadState) global.igDownloadState = {};
 
@@ -41,7 +41,9 @@ function isIgUrl(text) {
 }
 
 function tmpFile(ext) {
-    return path.join('/data/tmp', `ig_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
+    const dir = path.join(process.cwd(), 'data', 'tmp');
+    fs.mkdirSync(dir, { recursive: true });
+    return path.join(dir, `ig_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
 }
 
 function cleanFiles(...files) {

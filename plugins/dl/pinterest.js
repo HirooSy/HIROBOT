@@ -342,7 +342,7 @@ handler.before = async (m, { conn }) => {
     const infoText = `${title ? `- Title: ${title}\n` : ''}${desc ? `- Description: ${desc}\n` : ''}- Creator: ${creator}\n- Saves: ${saves}\n- Resolution: ${selected.resolution}`
 
     await m.react(`⬇️`)
-    const output = `/tmp/pin_${Date.now()}.mp4`
+    const output = join(tmpdir(), `pin_${Date.now()}.mp4`)
     await mergeVideoAudio(selected.url, hls.audio, output)
 
     await sendMedia(conn, m.chat, m, fs.readFileSync(output), 'pinterest.mp4', infoText)

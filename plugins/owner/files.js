@@ -86,9 +86,8 @@ Example: ${usedPrefix}savefile main.js
     }
 
     try {
-      let { stdout, stderr } = await exec(`cat plugins/${text}.js`)
-      if (stdout?.trim()) m.reply(stdout)
-      if (stderr?.trim()) m.reply(stderr)
+      const content = await _fs.readFile(join(process.cwd(), 'plugins', `${text}.js`), 'utf8')
+      if (content.trim()) m.reply(content)
     } catch (e) {
       m.reply(e.message || String(e))
     }

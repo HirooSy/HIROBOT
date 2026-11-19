@@ -9,7 +9,8 @@ const FONT_FAMILY = 'QuoteFont'
 const FONT_SOURCES = [
     'https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Regular.ttf',
     '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf'
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+    `${process.env.WINDIR || 'C:\\Windows'}\\Fonts\\arial.ttf`
 ]
 
 let fontReady = null

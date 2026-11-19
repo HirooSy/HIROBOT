@@ -18,7 +18,7 @@ const sendTo = (conn, chat, payload, quoted) => {
     if (converted.text) converted.text = waToDiscord(converted.text);
     return conn.discord(chat, converted);
 };
-const ffmpegPath = '/usr/bin/ffmpeg';
+const ffmpegPath = process.platform === 'win32' ? 'ffmpeg' : '/usr/bin/ffmpeg';
 
 function getTmpDir() {
     const TMP_DIR = path.join(process.cwd(), 'data', 'tmp');

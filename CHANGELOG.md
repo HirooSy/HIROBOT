@@ -7,14 +7,44 @@
 • Refactor `question` promise in `connection.js` to support cross-process worker communication
 • Refactor `question` promise to include `getPairingPhone` with caching and timeout support
 • Switch to `rmWithRetry` for auth file cleanup
-• Refactor TV plugin stability/scraping logic
+• Refactor TV internet plugin and enhance ping command output
+• Update AI default personality to professional/formal tone, removing anime/silly style
+• Add Windows-specific support for TMP directory and process spawning in cloudflared
+• Sanitize outgoing chat content in AI adapter
 
 ________________________
 
+- Delete "plugins/group/grouplist.js"
+* Edit "lib/config.js"
+* Edit "lib/main.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/prompt.txt"
+* Edit "lib/package/ai/tools/convert.js"
+* Edit "lib/package/ai/tools/files.js"
+* Edit "lib/package/ai/tools/media.js"
+* Edit "lib/package/ai/tools/system.js"
+* Edit "lib/package/canvas.js"
 * Edit "lib/package/voip/index.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/scrapers/src/pinterest.js"
+* Edit "lib/scrapers/src/x.js"
 * Edit "lib/start.js"
 * Edit "lib/utils/connection.js"
+* Edit "lib/utils/database.js"
+* Edit "lib/utils/helper.js"
+* Edit "lib/utils/plugins.js"
+* Edit "lib/utils/simple.js"
+* Edit "plugins/canvas/quotes.js"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/dl/fb.js"
+* Edit "plugins/dl/ig.js"
+* Edit "plugins/dl/pinterest.js"
+* Edit "plugins/dl/pornhub.js"
 * Edit "plugins/internet/tv.js"
+* Edit "plugins/main/ping.js"
+* Edit "plugins/owner/backup.js"
+* Edit "plugins/owner/files.js"
+* Edit "plugins/owner/grep.js"
 ```
 </sub>
 
@@ -259,31 +289,5 @@ ________________________
 * Edit "plugins/tools/ssweb.js"
 * Edit "plugins/tools/tinyurl.js"
 * Edit "plugins/tools/wink.js"
-```
-</sub>
-
-<h3>06/November/2026</h3>
-<sub>
-
-```diff
-• Add text_to_speech AI tool for converting text to spoken audio via Gemini TTS and sending as voice notes
-• Implement Gemini TTS helper geminiSpeech in MCP package with voice settings, style options, and API key cooldowns
-• Support TTS fallback across multiple Gemini models and update speech generation API handling in MCP package
-• Refactor hot-reload module to dynamically reload config.js changes without requiring a full process restart
-• Refactor reload watcher helper functions, ignore temporary swap files, and schedule process restarts
-• Add global.settings.ai.voice configuration option in config.js for default text-to-speech voice settings
-• Update AI message handler to alternate message quoting behavior when replying
-• Update AI_KEYS configuration documentation in .env.example and README.md for comma-separated API keys
-• Update README.md documentation with Gemini Guest vs API key capability matrix
-
-________________________
-
-* Edit ".env.example"
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/package/ai/mcp.js"
-* Edit "lib/package/ai/tools/media.js"
-* Edit "lib/utils/reload.js"
-* Edit "plugins/ai/ai.js"
 ```
 </sub>

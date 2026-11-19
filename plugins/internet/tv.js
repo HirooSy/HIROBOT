@@ -1,7 +1,5 @@
-import fs from 'fs'
-import os from 'os'
-import path from 'path'
-import { spawn, spawnSync } from 'child_process'
+import net from 'net'
+import { spawn } from 'child_process'
 
 const tv = {
   defaultResolution: '720p',
@@ -12,6 +10,7 @@ const tv = {
   writerRetryLimit: 5,
   writerRetryDelayMs: 2000,
   pipeReleaseDelayMs: 1000,
+  relayBufferBytes: 4 * 1024 * 1024,
   regionNames: new Intl.DisplayNames(['en'], { type: 'region' }),
   sessions: global.waTvSessions ||= new Map()
 }
@@ -139,11 +138,27 @@ async function voipOf(conn) {
 }
 
 function openPipe() {
-  const fifo = path.join(os.tmpdir(), `hiro-tv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.fifo`)
-  const made = spawnSync('mkfifo', [fifo], { stdio: 'ignore' })
-  if (made.status !== 0) throw new Error('mkfifo is required for TV streaming')
-  const holder = fs.openSync(fifo, 'r+')
-  return { fifo, holder, writer: null }
+  return new Promise((resolve, reject) => {
+    const pipe = { server: null, socket: null, writer: null, source: '' }
+    const server = net.createServer(socket => {
+      if (pipe.socket) pipe.socket.destroy()
+      pipe.socket = socket
+      socket.setNoDelay(true)
+      socket.on('data', () => {})
+      socket.on('error', () => {})
+      socket.on('close', () => {
+        if (pipe.socket === socket) pipe.socket = null
+      })
+    })
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      server.removeListener('error', reject)
+      server.on('error', () => {})
+      pipe.server = server
+      pipe.source = `tcp://127.0.0.1:${server.address().port}`
+      resolve(pipe)
+    })
+  })
 }
 
 function killWriter(pipe) {
@@ -157,10 +172,12 @@ function killWriter(pipe) {
 
 function closePipe(pipe) {
   killWriter(pipe)
+  if (pipe.socket) pipe.socket.destroy()
+  pipe.socket = null
   try {
-    fs.closeSync(pipe.holder)
+    pipe.server?.close()
   } catch {}
-  fs.rm(pipe.fifo, { force: true }, () => {})
+  pipe.server = null
 }
 
 function sendNote(session, text) {
@@ -171,6 +188,12 @@ function liveStartArgs(url) {
   return /\.m3u8/i.test(url) ? ['-live_start_index', '-1'] : []
 }
 
+function relayChunk(pipe, chunk) {
+  const socket = pipe.socket
+  if (!socket || socket.destroyed || socket.writableLength > tv.relayBufferBytes) return
+  socket.write(chunk)
+}
+
 function spawnWriter(session, pipe, url) {
   const proc = spawn('ffmpeg', [
     '-hide_banner', '-loglevel', 'error', '-nostdin', '-y',
@@ -179,9 +202,13 @@ function spawnWriter(session, pipe, url) {
     ...liveStartArgs(url),
     '-i', url,
     '-an', '-sn', '-dn', '-c:v', 'copy',
-    '-f', 'mpegts', pipe.fifo
-  ], { stdio: 'ignore' })
+    '-f', 'mpegts', 'pipe:1'
+  ], { stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true })
   pipe.writer = proc
+  proc.stdout.on('data', chunk => {
+    if (pipe.writer === proc) relayChunk(pipe, chunk)
+  })
+  proc.stdout.on('error', () => {})
   const exited = () => {
     if (pipe.writer !== proc) return
     pipe.writer = null
@@ -240,7 +267,7 @@ function refreshTvStatus(session) {
 function releaseRetired(session) {
   const keep = []
   for (const pipe of session.retired) {
-    if (pipe.fifo === session.loadedFifo) keep.push(pipe)
+    if (pipe.source === session.loadedSource) keep.push(pipe)
     else closePipe(pipe)
   }
   session.retired = keep
@@ -341,7 +368,7 @@ async function startTvSession(m, { conn }, channel) {
     channel,
     quality,
     pipe: null,
-    loadedFifo: null,
+    loadedSource: null,
     retired: [],
     phase: 'calling',
     connected: false,
@@ -369,10 +396,10 @@ async function startTvSession(m, { conn }, channel) {
   session.waitTimer.unref?.()
 
   try {
-    session.pipe = openPipe()
+    session.pipe = await openPipe()
     await coordinator.loadAudio(callId, channel.url)
-    await coordinator.loadVideo(callId, session.pipe.fifo)
-    session.loadedFifo = session.pipe.fifo
+    await coordinator.loadVideo(callId, session.pipe.source)
+    session.loadedSource = session.pipe.source
     if (session.connected) startWriter(session)
   } catch (err) {
     coordinator.endCall(callId).catch(() => {})
@@ -393,14 +420,14 @@ async function startTvSession(m, { conn }, channel) {
 }
 
 async function switchVideo(session) {
-  if (session.loadedFifo !== session.pipe.fifo) {
+  if (session.loadedSource !== session.pipe.source) {
     try {
-      await session.coordinator.swapVideoSource(session.callId, session.pipe.fifo)
+      await session.coordinator.swapVideoSource(session.callId, session.pipe.source)
     } catch (err) {
       sendNote(session, `TV error: ${err?.message || err}`)
       return
     }
-    session.loadedFifo = session.pipe.fifo
+    session.loadedSource = session.pipe.source
   }
   releaseRetired(session)
 }
@@ -410,7 +437,7 @@ async function tuneSession(session, channel) {
   if (session.channel.url === channel.url) throw `${channel.name} is already playing.`
 
   const previous = session.pipe
-  const next = openPipe()
+  const next = await openPipe()
   try {
     await session.coordinator.loadAudio(session.callId, channel.url)
   } catch (err) {
