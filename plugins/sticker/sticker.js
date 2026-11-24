@@ -1,4 +1,3 @@
-import { audioToOpus, audioUrlToOpus, quotedAudioOpus, sendAudioSticker } from '../../lib/utils/simple.js'
 const upload = global.scraper.upload.default
 const { webp2png } = global.scraper.ezgif
 
@@ -64,21 +63,10 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
       let img = await q.download?.()
       if (!img) throw `> Reply or caption image/video/sticker`
 
-      let opus = null
-      if (audioUrl) {
-        opus = await audioUrlToOpus(audioUrl).catch(() => null)
-        if (!opus) {
-          sent = true
-          return m.reply('> Failed to get the audio from that URL')
-        }
-      } else {
-        opus = await quotedAudioOpus(conn, q).catch(() => null)
-        if (!opus && /video/.test(mime)) opus = await audioToOpus(img)
-      }
+      const sound = audioUrl || await conn.stickerSoundUrl(/video/.test(mime) ? img : null, /webp/.test(mime) ? q : null).catch(() => null)
 
       try {
-        if (opus) await sendAudioSticker(conn, m.chat, img, opus, scap.name, scap.author, m)
-        else await conn.sendSticker(m.chat, img, { packname: scap.name, author: scap.author }, m)
+        await conn.sendSticker(m.chat, img, { packname: scap.name, author: scap.author }, m, { sound })
         sent = true
       } catch (e) {
         console.error(e)
