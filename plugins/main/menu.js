@@ -3,6 +3,7 @@ import { join } from 'path'
 import os from 'os'
 import { plugins } from '../../lib/utils/plugins.js'
 import { detectTimezoneFromNumber } from '../../lib/package/ai/mcp.js'
+import { whatsappOwners, discordOwners } from '../../lib/utils/helper.js'
 
 let handler = async (m, { conn, usedPrefix: _p, args, isPrems, isOwner, command: cmd, usedPrefix, platform }) => {
   const allPlugins = conn.customPlugins ? { ...plugins, ...conn.customPlugins } : plugins
@@ -53,7 +54,7 @@ let handler = async (m, { conn, usedPrefix: _p, args, isPrems, isOwner, command:
     }
 
     const pkg = JSON.parse(await promises.readFile(join(process.cwd(), 'package.json')).catch(() => '{}')) || {}
-    const dev = global.settings.owner.filter(([id, name, isCreator]) => id && isCreator).map(([id]) => id)[0]
+    const dev = whatsappOwners()[0]
     const status = isOwner ? 'Owner' : isPrems ? 'Premium User' : 'User'
 
     const header = `──────────────────
@@ -65,8 +66,8 @@ let handler = async (m, { conn, usedPrefix: _p, args, isPrems, isOwner, command:
 ──────────────────
 
 **I N F O R M A T I O N**
-- \`Bot Name:\` ${conn.botName || global.settings.botname}
-- \`Developer:\` ${process.env.DISCORD_OWNER || '-'}
+- \`Bot Name:\` ${conn.botName || global.config.bot.name}
+- \`Developer:\` ${discordOwners()[0] || '-'}
 - \`Version:\` ${pkg.version || '-'}
 
 ──────────────────`
@@ -126,7 +127,7 @@ const defaultMenu = {
     const premium   = db.data.users[m.sender].premiumTime
     const prems     = premium > 0 ? 'Premium' : 'Free'
     const osPlatform  = os.platform()
-    const dev       = global.settings.owner.filter(([id, name, isCreator]) => id && isCreator).map(([id]) => id)[0]
+    const dev       = whatsappOwners()[0]
 
     const allQuoted = {
       contact: {
@@ -150,7 +151,7 @@ const defaultMenu = {
 ──────────────────
 
 *I N F O R M A T I O N*
-- \`Bot Name:\` ${conn.botName || global.settings.botname}
+- \`Bot Name:\` ${conn.botName || global.config.bot.name}
 - \`Developer:\` @${dev}
 - \`Version:\` ${_package.version}
 
@@ -160,7 +161,7 @@ const defaultMenu = {
     const customPage = customMenu && (selected === '404' ? (customMenu.type === 'all' ? 'all' : 'select') : (customMenu.type === 'select' && selected !== 'all' ? 'tags' : null))
     if (customPage) {
       const values = {
-        botName: conn.botName || global.settings.botname,
+        botName: conn.botName || global.config.bot.name,
         userName: name,
         status: m.sender.split('@')[0] == dev ? 'Developer' : isOwner ? 'Owner' : isPrems ? 'Premium User' : 'User',
         prefix: (Array.isArray(conn.prefix) ? conn.prefix : Array.isArray(global.prefix) ? global.prefix : [_p]).join(' '),
@@ -214,7 +215,7 @@ const defaultMenu = {
         ),
         mimetype: 'image/webp',
         caption: TextBefore,
-        fileName: conn.botName || global.settings.botname,
+        fileName: conn.botName || global.config.bot.name,
         fileLength: '665666646645000',
         nativeFlow: [{},
           { text: '📢', url: 'https://whatsapp.com/channel/0029VaVJo460bIdoxTVoJY3e' },

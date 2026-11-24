@@ -1,6 +1,8 @@
+import { whatsappOwners } from '../../lib/utils/helper.js'
+
 let handler = async(m, { conn }) => {
 
-  const [id] = global.settings.owner[0] || []
+  const [id] = whatsappOwners()
   conn.sendContact(m.chat, [[id, "OWNER"]], m)
 
 }

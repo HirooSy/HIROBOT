@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { generateWAMessage } from 'baileys'
 import Helper from '../../lib/utils/helper.js'
+import { whatsappOwners } from '../../lib/utils/helper.js'
 
 const { fileTypeFromBuffer } = Helper
 
@@ -40,8 +41,8 @@ const parseFlags = text => ({
   content: text.replace(OWNER_FLAG_GLOBAL, '').trim()
 })
 
-const getOwnerJids = () => global.settings.owner
-  .map(([number]) => String(number || '').replace(/[^\d]/g, ''))
+const getOwnerJids = () => whatsappOwners()
+  .map(number => String(number || '').replace(/[^\d]/g, ''))
   .filter(Boolean)
   .map(number => `${number}@s.whatsapp.net`)
 

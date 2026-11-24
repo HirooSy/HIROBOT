@@ -6,6 +6,7 @@ const {
 
 
 import util from'util'
+import { whatsappOwners } from '../../lib/utils/helper.js'
 
 let handler = async (m, { conn, text, participants, usedPrefix, command, isAdmin, isOwner }) => {
 	if (!(isAdmin || isOwner)) {
@@ -13,7 +14,7 @@ let handler = async (m, { conn, text, participants, usedPrefix, command, isAdmin
 		throw false
 	}
 	if (!text && m.quoted) text = m.quoted.sender.split('@')[0]
-	else if (!text) throw `_Enter a number!_\nExample:\n\n${usedPrefix + command} ${global.settings.owner[0]?.[0] || ''}`
+	else if (!text) throw `_Enter a number!_\nExample:\n\n${usedPrefix + command} ${whatsappOwners()[0] || ''}`
     let _participants = participants.map(user => user.id)
     let users = (await Promise.all(
         text.split(',')

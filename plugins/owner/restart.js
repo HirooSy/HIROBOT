@@ -2,7 +2,7 @@ import { spawn } from 'child_process'
 
 let handler = async (m, { conn, platform }) => {
   if (platform == 'discord') {
-    if (process.env.DATABASE) {
+    if (global.config.bot.database) {
       await m.reply({ ephemeral: true, content: 'Saving database...' })
       await conn.db.write().catch(() => {})
       await new Promise(resolve => setTimeout(resolve, 1500))
@@ -13,7 +13,7 @@ let handler = async (m, { conn, platform }) => {
     else process.exit(0)
     return
   }
-    if (process.env.DATABASE) {
+    if (global.config.bot.database) {
         let { key } = await m.reply("Saving Database...")
         await db.write()
         await new Promise(resolve => setTimeout(resolve, 2000))

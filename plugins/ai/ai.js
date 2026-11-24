@@ -157,7 +157,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false,
             : ''
 
         return send({
-            text: `*${conn.botName || global.settings.botname} — Info*\n- ${userInfo}\n- API Keys: ${keys.length ? `${keys.length} key active` : 'No Apikey'}${keyLines}\n- AI Tools: ${countTools(platform)} tools\n- Default model: ${MODELS.default}`
+            text: `*${conn.botName || global.config.bot.name} — Info*\n- ${userInfo}\n- API Keys: ${keys.length ? `${keys.length} key active` : 'No Apikey'}${keyLines}\n- AI Tools: ${countTools(platform)} tools\n- Default model: ${MODELS.default}`
         })
     }
 
@@ -180,7 +180,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false,
     const hasContent = rawText.trim() || hasMedia(m) || hasQuotedMedia(m)
     if (!hasContent) {
         return send({
-            text: `*${conn.botName || global.settings.botname}*\n\n*Usage:*\n• \`.ai <question>\` — ask anything\n• \`.ai:flash-lite <text>\` — use lite model\n• \`.ai:pro <text>\` — use powerful model\n• Send image/audio then \`.ai\` — analyze media\n\n*Subcommand:*\n• \`.ai reset\` — clear conversation session\n• \`.ai info\` — AI status & API keys\n• \`.ai tools\` — active MCP tools list\n• \`.ai models\` — list available models\n\n*In group:* mention bot or reply to bot messages to chat without prefix`
+            text: `*${conn.botName || global.config.bot.name}*\n\n*Usage:*\n• \`.ai <question>\` — ask anything\n• \`.ai:flash-lite <text>\` — use lite model\n• \`.ai:pro <text>\` — use powerful model\n• Send image/audio then \`.ai\` — analyze media\n\n*Subcommand:*\n• \`.ai reset\` — clear conversation session\n• \`.ai info\` — AI status & API keys\n• \`.ai tools\` — active MCP tools list\n• \`.ai models\` — list available models\n\n*In group:* mention bot or reply to bot messages to chat without prefix`
         })
     }
 
@@ -191,7 +191,7 @@ async function handleAI(conn, m, rawText, modelKey = 'default', isOwner = false,
 
     await conn.sendPresenceUpdate?.('composing', chat)?.catch?.(() => {})
 
-    const thinkingOn = !!global.settings?.ai?.thinking
+    const thinkingOn = !!global.config?.ai?.thinking
     let statusKey = null
     let statusAlive = false
     let onStep = null

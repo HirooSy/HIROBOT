@@ -3,7 +3,7 @@ const { webp2png } = global.scraper.ezgif
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   let user = db.data.users[m.sender]
-  let wmSticker = global.settings.sticker_wm
+  let wmSticker = global.config.sticker_wm
 
   let customName = null
   let customAuthor = null

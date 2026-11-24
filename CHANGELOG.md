@@ -1,3 +1,58 @@
+<h3>24/November/2026</h3>
+<sub>
+
+```diff
+• Migrate configuration system from `.env` and `lib/config.js` to a unified `config.json` file with `config.example.json` template
+• Refactor configuration parsing and startup logic in `start.js` and `helper.js`
+• Update AI prompt rules, MCP tool adapters, web server, and bot utilities to read settings from `global.config`
+• Refactor file reload watcher, cluster workers, and handler utilities
+• Remove obsolete `.env.example`, `lib/config.js`, and `viewonce.js` plugin
+
+________________________
+
++ Add "config.example.json"
++ Add "config.json"
+- Delete ".env.example"
+- Delete "lib/config.js"
+- Delete "plugins/tools/viewonce.js"
+* Edit "README.md"
+* Edit "lib/main.js"
+* Edit "lib/package/ai/chatlog.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/prompt.txt"
+* Edit "lib/package/ai/tools/files.js"
+* Edit "lib/package/ai/tools/memory.js"
+* Edit "lib/package/ai/tools/messaging.js"
+* Edit "lib/package/ai/tools/system.js"
+* Edit "lib/package/website/server.js"
+* Edit "lib/scrapers/src/brat.js"
+* Edit "lib/scrapers/src/discordstalk.js"
+* Edit "lib/start.js"
+* Edit "lib/utils/botsManager.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/database.js"
+* Edit "lib/utils/handler.js"
+* Edit "lib/utils/helper.js"
+* Edit "lib/utils/plugins.js"
+* Edit "lib/utils/reload.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/ai/ai.js"
+* Edit "plugins/group/add.js"
+* Edit "plugins/main/invite.js"
+* Edit "plugins/main/menu.js"
+* Edit "plugins/main/owner.js"
+* Edit "plugins/main/profile.js"
+* Edit "plugins/owner/github.js"
+* Edit "plugins/owner/migratedb.js"
+* Edit "plugins/owner/restart.js"
+* Edit "plugins/owner/sw.js"
+* Edit "plugins/sticker/setwm.js"
+* Edit "plugins/sticker/sticker.js"
+* Edit "plugins/sticker/telegram.js"
+```
+</sub>
+
 <h3>19/November/2026</h3>
 <sub>
 
@@ -176,8 +231,6 @@ ________________________
 * Edit "lib/package/voip/media/mlow-codec.js"
 * Edit "lib/package/voip/relay/WaManualRelay.js"
 * Edit "lib/package/voip/relay/dtls/handshake.js"
-* Edit "lib/package/voip/relay/relay-ack.js"
-* Edit "lib/package/voip/relay/sctp/association.js"
 * Edit "lib/package/voip/relay/stun.js"
 * Edit "lib/package/voip/types.js"
 * Edit "lib/package/voip/voipClient.js"

@@ -60,7 +60,7 @@ html,body{width:${SIZE}px;height:${SIZE}px;background:#0d0e14;font-family:Poppin
 
 let handler = async (m, { conn, isPrems, isOwner, args, user: account, platform }) => {
   if (platform == 'discord') {
-    const tiers = global.settings.tier || {}
+    const tiers = global.config.tier || {}
     const self = m.user
 
     if (args.user && args.user.id !== self.id) {
@@ -77,7 +77,7 @@ let handler = async (m, { conn, isPrems, isOwner, args, user: account, platform 
     if (!user) return m.reply('Profile not found.');
 
     let limit = isOwner || isPrems ? '♾ ' + user.limit : user.limit;
-    let tier = global.settings.tier;
+    let tier = global.config.tier;
     let requiredExp = tier[user.level + 1]?.expRequired || user.exp;
     let tierUp = user.level >= Object.keys(tier).length + 1 ? 'MAX !' : user.exp > requiredExp ? 'UPGRADE !' : `${toSimple(user.exp)} / ${toSimple(requiredExp)}`;
 

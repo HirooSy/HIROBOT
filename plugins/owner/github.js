@@ -27,14 +27,14 @@ async function pushToGitHub(conn, m, args) {
     m.react('⬆️')
 
     try {
-        const token = process.env.GIT_TOKEN
-        const user  = process.env.GIT_USER
-        const email = process.env.GIT_EMAIL
-        const repo  = process.env.GIT_REPO
+        const token = global.config.github.token
+        const user  = global.config.github.username
+        const email = global.config.github.email
+        const repo  = global.config.github.repository
 
         if (!token || !user || !email || !repo) {
             throw new Error(
-                'GIT_TOKEN, GIT_USER, GIT_EMAIL, or GIT_REPO is not set'
+                'github.token, github.username, github.email, or github.repository is not set in config.json'
             )
         }
 
@@ -52,6 +52,7 @@ async function pushToGitHub(conn, m, args) {
             '.gitignore',
             'node_modules/',
             '.env',
+            'config.json',
             'data/',
             '*.log',
             '*.zip',
@@ -117,6 +118,7 @@ async function pushToGitHub(conn, m, args) {
             '.github',
             '.gitignore',
             '.env',
+            'config.json',
             'data',
             'run.js',
         ]
@@ -131,6 +133,12 @@ async function pushToGitHub(conn, m, args) {
         }
 
         await execAsync('git add .', { cwd: ROOT })
+
+        const { stdout: stagedFiles } =
+            await execAsync('git diff --cached --name-only --diff-filter=ACMR', { cwd: ROOT })
+        if (stagedFiles.split('\n').some(file => ['.env', 'config.json'].includes(file.trim()))) {
+            throw new Error('config.json or .env is staged for commit, refusing to push secrets')
+        }
 
         const whitelistFiles = [
             '.github/FUNDING.yml',

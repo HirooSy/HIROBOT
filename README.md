@@ -382,7 +382,7 @@ export default [
 ---
 
 ## ✦ Website Configuration 
-<code>.env Configuration:</code>
+<code>config.json Configuration:</code>
 <table align="center" height="500">
   <tbody>
     <tr>
@@ -395,19 +395,19 @@ export default [
 </td>
     </tr>
     <tr>
-      <td><code>CF_KV_TOKEN</code></td>
+      <td><code>website.cloudflare.kv_token</code></td>
       <td>Cloudflare API Token with <b>Account &gt; Workers KV Storage &gt; Edit</b> permission, from <a href="https://dash.cloudflare.com/profile/api-tokens">dash.cloudflare.com/profile/api-tokens</a></td>
     </tr>
     <tr>
-      <td><code>CF_ACCOUNT_ID</code></td>
+      <td><code>website.cloudflare.account_id</code></td>
       <td>Found on the Workers &amp; Pages overview page</td>
     </tr>
     <tr>
-      <td><code>CF_KV_NAMESPACE_ID</code></td>
+      <td><code>website.cloudflare.kv_id</code></td>
       <td>Found on your KV Namespace's page</td>
     </tr>
     <tr>
-      <td><code>CF_HOSTNAME</code></td>
+      <td><code>website.cloudflare.hostname</code></td>
       <td>Required for the domain that becomes your bot's main address, e.g. <code>bot.yourdomain.com</code></td>
     </tr>
     <tr>
@@ -419,23 +419,19 @@ export default [
 </td>
     </tr>
     <tr>
-      <td><code>CF_TOKEN</code></td>
-      <td>Named Tunnel token from Cloudflare Zero Trust</td>
+      <td><code>website.cloudflare.token</code></td>
+      <td>Named Tunnel token from Cloudflare Zero Trust, only used when hostname is empty</td>
     </tr>
     <tr>
-      <td><code>CF_HOSTNAME</code></td>
+      <td><code>website.cloudflare.hostname</code></td>
       <td>Required for the domain that becomes your bot's main address, e.g. <code>bot.yourdomain.com</code></td>
     </tr>
-    <tr>
-      <td><code>HOSTNAME_PUBLIC</code></td>
-      <td>Fill it using same value as CF_HOSTNAME <code>bot.yourdomain.com</code></td>
-    </tr>
-    <tr>
+        <tr>
       <td><b>SCENARIO 3</b><br><sub>No own domain, free provider</sub></td>
       <td colspan="2">
         
 > [!NOTE]
-> <sub><code>HOSTNAME_PUBLIC</code> — you don't own a custom domain, but have a free public address from another provider (e.g. <code>my.zone.id</code>, <code>is.dev</code>) already pointed (A/CNAME) at your panel's real public address. Fill in <b>only</b> this one, leave everything above empty — the bot will not run cloudflared/any tunnel at all.</sub>
+> <sub><code>website.cloudflare.hostname</code> — you don't own a custom domain, but have a free public address from another provider (e.g. <code>my.zone.id</code>, <code>is.dev</code>) already pointed (A/CNAME) at your panel's real public address. Fill in <b>only</b> this one, leave everything above empty — the bot will not run cloudflared/any tunnel at all.</sub>
       </td>
     </tr>
     <tr>
@@ -915,7 +911,6 @@ HIROBOT
 │   │   └── 📄canvas.js
 │   ├── 📁scrapers
 │   ├── 📁utils
-│   ├── 📄config.js        # bot's preference
 │   ├── 📄main.js
 │   └── 📄start.js
 ├── 📁data
@@ -930,7 +925,8 @@ HIROBOT
 │   ├── 📁tunnel
 │   └── 📁tmp
 ├── 📁plugins
-├── 📄.env                 # your tokens
+├── 📄config.json          # your settings and tokens, never commit
+├── 📄config.example.json  # template for config.json, safe to commit
 ├── 📄LICENSE
 ├── 📄package.json
 └── 📄README.md
@@ -967,40 +963,33 @@ HIROBOT
 <details>
    <summary align=center><code>How To Config & Run</code></summary>
 
-1. Create file ".env"
-2. And set it with this code:
+1. Copy "config.example.json" to "config.json" in the project root, next to package.json
+2. Fill in the values, for example (see config.example.json for every key). Set `prefix` to `[]` to enable noPrefix mode, where commands also work without a prefix:
 
 <table height=200>
   <td>
 <sub>
   
-```env
-# Read .env.example for explanations 
-OWNER=
-MODERATOR=
-DATABASE=
-
-AI_PERSONALITY=
-AI_KEYS=
-
-DISCORD_TOKEN=
-DISCORD_CLIENT_ID=
-DISCORD_CLIENT_SECRET=
-DISCORD_REDIRECT_URI=
-DISCORD_OWNER=
-
-GIT_CLASSIC_KEY=
-GIT_TOKEN=
-GIT_USER=
-GIT_EMAIL=
-GIT_REPO=
-
-CF_KV_TOKEN=
-CF_ACCOUNT_ID=
-CF_KV_NAMESPACE_ID=
-CF_TOKEN=
-CF_HOSTNAME=
-HOSTNAME_PUBLIC=
+```json
+{
+    "prefix": [".", "/", "!"],
+    "owner": ["628xxxxxxxxxx"],
+    "mods": [],
+    "bot": {
+        "name": "HIROBOT",
+        "database": "",
+        "whatsapp": {
+            "enable": true,
+            "connection": { "type": "sql", "paircode": "", "maxSubbots": 100 }
+        },
+        "discord": { "enable": false, "token": "", "client_id": "", "client_secret": "" }
+    },
+    "github": { "username": "", "email": "", "repository": "", "classic_key": "", "token": "" },
+    "website": {
+        "cloudflare": { "token": "", "hostname": "", "kv_token": "", "account_id": "", "kv_id": "" }
+    },
+    "ai": { "keys": [] }
+}
 ```
 </sub>
 </td>

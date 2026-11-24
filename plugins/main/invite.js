@@ -4,7 +4,7 @@ let handler = async (m, { conn }) => {
   const id = conn.client.application?.id || conn.client.user.id
   const url = `https://discord.com/oauth2/authorize?client_id=${id}&scope=bot%20applications.commands&permissions=${PERMISSIONS}`
   await m.reply({
-    embeds: [conn.embed({ title: `Add ${global.settings.botname} to your server`, description: 'Pick a server you manage and approve the permissions.' })],
+    embeds: [conn.embed({ title: `Add ${global.config.bot.name} to your server`, description: 'Pick a server you manage and approve the permissions.' })],
     components: [{ type: 1, components: [{ type: 2, style: 5, label: 'Add to server', url }] }]
   })
 }

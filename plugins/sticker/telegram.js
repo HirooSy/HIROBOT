@@ -44,7 +44,7 @@ var handler = async (m, { conn, args, text, usedPrefix, command }) => {
 			? `${result.title} (${packIndex + 1}/${totalPacks})`
 			: result.title
 
-		let packDescription = `${global.settings.botname} — ${global.opts.server}`
+		let packDescription = `${global.config.bot.name} — ${global.opts.server}`
 
 		await conn.sendStickerPack(m.chat, {
 			cover: { url: packStickers[0].url },
