@@ -411,7 +411,7 @@ export default [
       <td>Required for the domain that becomes your bot's main address, e.g. <code>bot.yourdomain.com</code></td>
     </tr>
     <tr>
-      <td rowspan="4"><b>SCENARIO 2</b><br><sub>DNS-pointable server, using own domain</sub></td>
+      <td rowspan="3"><b>SCENARIO 2</b><br><sub>DNS-pointable server, using own domain</sub></td>
       <td colspan="3">
         
 > [!NOTE]
@@ -963,37 +963,8 @@ HIROBOT
 <details>
    <summary align=center><code>How To Config & Run</code></summary>
 
-1. Copy "config.example.json" to "config.json" in the project root, next to package.json
-2. Fill in the values, for example (see config.example.json for every key). Set `prefix` to `[]` to enable noPrefix mode, where commands also work without a prefix:
-
-<table height=200>
-  <td>
-<sub>
-  
-```json
-{
-    "prefix": [".", "/", "!"],
-    "owner": ["628xxxxxxxxxx"],
-    "mods": [],
-    "bot": {
-        "name": "HIROBOT",
-        "database": "",
-        "whatsapp": {
-            "enable": true,
-            "connection": { "type": "sql", "paircode": "", "maxSubbots": 100 }
-        },
-        "discord": { "enable": false, "token": "", "client_id": "", "client_secret": "" }
-    },
-    "github": { "username": "", "email": "", "repository": "", "classic_key": "", "token": "" },
-    "website": {
-        "cloudflare": { "token": "", "hostname": "", "kv_token": "", "account_id": "", "kv_id": "" }
-    },
-    "ai": { "keys": [] }
-}
-```
-</sub>
-</td>
-</table>
+1. Copy "config.example.json" to "config.json"
+2. Fill in the values, for example (see config.example.json for every key).
 
 <sub align=left>
 
