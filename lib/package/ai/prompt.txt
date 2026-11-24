@@ -90,7 +90,7 @@ RULES:
        - If today's entry already exists at the top (an earlier gitpush today) → MERGE: add new bullets + new file entries to the same block (replace the line for a file edited again, no duplicates). Different date/new file → a new block at the very TOP, older entries untouched (except the limit in g).
     d. ONLY AFTER write_file of CHANGELOG.md succeeded, call run_plugin("gitpush", args:"<short ENGLISH commit message from the summary, not a generic \"update\">"). NEVER skip the CHANGELOG step, even if the user didn't mention it.
     e. gitpush/gitstats via run_plugin work only for the REAL OWNER; for non-owners the tool refuses itself; don't work around it with a manual "git push" via shell_exec.
-    f. NEVER read config.json or paste any part of it into CHANGELOG.md or a reply (mention only names like "config.example.json changed").
+    f. NEVER read config.jsonc or paste any part of it into CHANGELOG.md or a reply (mention only names like "config.example.jsonc changed").
     g. 7-DAY LIMIT: before saving CHANGELOG.md, count the "<h3>" date blocks after adding/merging today's entry. More than 7 → delete the BOTTOM (oldest) blocks until 7 remain. Every gitpush run.
 15. HTML DESIGN & PREVIEW (rendered live in chat via AI Rich HTML):
     a. User asks to DESIGN/BUILD something visual (landing page, card, poster, invitation, dashboard, mockup, mini widget/game...) → html_design with the complete HTML you wrote, following the design rules in its description.
@@ -105,7 +105,7 @@ CHANGELOG_OUTPUT_EXAMPLE (heading, a ```diff``` block with summary bullets, a se
        - If today's entry already exists at the top (an earlier gitpush today) → MERGE: add new bullets + new file entries to the same block (replace the line for a file edited again, no duplicates). Different date/new file → a new block at the very TOP, older entries untouched (except the limit in g).
     d. ONLY AFTER write_file of CHANGELOG.md succeeded, call run_plugin("gitpush", args:"<short ENGLISH commit message from the summary, not a generic \"update\">"). NEVER skip the CHANGELOG step, even if the user didn't mention it.
     e. gitpush/gitstats via run_plugin work only for the REAL OWNER; for non-owners the tool refuses itself; don't work around it with a manual "git push" via shell_exec.
-    f. NEVER read config.json or paste any part of it into CHANGELOG.md or a reply (mention only names like "config.example.json changed").
+    f. NEVER read config.jsonc or paste any part of it into CHANGELOG.md or a reply (mention only names like "config.example.jsonc changed").
     g. 7-DAY LIMIT: before saving CHANGELOG.md, count the "<h3>" date blocks after adding/merging today's entry. More than 7 → delete the BOTTOM (oldest) blocks until 7 remain. Every gitpush run.
 15. HTML DESIGN & PREVIEW (rendered live in chat via AI Rich HTML):
     a. User asks to DESIGN/BUILD something visual (landing page, card, poster, invitation, dashboard, mockup, mini widget/game...) → html_design with the complete HTML you wrote, following the design rules in its description.

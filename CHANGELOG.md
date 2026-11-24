@@ -2,7 +2,7 @@
 <sub>
 
 ```diff
-• Migrate configuration system from `.env` and `lib/config.js` to a unified `config.json` file with `config.example.json` template
+• Migrate configuration system from `.env` and `lib/config.js` to a unified `config.jsonc` file with `config.example.jsonc` template
 • Refactor configuration parsing and startup logic in `start.js` and `helper.js`
 • Update AI prompt rules, MCP tool adapters, web server, and bot utilities to read settings from `global.config`
 • Refactor file reload watcher, cluster workers, and handler utilities
@@ -10,8 +10,8 @@
 
 ________________________
 
-+ Add "config.example.json"
-+ Add "config.json"
++ Add "config.example.jsonc"
++ Add "config.jsonc"
 - Delete ".env.example"
 - Delete "lib/config.js"
 - Delete "plugins/tools/viewonce.js"

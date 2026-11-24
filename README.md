@@ -963,8 +963,8 @@ HIROBOT
 <details>
    <summary align=center><code>How To Config & Run</code></summary>
 
-1. Copy "config.example.json" to "config.json"
-2. Fill in the values, for example (see config.example.json for every key).
+1. Copy "config.example.jsonc" to "config.jsonc"
+2. Fill in the values, for example (see config.example.jsonc for every key).
 
 <sub align=left>
 
