@@ -1,19 +1,22 @@
+import { audioToOpus, audioUrlToOpus, quotedAudioOpus, sendAudioSticker } from '../../lib/utils/simple.js'
 const upload = global.scraper.upload.default
 const { webp2png } = global.scraper.ezgif
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   let user = db.data.users[m.sender]
   let wmSticker = global.config.sticker_wm
+  const audioUrl = args.find(arg => /^https?:\/\//i.test(arg))
+  const textArgs = args.filter(arg => arg !== audioUrl)
 
   let customName = null
   let customAuthor = null
 
-  if (args[0] && args[0].includes('|')) {
-    const parts = args.join(' ').split('|')
+  if (textArgs[0] && textArgs[0].includes('|')) {
+    const parts = textArgs.join(' ').split('|')
     customName = parts[0]?.trim() || null
     customAuthor = parts[1]?.trim() || null
-  } else if (args[0] && !isUrl(args[0]) && !args[0].startsWith('http')) {
-    customName = args.join(' ').trim()
+  } else if (textArgs[0] && !isUrl(textArgs[0]) && !textArgs[0].startsWith('http')) {
+    customName = textArgs.join(' ').trim()
   }
 
   let scap = {
@@ -54,11 +57,28 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         if (i < totalPacks - 1) await new Promise(resolve => setTimeout(resolve, 1000))
       }
     } else if (/webp|image|video/g.test(mime)) {
-      if (/video/g.test(mime)) if ((q.msg || q).seconds > 11) return m.reply('Maximum 10 seconds!')
+      if (/video/g.test(mime)) if ((q.msg || q).seconds > 11) {
+        sent = true
+        return m.reply('Maximum 10 seconds!')
+      }
       let img = await q.download?.()
       if (!img) throw `> Reply or caption image/video/sticker`
+
+      let opus = null
+      if (audioUrl) {
+        opus = await audioUrlToOpus(audioUrl).catch(() => null)
+        if (!opus) {
+          sent = true
+          return m.reply('> Failed to get the audio from that URL')
+        }
+      } else {
+        opus = await quotedAudioOpus(conn, q).catch(() => null)
+        if (!opus && /video/.test(mime)) opus = await audioToOpus(img)
+      }
+
       try {
-        await conn.sendSticker(m.chat, img, { packname: scap.name, author: scap.author }, m)
+        if (opus) await sendAudioSticker(conn, m.chat, img, opus, scap.name, scap.author, m)
+        else await conn.sendSticker(m.chat, img, { packname: scap.name, author: scap.author }, m)
         sent = true
       } catch (e) {
         console.error(e)
@@ -89,7 +109,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   }
 }
 
-handler.help = ['sticker', 's'].map(v => v + ` [name|author]`)
+handler.help = ['sticker', 's'].map(v => v + ` [name|author] [audio url]`)
 handler.tags = ['sticker']
 handler.command = /^s(tic?ker)?(gif)?(wm)?$/i
 

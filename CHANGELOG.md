@@ -6,15 +6,18 @@
 • Refactor configuration parsing and startup logic in `start.js` and `helper.js`
 • Update AI prompt rules, MCP tool adapters, web server, and bot utilities to read settings from `global.config`
 • Refactor file reload watcher, cluster workers, and handler utilities
-• Remove obsolete `.env.example`, `lib/config.js`, and `viewonce.js` plugin
+• Add audio sticker support with Opus audio encoding, proto extensions, and `sendAudioSticker` helper in `simple.js`
+• Update sticker plugins (`sticker.js`, `wm.js`) to support attached/quoted audio or audio URL for audio stickers
+• Add `readviewonce` (`rvo`) tool plugin to retrieve and re-send viewOnce media messages with placeholder resend fallback
+• Update `baileys` dependency version to `^0.4.3` in `package.json`
 
 ________________________
 
 + Add "config.example.jsonc"
 + Add "config.jsonc"
++ Add "plugins/tools/viewonce.js"
 - Delete ".env.example"
 - Delete "lib/config.js"
-- Delete "plugins/tools/viewonce.js"
 * Edit "README.md"
 * Edit "lib/main.js"
 * Edit "lib/package/ai/chatlog.js"
@@ -50,6 +53,7 @@ ________________________
 * Edit "plugins/sticker/setwm.js"
 * Edit "plugins/sticker/sticker.js"
 * Edit "plugins/sticker/telegram.js"
+* Edit "plugins/sticker/wm.js"
 ```
 </sub>
 
