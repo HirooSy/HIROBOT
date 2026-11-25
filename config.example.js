@@ -1,6 +1,6 @@
-// ---- This is an example, create your own config.json or just rename this file to config.json -----
+// ---- This is an example, create your own config.js or just rename this file to config.js -----
 
-{
+export default {
     "prefix": [".", "/", "!"], // Set to [] to enable noPrefix mode, commands also work without a prefix
     "owner": [], // Fill owner & moderator using your own number, separate the numbers using coma, for example: ["628123456789", "628987654321"]. support pn whatsapp and discord user id
     "mods": [], // You dont need to fill the moderator, it's optional. only used for plugins that have (plugins.mods = true)

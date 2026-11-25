@@ -60,12 +60,12 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     throw `Invalid format!
 
 *${usedPrefix + command} local-cloud*
-> Migrate data from the local file (data/bot/database.db) to the cloud database (Mongo/MySQL, depending on bot.database in config.jsonc)
+> Migrate data from the local file (data/bot/database.db) to the cloud database (Mongo/MySQL, depending on bot.database in config.js)
 
 *${usedPrefix + command} cloud-local*
 > Migrate data from the cloud database (Mongo/MySQL) to the local file (data/bot/database.db)
 
-_This command auto-detects MongoDB or MySQL from the bot.database value in config.jsonc._`
+_This command auto-detects MongoDB or MySQL from the bot.database value in config.js._`
   }
 
   const dbUrl = global.config.bot.database || ''
@@ -80,9 +80,9 @@ _This command auto-detects MongoDB or MySQL from the bot.database value in confi
 There is no local data to migrate.`
     }
     if (!cloudType) {
-      throw `❌ The *bot.database* value in config.jsonc is not set to a valid MongoDB/MySQL token.
+      throw `❌ The *bot.database* value in config.js is not set to a valid MongoDB/MySQL token.
 
-Set *bot.database* in config.jsonc to a Mongo (mongodb://...) or MySQL (mysql://...) connection string before migrating to the cloud.`
+Set *bot.database* in config.js to a Mongo (mongodb://...) or MySQL (mysql://...) connection string before migrating to the cloud.`
     }
 
     await m.reply(`Starting migration *local ➜ ${cloudType.toUpperCase()}*, please wait...`)
@@ -123,7 +123,7 @@ _Only copies data, nothing was deleted from either local or cloud._`)
 
   if (direction === 'cloud-local') {
     if (!cloudType) {
-      throw `❌ The *bot.database* value in config.jsonc is not set to a valid MongoDB/MySQL token.`
+      throw `❌ The *bot.database* value in config.js is not set to a valid MongoDB/MySQL token.`
     }
     if (localExists) {
       throw `❌ File *data/bot/database.db* already exists.

@@ -1,3 +1,75 @@
+<h3>25/November/2026</h3>
+<sub>
+
+```diff
+• Migrated the configuration system from .jsonc to .js files to improve project settings flexibility.
+• Added a custom native FFmpeg implementation to reduce external binary dependencies for media processing.
+• Integrated the new native FFmpeg library into AI audio conversion tools and the VoIP media engine to enhance processing efficiency.
+• Updated documentation and system references to align with the new configuration and media handling architecture.
+
+________________________
+
+* Edit "README.md"
+- Delete "config.example.jsonc"
+* Edit "lib/main.js"
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/tools/convert.js"
+* Edit "lib/package/ai/tools/files.js"
+* Edit "lib/package/voip/media/WaAudioEngine.js"
+* Edit "lib/package/voip/media/WaVideoEngine.js"
+* Edit "lib/start.js"
+* Edit "lib/utils/botsManager.js"
+* Edit "lib/utils/connection.js"
+* Edit "lib/utils/helper.js"
+* Edit "lib/utils/reload.js"
+* Edit "lib/utils/simple.js"
+* Edit "package.json"
+* Edit "plugins/owner/github.js"
+* Edit "plugins/owner/migratedb.js"
++ Add "config.example.js"
++ Add "config.js"
++ Add "lib/package/ffmpeg/LICENSE"
++ Add "lib/package/ffmpeg/bin/ffnode.js"
++ Add "lib/package/ffmpeg/bridge.js"
++ Add "lib/package/ffmpeg/index.d.ts"
++ Add "lib/package/ffmpeg/index.js"
++ Add "lib/package/ffmpeg/lib/bits.js"
++ Add "lib/package/ffmpeg/lib/cli.js"
++ Add "lib/package/ffmpeg/lib/codec/flac.js"
++ Add "lib/package/ffmpeg/lib/codec/index.js"
++ Add "lib/package/ffmpeg/lib/codec/libopus.js"
++ Add "lib/package/ffmpeg/lib/codec/mp3.js"
++ Add "lib/package/ffmpeg/lib/codec/mpa.js"
++ Add "lib/package/ffmpeg/lib/codec/mpa_tables.js"
++ Add "lib/package/ffmpeg/lib/codec/opus.js"
++ Add "lib/package/ffmpeg/lib/codec/pcm.js"
++ Add "lib/package/ffmpeg/lib/crc.js"
++ Add "lib/package/ffmpeg/lib/debug.js"
++ Add "lib/package/ffmpeg/lib/demux/adts.js"
++ Add "lib/package/ffmpeg/lib/demux/flac.js"
++ Add "lib/package/ffmpeg/lib/demux/index.js"
++ Add "lib/package/ffmpeg/lib/demux/mp3.js"
++ Add "lib/package/ffmpeg/lib/demux/mp4.js"
++ Add "lib/package/ffmpeg/lib/demux/ogg.js"
++ Add "lib/package/ffmpeg/lib/demux/wav.js"
++ Add "lib/package/ffmpeg/lib/errors.js"
++ Add "lib/package/ffmpeg/lib/filter/gain.js"
++ Add "lib/package/ffmpeg/lib/filter/mix.js"
++ Add "lib/package/ffmpeg/lib/filter/resample.js"
++ Add "lib/package/ffmpeg/lib/io.js"
++ Add "lib/package/ffmpeg/lib/mux/adts.js"
++ Add "lib/package/ffmpeg/lib/mux/flac.js"
++ Add "lib/package/ffmpeg/lib/mux/mp3.js"
++ Add "lib/package/ffmpeg/lib/mux/mp4.js"
++ Add "lib/package/ffmpeg/lib/mux/ogg.js"
++ Add "lib/package/ffmpeg/lib/mux/wav.js"
++ Add "lib/package/ffmpeg/lib/pipeline.js"
++ Add "lib/package/ffmpeg/lib/probe.js"
++ Add "lib/package/ffmpeg/lib/tags.js"
++ Add "lib/package/ffmpeg/lib/util.js"
+```
+</sub>
+
 <h3>24/November/2026</h3>
 <sub>
 
@@ -266,85 +338,5 @@ ________________________
 * Edit "plugins/main/profile.js"
 * Edit "plugins/owner/call.js"
 * Edit "plugins/sticker/telegram.js"
-```
-</sub>
-
-<h3>07/November/2026</h3>
-<sub>
-
-```diff
-• Refactor global.settings.icon into global.settings.website object with icon, thumbnail, and description properties
-• Add dynamic OpenGraph and Twitter meta tag injection for website server responses
-• Implement WebSocket connection authorization callback handling in WebSocketServer
-• Increase random upload filename generation length to 20 bytes for enhanced uniqueness
-• Add strict 64-character hex format validation for authorization bearer tokens
-• Inline page view scripts back into templates and implement dynamic script externalization in server with SHA-1 hashing and immutable `/_p/:hash.js` endpoint caching
-• Update handler order message thumbnail references to global.settings.website.icon
-• Extract inline scrapers across AI, downloader, internet, sticker, and tool plugins into dedicated modules in `lib/scrapers/src/`
-• Add standalone plugins and scraper modules for DeepAI, DeepSeek, Sfile downloader, Lyrics search, and InboxKitten
-• Update README branding images, header layout, and Baileys-lite badge
-
-________________________
-
-+ Add "lib/scrapers/src/aicheck.js"
-+ Add "lib/scrapers/src/deepai.js"
-+ Add "lib/scrapers/src/deepseek.js"
-+ Add "lib/scrapers/src/discordstalk.js"
-+ Add "lib/scrapers/src/drive.js"
-+ Add "lib/scrapers/src/gpt.js"
-+ Add "lib/scrapers/src/hd.js"
-+ Add "lib/scrapers/src/iloveimg.js"
-+ Add "lib/scrapers/src/inboxkitten.js"
-+ Add "lib/scrapers/src/lyrics.js"
-+ Add "lib/scrapers/src/mediafire.js"
-+ Add "lib/scrapers/src/notrack.js"
-+ Add "lib/scrapers/src/pollination.js"
-+ Add "lib/scrapers/src/pornhub.js"
-+ Add "lib/scrapers/src/reddit.js"
-+ Add "lib/scrapers/src/removebg.js"
-+ Add "lib/scrapers/src/sfile.js"
-+ Add "lib/scrapers/src/shinigami.js"
-+ Add "lib/scrapers/src/speedtest.js"
-+ Add "lib/scrapers/src/spotify.js"
-+ Add "lib/scrapers/src/ssweb.js"
-+ Add "lib/scrapers/src/telegram.js"
-+ Add "lib/scrapers/src/tinyurl.js"
-+ Add "lib/scrapers/src/wink.js"
-+ Add "plugins/ai/deepai.js"
-+ Add "plugins/ai/deepseek.js"
-+ Add "plugins/dl/sfile.js"
-+ Add "plugins/internet/lyrics.js"
-+ Add "plugins/tools/inboxkitten.js"
-* Edit "README.md"
-* Edit "lib/config.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/package/website/views/connect.html"
-* Edit "lib/package/website/views/index.html"
-* Edit "lib/package/website/views/profile.html"
-* Edit "lib/scrapers/src/e621.js"
-* Edit "lib/scrapers/src/pinterest.js"
-* Edit "lib/utils/handler.js"
-* Edit "plugins/ai/aicheck.js"
-* Edit "plugins/ai/gpt.js"
-* Edit "plugins/ai/notrack.js"
-* Edit "plugins/ai/pollination.js"
-* Edit "plugins/dl/drive.js"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/dl/mediafire.js"
-* Edit "plugins/dl/pinterest.js"
-* Edit "plugins/dl/pornhub.js"
-* Edit "plugins/dl/reddit.js"
-* Edit "plugins/dl/shinigami.js"
-* Edit "plugins/dl/spotify.js"
-* Edit "plugins/internet/discordstalk.js"
-* Edit "plugins/main/speedtest.js"
-* Edit "plugins/sticker/telegram.js"
-* Edit "plugins/tools/alightmotion.js"
-* Edit "plugins/tools/hd.js"
-* Edit "plugins/tools/iloveimg.js"
-* Edit "plugins/tools/removebg.js"
-* Edit "plugins/tools/ssweb.js"
-* Edit "plugins/tools/tinyurl.js"
-* Edit "plugins/tools/wink.js"
 ```
 </sub>

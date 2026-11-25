@@ -34,7 +34,7 @@ async function pushToGitHub(conn, m, args) {
 
         if (!token || !user || !email || !repo) {
             throw new Error(
-                'github.token, github.username, github.email, or github.repository is not set in config.jsonc'
+                'github.token, github.username, github.email, or github.repository is not set in config.js'
             )
         }
 
@@ -52,7 +52,7 @@ async function pushToGitHub(conn, m, args) {
             '.gitignore',
             'node_modules/',
             '.env',
-            'config.jsonc',
+            'config.js',
             'config.json',
             'data/',
             '*.log',
@@ -119,7 +119,7 @@ async function pushToGitHub(conn, m, args) {
             '.github',
             '.gitignore',
             '.env',
-            'config.jsonc',
+            'config.js',
             'config.json',
             'data',
             'run.js',
@@ -138,8 +138,8 @@ async function pushToGitHub(conn, m, args) {
 
         const { stdout: stagedFiles } =
             await execAsync('git diff --cached --name-only --diff-filter=ACMR', { cwd: ROOT })
-        if (stagedFiles.split('\n').some(file => ['.env', 'config.jsonc', 'config.json'].includes(file.trim()))) {
-            throw new Error('config.jsonc or .env is staged for commit, refusing to push secrets')
+        if (stagedFiles.split('\n').some(file => ['.env', 'config.js', 'config.json'].includes(file.trim()))) {
+            throw new Error('config.js or .env is staged for commit, refusing to push secrets')
         }
 
         const whitelistFiles = [

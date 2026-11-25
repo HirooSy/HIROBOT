@@ -382,7 +382,7 @@ export default [
 ---
 
 ## ✦ Website Configuration 
-<code>config.json Configuration:</code>
+<code>config.js Configuration:</code>
 <table align="center" height="500">
   <tbody>
     <tr>
@@ -925,8 +925,8 @@ HIROBOT
 │   ├── 📁tunnel
 │   └── 📁tmp
 ├── 📁plugins
-├── 📄config.json          # your settings and tokens, never commit
-├── 📄config.example.json  # template for config.json, safe to commit
+├── 📄config.js            # your settings and tokens, never commit
+├── 📄config.example.js    # template for config.js, safe to commit
 ├── 📄LICENSE
 ├── 📄package.json
 └── 📄README.md
@@ -939,7 +939,7 @@ HIROBOT
 <table align="center">
   <tbody>
     <tr>
-      <td rowspan="4"><b>REQUIREMENT</b></td>
+      <td rowspan="3"><b>REQUIREMENT</b></td>
       <td><b>Server</b></td>
       <td colspan="2">100% CPU Limit, 500MB RAM, and 1GB Storage<br> <code>-</code></td>
     </tr>
@@ -951,10 +951,6 @@ HIROBOT
       <td><b>Python</b> <i><sub>(Optional)</sub></i></td>
       <td colspan="2">>=3.10 <br> <code>pkg install python</code></td>
     </tr>
-    <tr>
-      <td><b>FFMPEG</b></td>
-      <td colspan="2">latest <br> <code>pkg install ffmpeg</code></td>
-    </tr>
   </tbody>
 </table>
 
@@ -963,8 +959,8 @@ HIROBOT
 <details>
    <summary align=center><code>How To Config & Run</code></summary>
 
-1. Copy "config.example.jsonc" to "config.jsonc"
-2. Fill in the values, for example (see config.example.jsonc for every key).
+1. Copy "config.example.js" to "config.js"
+2. Fill in the values, for example (see config.example.js for every key).
 
 <sub align=left>
 
