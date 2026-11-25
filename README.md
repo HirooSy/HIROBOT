@@ -76,7 +76,7 @@
     <tr>
       <td>Setup</td>
       <td>Nothing to set up, works out of the box</td>
-      <td>Free key from Google AI Studio, put it in AI_KEYS (several keys can be rotated, separate them with a comma: AI_KEYS=key1, key2, key3)</td>
+      <td>Free key from Google AI Studio, put it in config.js > ai > keys</td>
     </tr>
     <tr>
       <td>Model</td>
