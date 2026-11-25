@@ -19,6 +19,22 @@ const sendTo = (conn, chat, payload, quoted) => {
     return conn.discord(chat, converted);
 };
 const ffmpegPath = process.platform === 'win32' ? 'ffmpeg' : '/usr/bin/ffmpeg';
+const ffmpegBaseArgs = ['-hide_banner', '-loglevel', 'error', '-nostdin', '-threads', '1'];
+const ffmpegSlots = 3;
+let ffmpegActive = 0;
+const ffmpegWaiters = [];
+
+async function runFfmpeg(args, options = {}) {
+    if (ffmpegActive >= ffmpegSlots) await new Promise(resolve => ffmpegWaiters.push(resolve));
+    else ffmpegActive++;
+    try {
+        return await execFileAsync(ffmpegPath, [...ffmpegBaseArgs, ...args], options);
+    } finally {
+        const next = ffmpegWaiters.shift();
+        if (next) next();
+        else ffmpegActive--;
+    }
+}
 
 function getTmpDir() {
     const TMP_DIR = path.join(process.cwd(), 'data', 'tmp');
@@ -62,17 +78,21 @@ async function convertToMp4(fileUrl, inputExt) {
     }
 
     try {
-        await execFileAsync(ffmpegPath, [
+        await runFfmpeg([
             '-y',
             '-i', tmpInput,
+            '-an',
+            '-sn',
             '-movflags', 'faststart',
             '-pix_fmt', 'yuv420p',
             '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
             '-c:v', 'libx264',
-            '-c:a', 'aac',
+            '-preset', 'veryfast',
+            '-crf', '26',
+            '-threads', '1',
             '-f', 'mp4',
             tmpOutput
-        ]);
+        ], { timeout: 180000 });
     } catch (err) {
         throw new Error(`ffmpeg error: ${err.message}`);
     }
@@ -181,7 +201,8 @@ async function sende621Post(conn, chat, post, quoted) {
 const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 const videoExts = ['webm', 'mp4'];
 const labeledExts = ['webm', 'mp4', 'gif'];
-const previewConcurrency = 25;
+const previewConcurrency = 10;
+const maxRawPreviewBytes = 8 * 1024 * 1024;
 const gridColumns = 3;
 const escapeHtml = (str = '') => String(str)
     .replace(/&/g, '&amp;')
@@ -202,19 +223,29 @@ async function firstFrame(input, output) {
     if (/^https?:\/\//i.test(input)) {
         args.push('-user_agent', e621.getHeaders()['User-Agent'], '-headers', 'Referer: https://e621.net/\r\n');
     }
-    args.push('-i', input, '-frames:v', '1', '-vf', 'scale=320:-2', '-q:v', '5', output);
-    await execFileAsync(ffmpegPath, args, { timeout: 30000 });
+    args.push('-i', input, '-an', '-sn', '-frames:v', '1', '-vf', 'scale=320:-2', '-q:v', '5', output);
+    await runFfmpeg(args, { timeout: 30000 });
     if (!fs.existsSync(output) || fs.statSync(output).size === 0) throw new Error('empty frame');
+}
+
+function derivePreviewUrl(post) {
+    if (!post.md5 || !post.url) return null;
+    return `https://static1.e621.net/data/preview/${post.md5.slice(0, 2)}/${post.md5.slice(2, 4)}/${post.md5}.jpg`;
 }
 
 async function savePreview(post, dir, idx, fetcher) {
     const ext = (post.ext || '').toLowerCase();
     const base = path.join(dir, `e621_${idx}`);
 
-    if (post.previewUrl) {
+    const previewUrl = post.previewUrl || derivePreviewUrl(post);
+    if (previewUrl) {
         const file = `${base}.img`;
-        const mime = await fetchToFile(post.previewUrl, file, fetcher);
-        return { file, mime };
+        try {
+            const mime = await fetchToFile(previewUrl, file, fetcher);
+            return { file, mime };
+        } catch (e) {
+            if (post.previewUrl) throw e;
+        }
     }
 
     const out = `${base}.jpg`;
@@ -223,7 +254,7 @@ async function savePreview(post, dir, idx, fetcher) {
         return { file: out, mime: 'image/jpeg' };
     }
 
-    if (imageExts.includes(ext) && post.url) {
+    if (imageExts.includes(ext) && post.url && (!post.size || post.size <= maxRawPreviewBytes)) {
         const raw = `${base}_raw`;
         try {
             await fetchToFile(post.url, raw, fetcher);
@@ -243,7 +274,7 @@ async function shrinkIfLarge(result, dir, idx) {
     if (!result || fs.statSync(result.file).size <= shrinkAboveBytes) return result;
     const out = path.join(dir, `e621_${idx}_s.jpg`);
     try {
-        await execFileAsync(ffmpegPath, ['-y', '-i', result.file, '-frames:v', '1', '-vf', 'scale=150:150:force_original_aspect_ratio=increase,crop=150:150', '-q:v', '12', out], { timeout: 20000 });
+        await runFfmpeg(['-y', '-i', result.file, '-frames:v', '1', '-vf', 'scale=150:150:force_original_aspect_ratio=increase,crop=150:150', '-q:v', '12', out], { timeout: 20000 });
         if (fs.existsSync(out) && fs.statSync(out).size > 0) {
             fs.unlinkSync(result.file);
             return { file: out, mime: 'image/jpeg' };
