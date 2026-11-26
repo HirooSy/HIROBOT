@@ -39,6 +39,7 @@ export interface RunOptions {
   net?: { headers?: Record<string, string>; userAgent?: string; referer?: string; timeoutMs?: number };
   smartCopy?: boolean;
   maxPixels?: number;
+  sizeHint?: number;
 }
 
 export interface RunResult {
