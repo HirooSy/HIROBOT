@@ -25,6 +25,20 @@ export interface RunOptions {
   stripMetadata?: boolean;
   faststart?: boolean;
   overwrite?: boolean;
+  videoFilter?: string;
+  vf?: string;
+  frames?: number;
+  vframes?: number;
+  qscale?: number;
+  quality?: number;
+  compressionLevel?: number;
+  pixFmt?: string;
+  merge?: boolean;
+  maps?: { input: number; type?: 'audio' | 'video'; nth?: number; optional?: boolean; text?: string }[];
+  shortest?: boolean;
+  net?: { headers?: Record<string, string>; userAgent?: string; referer?: string; timeoutMs?: number };
+  smartCopy?: boolean;
+  maxPixels?: number;
 }
 
 export interface RunResult {
@@ -75,3 +89,6 @@ export function main(argv: string[]): Promise<number>;
 export function canConvertNatively(input: string, output: string): boolean;
 export function convertNative(input: string, output: string): Promise<boolean>;
 export function decodePcm16(input: string, options: { sampleRate: number; channels?: number; maxBytes?: number }): Promise<Int16Array | null>;
+export function canConvertImage(output: string): boolean;
+export function convertImage(input: Input, output: string, options?: Omit<RunOptions, 'input' | 'inputs' | 'output'>): Promise<boolean>;
+export function runFfmpegArgs(argv: string[], extra?: Partial<RunOptions>): Promise<boolean>;

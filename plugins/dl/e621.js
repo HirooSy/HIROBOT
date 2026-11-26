@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
+import { convertImage } from 'hiro/ffmpeg';
 import { img2pdf, ZipFile } from '../../lib/utils/converter.js';
 import { waToDiscord } from '../../lib/package/discord/text.js';
 import { flowToDiscord, renderGrid, ratingFooter } from '../../lib/package/discord/payload.js';
@@ -219,6 +220,10 @@ async function fetchToFile(url, file, fetcher) {
 }
 
 async function firstFrame(input, output) {
+    if (!/^https?:\/\//i.test(input) && await convertImage(input, output, { frames: 1, vf: 'scale=320:-2', qscale: 5 })) {
+        if (!fs.existsSync(output) || fs.statSync(output).size === 0) throw new Error('empty frame');
+        return;
+    }
     const args = ['-y'];
     if (/^https?:\/\//i.test(input)) {
         args.push('-user_agent', e621.getHeaders()['User-Agent'], '-headers', 'Referer: https://e621.net/\r\n');
@@ -273,8 +278,11 @@ const shrinkAboveBytes = 8 * 1024;
 async function shrinkIfLarge(result, dir, idx) {
     if (!result || fs.statSync(result.file).size <= shrinkAboveBytes) return result;
     const out = path.join(dir, `e621_${idx}_s.jpg`);
+    const filter = 'scale=150:150:force_original_aspect_ratio=increase,crop=150:150';
     try {
-        await runFfmpeg(['-y', '-i', result.file, '-frames:v', '1', '-vf', 'scale=150:150:force_original_aspect_ratio=increase,crop=150:150', '-q:v', '12', out], { timeout: 20000 });
+        if (!await convertImage(result.file, out, { frames: 1, vf: filter, qscale: 12 })) {
+            await runFfmpeg(['-y', '-i', result.file, '-frames:v', '1', '-vf', filter, '-q:v', '12', out], { timeout: 20000 });
+        }
         if (fs.existsSync(out) && fs.statSync(out).size > 0) {
             fs.unlinkSync(result.file);
             return { file: out, mime: 'image/jpeg' };

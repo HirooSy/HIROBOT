@@ -169,10 +169,9 @@ async function upChannel(m, { conn, args, usedPrefix, command, isOwner }) {
     }
     if (!m.quoted) throw 'Reply to the message you want to send to the channel.'
 
+    const { downloadContentFromMessage, prepareWAMessageMedia, generateWAMessageFromContent } = await import('baileys')
     const flags = args.filter(a => a !== input).map(a => a.toLowerCase().replace(/^-+/, ''))
     const q = m.quoted
-    const asQuestion = flags.includes('question') || flags.includes('q') || q.mtype === 'questionMessage'
-
     const meta = await fetchMetadata(conn, input)
     if (!meta?.id) throw 'Channel not found, or the link is invalid.'
 
@@ -181,6 +180,30 @@ async function upChannel(m, { conn, args, usedPrefix, command, isOwner }) {
         throw 'The bot is not an owner/admin of that channel, so it cannot post there.'
     }
 
+    const chJid = meta.id
+    const stc = q?.message?.stickerMessage
+    const aud = q?.message?.audioMessage
+
+    if (stc && aud) {
+        const dl = async (msg, type) => {
+            const s = await downloadContentFromMessage(msg, type)
+            const c = []
+            for await (const x of s) c.push(x)
+            return Buffer.concat(c)
+        }
+        const [sBuf, aBuf] = await Promise.all([dl(q, 'sticker'), dl(q, 'audio')])
+        const [sMed, aMed] = await Promise.all([
+            prepareWAMessageMedia({ sticker: sBuf }, { upload: conn.waUploadToServer, jid: chJid }),
+            prepareWAMessageMedia({ audio: aBuf, mimetype: aud.mimetype || 'audio/ogg; codecs=opus', ptt: aud.ptt ?? true }, { upload: conn.waUploadToServer, jid: chJid })
+        ])
+        if (stc.isAnimated) sMed.stickerMessage.isAnimated = true
+        sMed.stickerMessage.audioMessage = aMed.audioMessage
+        const msg = generateWAMessageFromContent(chJid, { stickerMessage: sMed.stickerMessage }, { userJid: conn.user?.id })
+        await conn.relayMessage(chJid, msg.message, { messageId: msg.key.id })
+        return m.reply('Done (sticker-sound)')
+    }
+
+    const asQuestion = flags.includes('question') || flags.includes('q') || q.mtype === 'questionMessage'
     const channel = { id: meta.id, name: meta.thread_metadata?.name?.text || meta.name || input }
     let label
 

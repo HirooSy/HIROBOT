@@ -1,3 +1,44 @@
+<h3>27/November/2026</h3>
+<sub>
+
+```diff
+• Expand the ffmpeg native bridge to support image conversion and direct argument execution.
+• Introduce new demuxers for Matroska, TS, and image formats to improve container support.
+• Add advanced ffmpeg pipeline options like video filters, frame control, and stream mapping.
+• Integrate native ffmpeg argument execution into the Pinterest and X scrapers to bypass external dependencies.
+• Implement internal support for image processing and network-based inputs within the ffmpeg package.
+
+________________________
+
+* Edit "lib/package/ffmpeg/bridge.js"
+* Edit "lib/package/ffmpeg/index.d.ts"
+* Edit "lib/package/ffmpeg/index.js"
+* Edit "lib/package/ffmpeg/lib/cli.js"
+* Edit "lib/package/ffmpeg/lib/demux/index.js"
+* Edit "lib/package/ffmpeg/lib/pipeline.js"
+* Edit "lib/scrapers/src/pinterest.js"
+* Edit "lib/scrapers/src/x.js"
+* Edit "plugins/dl/e621.js"
+* Edit "plugins/dl/pornhub.js"
+* Edit "plugins/main/channel.js"
++ Add "lib/package/ffmpeg/lib/bsf.js"
++ Add "lib/package/ffmpeg/lib/compat.js"
++ Add "lib/package/ffmpeg/lib/demux/image.js"
++ Add "lib/package/ffmpeg/lib/demux/matroska.js"
++ Add "lib/package/ffmpeg/lib/demux/merge.js"
++ Add "lib/package/ffmpeg/lib/demux/ts.js"
++ Add "lib/package/ffmpeg/lib/ffargs.js"
++ Add "lib/package/ffmpeg/lib/filter/video.js"
++ Add "lib/package/ffmpeg/lib/image/bmp.js"
++ Add "lib/package/ffmpeg/lib/image/frame.js"
++ Add "lib/package/ffmpeg/lib/image/gif.js"
++ Add "lib/package/ffmpeg/lib/image/index.js"
++ Add "lib/package/ffmpeg/lib/image/jpeg.js"
++ Add "lib/package/ffmpeg/lib/image/png.js"
++ Add "lib/package/ffmpeg/lib/net.js"
+```
+</sub>
+
 <h3>25/November/2026</h3>
 <sub>
 
@@ -266,77 +307,5 @@ ________________________
 ________________________
 
 * Edit "lib/utils/simple.js"
-```
-</sub>
-
-<h3>14/November/2026</h3>
-<sub>
-
-```diff
-• Add SPR message tool plugin for targeted hidden message delivery
-• Add SoundCloud, Threads and TV stream channel scraper modules and plugins
-• Refactor VoIP call engine, media sessions, and relay handlers for enhanced WebRTC call handling
-• Update Discord module payload handling, permissions, text, and voice options
-• Refactor handler, connection, database, and simple core utilities
-• Update web server dashboard views and API route handling
-• Update Spotify and Telegram scraper modules along with various group and downloader plugins
-• Fix sequence gap calculation logic in VoIP media session packet receiver and remove unused footer constant in WhatsApp music controls
-
-________________________
-
-+ Add "lib/scrapers/src/soundcloud.js"
-+ Add "lib/scrapers/src/threads.js"
-+ Add "lib/scrapers/src/tv.js"
-+ Add "plugins/dl/soundcloud.js"
-+ Add "plugins/dl/threads.js"
-+ Add "plugins/internet/tv.js"
-+ Add "plugins/tools/spr.js"
-* Edit "lib/config.js"
-* Edit "lib/main.js"
-* Edit "lib/package/discord/opus.js"
-* Edit "lib/package/discord/payload.js"
-* Edit "lib/package/discord/permissions.js"
-* Edit "lib/package/discord/text.js"
-* Edit "lib/package/discord/voice.js"
-* Edit "lib/package/voip/app-data/WaAppDataStream.js"
-* Edit "lib/package/voip/call/WaCallManager.js"
-* Edit "lib/package/voip/call/WaCallMediaSession.js"
-* Edit "lib/package/voip/index.js"
-* Edit "lib/package/voip/media/WaAudioEngine.js"
-* Edit "lib/package/voip/media/WaVideoEngine.js"
-* Edit "lib/package/voip/media/mlow-codec.js"
-* Edit "lib/package/voip/relay/WaManualRelay.js"
-* Edit "lib/package/voip/relay/dtls/handshake.js"
-* Edit "lib/package/voip/relay/stun.js"
-* Edit "lib/package/voip/types.js"
-* Edit "lib/package/voip/voipClient.js"
-* Edit "lib/package/website/server.js"
-* Edit "lib/package/website/views/connect.html"
-* Edit "lib/package/website/views/index.html"
-* Edit "lib/package/website/views/profile.html"
-* Edit "lib/scrapers/src/spotify.js"
-* Edit "lib/scrapers/src/telegram.js"
-* Edit "lib/utils/botsManager.js"
-* Edit "lib/utils/connection.js"
-* Edit "lib/utils/database.js"
-* Edit "lib/utils/handler.js"
-* Edit "lib/utils/plugins.js"
-* Edit "lib/utils/print.js"
-* Edit "lib/utils/reload.js"
-* Edit "lib/utils/simple.js"
-* Edit "package.json"
-* Edit "plugins/dl/apkpure.js"
-* Edit "plugins/dl/e621.js"
-* Edit "plugins/dl/pinterest.js"
-* Edit "plugins/dl/sfile.js"
-* Edit "plugins/group/ban.js"
-* Edit "plugins/group/kick.js"
-* Edit "plugins/group/nickname.js"
-* Edit "plugins/group/role.js"
-* Edit "plugins/group/slowmode.js"
-* Edit "plugins/main/play.js"
-* Edit "plugins/main/profile.js"
-* Edit "plugins/owner/call.js"
-* Edit "plugins/sticker/telegram.js"
 ```
 </sub>

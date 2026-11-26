@@ -3,6 +3,7 @@ import * as path from 'path'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { tmpdir } from 'os'
+import { runFfmpegArgs } from 'hiro/ffmpeg'
 
 const execFileAsync = promisify(execFile)
 const ffmpegPath = process.platform === 'win32' ? 'ffmpeg' : '/usr/bin/ffmpeg'
@@ -59,7 +60,7 @@ async function hlsToMp4(m3u8Url) {
     const out = path.join(tmpDir, `ph_tmp_${ts}.mp4`)
 
     try {
-        await execFileAsync(ffmpegPath, [
+        const args = [
             '-y',
             '-nostdin',
             '-nostats',
@@ -73,7 +74,8 @@ async function hlsToMp4(m3u8Url) {
             '-bsf:a', 'aac_adtstoasc',
             '-f', 'mp4',
             out
-        ], { timeout: ffmpegTimeoutMs, killSignal: 'SIGKILL', maxBuffer: 4 * 1024 * 1024 })
+        ];
+        if (!await runFfmpegArgs(args)) await execFileAsync(ffmpegPath, args, { timeout: ffmpegTimeoutMs, killSignal: 'SIGKILL', maxBuffer: 4 * 1024 * 1024 })
     } catch (e) {
         try { fs.unlinkSync(out) } catch {}
         throw e
