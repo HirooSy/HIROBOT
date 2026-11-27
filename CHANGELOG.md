@@ -2,6 +2,8 @@
 <sub>
 
 ```diff
+• Update the Node.js engine requirement in package.json to allow compatibility with all Node.js 18.x versions.
+• Broaden the project runtime version support to improve compatibility across different environments.
 • Expand the ffmpeg native bridge to support image conversion and direct argument execution.
 • Introduce new demuxers for Matroska, TS, and image formats to improve container support.
 • Add advanced ffmpeg pipeline options like video filters, frame control, and stream mapping.
@@ -36,6 +38,7 @@ ________________________
 + Add "lib/package/ffmpeg/lib/image/jpeg.js"
 + Add "lib/package/ffmpeg/lib/image/png.js"
 + Add "lib/package/ffmpeg/lib/net.js"
+* Edit "package.json"
 ```
 </sub>
 

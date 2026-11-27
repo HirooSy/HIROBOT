@@ -9,7 +9,7 @@
         "start": "node lib/start.js"
     },
     "engines": {
-        "node": ">=18.17.0"
+        "node": ">=18"
     },
     "exports": {
         "./voip": "./lib/package/voip/index.js",
