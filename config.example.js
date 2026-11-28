@@ -25,7 +25,7 @@ export default {
                 "online": true,
                 "loadhistory": true,
                 "type": "sql", // multi, sql, single
-                "browser": ["Windows", "Firefox", "10.0.22631"],
+                "browser": ["Windows", "Firefox", "10.0.22631"], // use ["13", "Android", ""] to fix viewonce issue
                 "paircode": "",
                 "qr": false,
                 "maxSubbots": 100

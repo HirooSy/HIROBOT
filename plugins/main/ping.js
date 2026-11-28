@@ -162,7 +162,7 @@ let handler = async (m, { conn, platform }) => {
 ${info}
 ──────────────────
 ${mem}\`\`\``, m)
-  m.react('✅')
+  await Promise.resolve(m.react('✅')).catch(() => {})
 }
 
 function formatUptime(seconds) {

@@ -20,7 +20,7 @@
         "./ffmpeg": "./lib/package/ffmpeg/index.js"
     },
     "dependencies": {
-        "baileys": "npm:@hiroosy/baileys-lite@^0.4.5"
+        "baileys": "npm:@hiroosy/baileys-lite@^0.4.6"
     },
     "allowScripts": {
         "@hiroosy/baileys-lite": true

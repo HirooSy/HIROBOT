@@ -2,6 +2,10 @@
 <sub>
 
 ```diff
+• Refined Baileys internal error detection in lib/main.js by checking stack frames and fatal signatures while lowering the ignored error window and threshold.
+• Updated @hiroosy/baileys-lite dependency to ^0.4.6 in package.json.
+• Added error handling around message reactions and readMessages calls in lib/utils/handler.js and plugins/main/ping.js to prevent unhandled rejections.
+• Added a comment in config.example.js documenting the browser setting for fixing viewonce issues.
 • Upgrade the default AI model to gemini-4-hydrogen in lib/package/ai/mcp.js
 • Add mandatory project-aware coding and structural rules to prompt.txt
 • Implement project import validation helper to detect invalid paths in lib/package/ai/tools/files.js
@@ -18,6 +22,10 @@ ________________________
 * Edit "plugins/ai/ai.js"
 * Edit "plugins/main/menu.js"
 * Edit "plugins/tools/resize.js"
+* Edit "config.example.js"
+* Edit "lib/main.js"
+* Edit "package.json"
+* Edit "plugins/main/ping.js"
 ```
 </sub>
 
