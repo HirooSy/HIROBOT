@@ -2,6 +2,8 @@
 <sub>
 
 ```diff
+• Improved the Pinterest preview interface with refined CSS and automatic dark mode support.
+• Adjusted the maximum result limit for Pinterest searches to 12 for better resource management.
 • Refined Baileys internal error detection in lib/main.js by checking stack frames and fatal signatures while lowering the ignored error window and threshold.
 • Updated @hiroosy/baileys-lite dependency to ^0.4.6 in package.json.
 • Added error handling around message reactions and readMessages calls in lib/utils/handler.js and plugins/main/ping.js to prevent unhandled rejections.
@@ -26,6 +28,7 @@ ________________________
 * Edit "lib/main.js"
 * Edit "package.json"
 * Edit "plugins/main/ping.js"
+* Edit "plugins/dl/pinterest.js"
 ```
 </sub>
 

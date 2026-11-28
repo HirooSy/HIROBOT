@@ -57,17 +57,17 @@ function buildPreviewHtml(items) {
 <style>
   :root { color-scheme: light dark; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { padding: 8px; font-family: sans-serif; background: transparent; }
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .cell { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: rgba(128,128,128,.2); }
+  body { padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #fff; color: #000; }
+  @media (prefers-color-scheme: dark) { body { background: #111; color: #fff; } }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; }
+  .cell { position: relative; aspect-ratio: 1 / 1; border-radius: 8px; overflow: hidden; background: rgba(128,128,128,.1); }
   .cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .num { position: absolute; top: 6px; left: 6px; min-width: 24px; padding: 2px 7px; border-radius: 12px; background: rgba(0,0,0,.65); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
-  .tag { position: absolute; bottom: 6px; right: 6px; padding: 2px 6px; border-radius: 6px; background: rgba(230,0,35,.9); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+  .num { position: absolute; top: 4px; left: 4px; padding: 2px 6px; border-radius: 6px; background: rgba(0,0,0,.5); color: #fff; font-size: 10px; font-weight: bold; }
+  .tag { position: absolute; bottom: 4px; right: 4px; padding: 2px 6px; border-radius: 6px; background: #e60023; color: #fff; font-size: 9px; font-weight: bold; }
 </style>
 </head>
 <body>
-  <div class="grid">${cells}
-  </div>
+  <div class="grid">${cells}</div>
 </body>
 </html>`
 }
@@ -238,7 +238,7 @@ let handler = async (m, { conn, args: rawArgs, text, command, platform }) => {
 
   const totalResult = filteredPins.length
 
-  const maxResults = platform === 'discord' ? 25 : 30
+  const maxResults = platform === 'discord' ? 25 : 12
 
   const shuffled = filteredPins
     .sort(() => Math.random() - 0.5)
@@ -308,10 +308,13 @@ let handler = async (m, { conn, args: rawArgs, text, command, platform }) => {
       return
     }
 
-    await conn.aiRich()
-      .setTitle(`Pinterest — ${query}`)
-      .addHtml(buildPreviewHtml(readyItems))
-      .send(m.chat, { quoted: m })
+    try {
+      await conn.aiRich()
+        .addHtml(buildPreviewHtml(readyItems))
+        .send(m.chat, { quoted: m })
+    } catch (err) {
+      await m.reply(`Failed to send preview: ${err.message || err}`)
+    }
 
     await conn.sendButton(m.chat, {
       text: caption,
