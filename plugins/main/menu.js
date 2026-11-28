@@ -152,7 +152,7 @@ const defaultMenu = {
 
 *I N F O R M A T I O N*
 - \`Bot Name:\` ${conn.botName || global.config.bot.name}
-- \`Developer:\` @${dev}
+- \`Library:\` ${(() => { const b = String(_package.dependencies?.baileys || '-').replace(/^npm:/, ''); const i = b.lastIndexOf('@'); return i > 0 ? `${b.slice(0, i)} (${b.slice(i + 1).replace(/^[\^~]/, '')})` : b })()}
 - \`Version:\` ${_package.version}
 
 ──────────────────`

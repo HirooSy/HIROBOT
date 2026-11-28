@@ -1,3 +1,26 @@
+<h3>28/November/2026</h3>
+<sub>
+
+```diff
+• Upgrade the default AI model to gemini-4-hydrogen in lib/package/ai/mcp.js
+• Add mandatory project-aware coding and structural rules to prompt.txt
+• Implement project import validation helper to detect invalid paths in lib/package/ai/tools/files.js
+• Optimize command fuzzy matching with Damerau-Levenshtein in lib/utils/handler.js
+• Update AI help menu in plugins/ai/ai.js to reflect the new default model
+
+________________________
+
+* Edit "lib/package/ai/mcp.js"
+* Edit "lib/package/ai/prompt.txt"
+* Edit "lib/package/ai/tools/files.js"
+* Edit "lib/package/ai/tools/web.js"
+* Edit "lib/utils/handler.js"
+* Edit "plugins/ai/ai.js"
+* Edit "plugins/main/menu.js"
+* Edit "plugins/tools/resize.js"
+```
+</sub>
+
 <h3>27/November/2026</h3>
 <sub>
 
@@ -297,18 +320,5 @@ ________________________
 * Edit "plugins/main/play.js"
 * Edit "plugins/owner/call.js"
 * Edit "README.md"
-```
-</sub>
-
-<h3>15/November/2026</h3>
-<sub>
-
-```diff
-• Add isGroupTarget helper in simple.js to restrict hidden message delivery handling strictly to group chats
-• Simplify native flow node construction by removing redundant biz_bot tag attachment on non-group targets
-
-________________________
-
-* Edit "lib/utils/simple.js"
 ```
 </sub>
